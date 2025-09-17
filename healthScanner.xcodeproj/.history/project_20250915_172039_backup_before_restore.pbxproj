@@ -1,0 +1,825 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CED6D9E92E6F09A4006C1A7A /* Resources/Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* Resources/Launch Screen.storyboard */; };
+		CEF23E4F2E6C5F66002B903F /* norrishApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E4E2E6C5F66002B903F /* norrishApp.swift */; };
+		CEF23E512E6C5F66002B903F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E502E6C5F66002B903F /* ContentView.swift */; };
+		CEF23E532E6C5F66002B903F /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E522E6C5F66002B903F /* Item.swift */; };
+		CEF23E552E6C5F67002B903F /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E542E6C5F67002B903F /* Resources/Assets.xcassets */; };
+		CEF23E582E6C5F67002B903F /* Resources/Preview Content/Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E572E6C5F67002B903F /* Resources/Preview Content/Preview Assets.xcassets */; };
+		CEF23E622E6C5F67002B903F /* healthScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E612E6C5F67002B903F /* healthScannerTests.swift */; };
+		CEF23E6C2E6C5F67002B903F /* healthScannerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */; };
+		CEF23E6E2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */; };
+		CEF23E832E6C655B002B903F /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E822E6C655B002B903F /* BarcodeScannerView.swift */; };
+		CEF23E852E6C658C002B903F /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E842E6C658C002B903F /* Product.swift */; };
+		CEF23E872E6C65D0002B903F /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E862E6C65CF002B903F /* ProductDetailView.swift */; };
+		CEF23E892E6C65FA002B903F /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E882E6C65FA002B903F /* ProductService.swift */; };
+		CEF23E8B2E6C6600002B903F /* ImageCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E8A2E6C6600002B903F /* ImageCacheService.swift */; };
+		CEFFFF0A2E79B0010000000A /* Resources/Localization in Resources */ = {isa = PBXBuildFile; fileRef = CEFFFF022E79B00100000002 /* Resources/Localization */; };
+		CEFFFF1A2E79B0010000001A /* Extensions/String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF112E79B00100000011 /* Extensions/String+Localization.swift */; };
+		CEFFFF1B2E79B0010000001B /* Extensions/LocalizationDebug.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF122E79B00100000012 /* Extensions/LocalizationDebug.swift */; };
+		CEFFFF2A2E79B0010000002A /* Views/NutriScoreInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF2112E79B00100000021 /* Views/NutriScoreInfoView.swift */; };
+		CEFFFF2B2E79B0010000002B /* Views/PlateAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF2212E79B00100000022 /* Views/PlateAnalysisView.swift */; };
+		CEFFFF2C2E79B0010000002C /* Views/PlateHistoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF2312E79B00100000023 /* Views/PlateHistoryDetailView.swift */; };
+		CEFFFF2D2E79B0010000002D /* Views/PlateAnalysisResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF2412E79B00100000024 /* Views/PlateAnalysisResultView.swift */; };
+		CEFFFF2E2E79B0010000002E /* Views/PersonalizedInsightCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF2512E79B00100000025 /* Views/PersonalizedInsightCarousel.swift */; };
+		CEFFFF2F2E79B0010000002F /* Views/PlateDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF2612E79B00100000026 /* Views/PlateDetailView.swift */; };
+		CEFFFF3A2E79B0010000003A /* Views/Components/NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF3112E79B00100000031 /* Views/Components/NutriScoreBadge.swift */; };
+		CEFFFF3B2E79B0010000003B /* Views/Components/RecentScanRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF3212E79B00100000032 /* Views/Components/RecentScanRow.swift */; };
+		CEFFFF3C2E79B0010000003C /* Views/Components/NutritionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF3312E79B00100000033 /* Views/Components/NutritionCard.swift */; };
+		CEFFFF3D2E79B0010000003D /* Views/Components/CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF3412E79B00100000034 /* Views/Components/CachedAsyncImage.swift */; };
+		CEFFFF4A2E79B0010000004A /* Scanning/Overlay/PlateProgressRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF4112E79B00100000041 /* Scanning/Overlay/PlateProgressRingView.swift */; };
+		CEFFFF4B2E79B0010000004B /* Scanning/Barcode/BarcodeScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF4212E79B00100000042 /* Scanning/Barcode/BarcodeScannerViewController.swift */; };
+		CEFFFF4C2E79B0010000004C /* Scanning/Barcode/CameraBarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF4312E79B00100000043 /* Scanning/Barcode/CameraBarcodeScannerView.swift */; };
+		CEFFFF4D2E79B0010000004D /* Scanning/AR/DualCameraPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF4412E79B00100000044 /* Scanning/AR/DualCameraPlateScannerViewController.swift */; };
+		CEFFFF4E2E79B0010000004E /* Scanning/AR/ARPlateScanNutrition.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF4512E79B00100000045 /* Scanning/AR/ARPlateScanNutrition.swift */; };
+		CEFFFF4F2E79B0010000004F /* Scanning/AR/ARPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF4612E79B00100000046 /* Scanning/AR/ARPlateScannerViewController.swift */; };
+		CEFFFF5A2E79B0010000005A /* Models/NutriScoreUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF5112E79B00100000051 /* Models/NutriScoreUtilities.swift */; };
+		CEFFFF5B2E79B0010000005B /* Models/PlateAnalysisHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF5212E79B00100000052 /* Models/PlateAnalysisHistory.swift */; };
+		CEFFFF5C2E79B0010000005C /* Models/RecentScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF5312E79B00100000053 /* Models/RecentScan.swift */; };
+		CEFFFF6A2E79B0010000006A /* ViewModels/BarcodeScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF6112E79B00100000061 /* ViewModels/BarcodeScannerViewModel.swift */; };
+		CEFFFF6B2E79B0010000006B /* ViewModels/PlateAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF6212E79B00100000062 /* ViewModels/PlateAnalysisViewModel.swift */; };
+		CEFFFF7A2E79B0010000007A /* Services/OpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEFFFF7112E79B00100000071 /* Services/OpenAIService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		CEF23E5E2E6C5F67002B903F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CEF23E432E6C5F66002B903F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CEF23E4A2E6C5F66002B903F;
+			remoteInfo = healthScanner;
+		};
+		CEF23E682E6C5F67002B903F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CEF23E432E6C5F66002B903F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CEF23E4A2E6C5F66002B903F;
+			remoteInfo = healthScanner;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
+		CEF23E4B2E6C5F66002B903F /* healthScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = healthScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEF23E4E2E6C5F66002B903F /* norrishApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = norrishApp.swift; sourceTree = "<group>"; };
+		CEF23E502E6C5F66002B903F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		CEF23E522E6C5F66002B903F /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		CEF23E542E6C5F67002B903F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		CEF23E5D2E6C5F67002B903F /* healthScannerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = healthScannerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEF23E612E6C5F67002B903F /* healthScannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerTests.swift; sourceTree = "<group>"; };
+		CEF23E672E6C5F67002B903F /* healthScannerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = healthScannerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITests.swift; sourceTree = "<group>"; };
+		CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		CEF23E822E6C655B002B903F /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
+		CEF23E842E6C658C002B903F /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
+		CEF23E862E6C65CF002B903F /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
+		CEF23E882E6C65FA002B903F /* ProductService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductService.swift; sourceTree = "<group>"; };
+		CEF23E8A2E6C6600002B903F /* ImageCacheService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheService.swift; sourceTree = "<group>"; };
+		CEFFFF012E79B00100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CEFFFF022E79B00100000002 /* Localization */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Localization; sourceTree = "<group>"; };
+		CEFFFF112E79B00100000011 /* String+Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = String+Localization.swift; sourceTree = "<group>"; };
+		CEFFFF122E79B00100000012 /* LocalizationDebug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
+		CEFFFF2112E79B00100000021 /* NutriScoreInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutriScoreInfoView.swift; sourceTree = "<group>"; };
+		CEFFFF2212E79B00100000022 /* PlateAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisView.swift; sourceTree = "<group>"; };
+		CEFFFF2312E79B00100000023 /* PlateHistoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateHistoryDetailView.swift; sourceTree = "<group>"; };
+		CEFFFF2412E79B00100000024 /* PlateAnalysisResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisResultView.swift; sourceTree = "<group>"; };
+		CEFFFF2512E79B00100000025 /* PersonalizedInsightCarousel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizedInsightCarousel.swift; sourceTree = "<group>"; };
+		CEFFFF2612E79B00100000026 /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
+		CEFFFF3112E79B00100000031 /* NutriScoreBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutriScoreBadge.swift; sourceTree = "<group>"; };
+		CEFFFF3212E79B00100000032 /* RecentScanRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentScanRow.swift; sourceTree = "<group>"; };
+		CEFFFF3312E79B00100000033 /* NutritionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionCard.swift; sourceTree = "<group>"; };
+		CEFFFF3412E79B00100000034 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
+		CEFFFF4112E79B00100000041 /* PlateProgressRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateProgressRingView.swift; sourceTree = "<group>"; };
+		CEFFFF4212E79B00100000042 /* BarcodeScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerViewController.swift; sourceTree = "<group>"; };
+		CEFFFF4312E79B00100000043 /* CameraBarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraBarcodeScannerView.swift; sourceTree = "<group>"; };
+		CEFFFF4412E79B00100000044 /* DualCameraPlateScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualCameraPlateScannerViewController.swift; sourceTree = "<group>"; };
+		CEFFFF4512E79B00100000045 /* ARPlateScanNutrition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlateScanNutrition.swift; sourceTree = "<group>"; };
+		CEFFFF4612E79B00100000046 /* ARPlateScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlateScannerViewController.swift; sourceTree = "<group>"; };
+		CEFFFF5112E79B00100000051 /* NutriScoreUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutriScoreUtilities.swift; sourceTree = "<group>"; };
+		CEFFFF5212E79B00100000052 /* PlateAnalysisHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisHistory.swift; sourceTree = "<group>"; };
+		CEFFFF5312E79B00100000053 /* RecentScan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentScan.swift; sourceTree = "<group>"; };
+		CEFFFF6112E79B00100000061 /* BarcodeScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerViewModel.swift; sourceTree = "<group>"; };
+		CEFFFF6212E79B00100000062 /* PlateAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisViewModel.swift; sourceTree = "<group>"; };
+		CEFFFF7112E79B00100000071 /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CEF23E482E6C5F66002B903F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEF23E5A2E6C5F67002B903F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEF23E642E6C5F67002B903F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CEF23E422E6C5F66002B903F = {
+			isa = PBXGroup;
+			children = (
+				CEF23E4D2E6C5F66002B903F /* healthScanner */,
+				CEF23E602E6C5F67002B903F /* healthScannerTests */,
+				CEF23E6A2E6C5F67002B903F /* healthScannerUITests */,
+				CEF23E4C2E6C5F66002B903F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CEF23E4C2E6C5F66002B903F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E4B2E6C5F66002B903F /* healthScanner.app */,
+				CEF23E5D2E6C5F67002B903F /* healthScannerTests.xctest */,
+				CEF23E672E6C5F67002B903F /* healthScannerUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CEF23E4D2E6C5F66002B903F /* healthScanner */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E4E2E6C5F66002B903F /* norrishApp.swift */,
+				CEGRPRES2E79B0010000A00B /* Resources */,
+				CEGRPEXT2E79B0010000A00A /* Extensions */,
+				CEGRPVW2E79B0010000A004 /* Views */,
+				CEGRPVM2E79B0010000A003 /* ViewModels */,
+				CEGRPSC2E79B0010000A006 /* Scanning */,
+				CEGRPMOD2E79B0010000A001 /* Models */,
+				CEGRPSVC2E79B0010000A002 /* Services */,
+			);
+			path = healthScanner;
+			sourceTree = "<group>";
+		};
+		CEF23E562E6C5F67002B903F /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		CEGRPRES2E79B0010000A00B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E542E6C5F67002B903F /* Assets.xcassets */,
+				CEF23E562E6C5F67002B903F /* Preview Content */,
+				CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */,
+				CEFFFF012E79B00100000001 /* Info.plist */,
+				CEFFFF022E79B00100000002 /* Localization */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CEGRPEXT2E79B0010000A00A /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				CEFFFF112E79B00100000011 /* String+Localization.swift */,
+				CEFFFF122E79B00100000012 /* LocalizationDebug.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		CEGRPVW2E79B0010000A004 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E502E6C5F66002B903F /* ContentView.swift */,
+				CEFFFF2112E79B00100000021 /* NutriScoreInfoView.swift */,
+				CEFFFF2212E79B00100000022 /* PlateAnalysisView.swift */,
+				CEFFFF2312E79B00100000023 /* PlateHistoryDetailView.swift */,
+				CEFFFF2412E79B00100000024 /* PlateAnalysisResultView.swift */,
+				CEFFFF2512E79B00100000025 /* PersonalizedInsightCarousel.swift */,
+				CEFFFF2612E79B00100000026 /* PlateDetailView.swift */,
+				CEGRPVC2E79B0010000A005 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		CEGRPVC2E79B0010000A005 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				CEFFFF3112E79B00100000031 /* NutriScoreBadge.swift */,
+				CEFFFF3212E79B00100000032 /* RecentScanRow.swift */,
+				CEFFFF3312E79B00100000033 /* NutritionCard.swift */,
+				CEFFFF3412E79B00100000034 /* CachedAsyncImage.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		CEGRPSC2E79B0010000A006 /* Scanning */ = {
+			isa = PBXGroup;
+			children = (
+				CEGRPSBC2E79B0010000A008 /* Barcode */,
+				CEGRPSOV2E79B0010000A009 /* Overlay */,
+				CEGRPSAR2E79B0010000A007 /* AR */,
+			);
+			path = Scanning;
+			sourceTree = "<group>";
+		};
+		CEGRPSBC2E79B0010000A008 /* Barcode */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E822E6C655B002B903F /* BarcodeScannerView.swift */,
+				CEFFFF4212E79B00100000042 /* BarcodeScannerViewController.swift */,
+				CEFFFF4312E79B00100000043 /* CameraBarcodeScannerView.swift */,
+			);
+			path = Barcode;
+			sourceTree = "<group>";
+		};
+		CEGRPSOV2E79B0010000A009 /* Overlay */ = {
+			isa = PBXGroup;
+			children = (
+				CEFFFF4112E79B00100000041 /* PlateProgressRingView.swift */,
+			);
+			path = Overlay;
+			sourceTree = "<group>";
+		};
+		CEGRPSAR2E79B0010000A007 /* AR */ = {
+			isa = PBXGroup;
+			children = (
+				CEFFFF4412E79B00100000044 /* DualCameraPlateScannerViewController.swift */,
+				CEFFFF4512E79B00100000045 /* ARPlateScanNutrition.swift */,
+				CEFFFF4612E79B00100000046 /* ARPlateScannerViewController.swift */,
+			);
+			path = AR;
+			sourceTree = "<group>";
+		};
+		CEGRPMOD2E79B0010000A001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E522E6C5F66002B903F /* Item.swift */,
+				CEF23E842E6C658C002B903F /* Product.swift */,
+				CEFFFF5112E79B00100000051 /* NutriScoreUtilities.swift */,
+				CEFFFF5212E79B00100000052 /* PlateAnalysisHistory.swift */,
+				CEFFFF5312E79B00100000053 /* RecentScan.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CEGRPSVC2E79B0010000A002 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E882E6C65FA002B903F /* ProductService.swift */,
+				CEF23E8A2E6C6600002B903F /* ImageCacheService.swift */,
+				CEFFFF7112E79B00100000071 /* OpenAIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		CEGRPVM2E79B0010000A003 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				CEFFFF6112E79B00100000061 /* BarcodeScannerViewModel.swift */,
+				CEFFFF6212E79B00100000062 /* PlateAnalysisViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		CEF23E602E6C5F67002B903F /* healthScannerTests */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E612E6C5F67002B903F /* healthScannerTests.swift */,
+			);
+			path = healthScannerTests;
+			sourceTree = "<group>";
+		};
+		CEF23E6A2E6C5F67002B903F /* healthScannerUITests */ = {
+			isa = PBXGroup;
+			children = (
+				CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */,
+				CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */,
+			);
+			path = healthScannerUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CEF23E4A2E6C5F66002B903F /* healthScanner */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CEF23E712E6C5F67002B903F /* Build configuration list for PBXNativeTarget "healthScanner" */;
+			buildPhases = (
+				CEF23E472E6C5F66002B903F /* Sources */,
+				CEF23E482E6C5F66002B903F /* Frameworks */,
+				CEF23E492E6C5F66002B903F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = healthScanner;
+			productName = healthScanner;
+			productReference = CEF23E4B2E6C5F66002B903F /* healthScanner.app */;
+			productType = "com.apple.product-type.application";
+		};
+		CEF23E5C2E6C5F67002B903F /* healthScannerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CEF23E742E6C5F67002B903F /* Build configuration list for PBXNativeTarget "healthScannerTests" */;
+			buildPhases = (
+				CEF23E592E6C5F67002B903F /* Sources */,
+				CEF23E5A2E6C5F67002B903F /* Frameworks */,
+				CEF23E5B2E6C5F67002B903F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CEF23E5F2E6C5F67002B903F /* PBXTargetDependency */,
+			);
+			name = healthScannerTests;
+			productName = healthScannerTests;
+			productReference = CEF23E5D2E6C5F67002B903F /* healthScannerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CEF23E662E6C5F67002B903F /* healthScannerUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CEF23E772E6C5F67002B903F /* Build configuration list for PBXNativeTarget "healthScannerUITests" */;
+			buildPhases = (
+				CEF23E632E6C5F67002B903F /* Sources */,
+				CEF23E642E6C5F67002B903F /* Frameworks */,
+				CEF23E652E6C5F67002B903F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CEF23E692E6C5F67002B903F /* PBXTargetDependency */,
+			);
+			name = healthScannerUITests;
+			productName = healthScannerUITests;
+			productReference = CEF23E672E6C5F67002B903F /* healthScannerUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CEF23E432E6C5F66002B903F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					CEF23E4A2E6C5F66002B903F = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					CEF23E5C2E6C5F67002B903F = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = CEF23E4A2E6C5F66002B903F;
+					};
+					CEF23E662E6C5F67002B903F = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = CEF23E4A2E6C5F66002B903F;
+					};
+				};
+			};
+			buildConfigurationList = CEF23E462E6C5F66002B903F /* Build configuration list for PBXProject "healthScanner" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				sv,
+			);
+			mainGroup = CEF23E422E6C5F66002B903F;
+			productRefGroup = CEF23E4C2E6C5F66002B903F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CEF23E4A2E6C5F66002B903F /* healthScanner */,
+				CEF23E5C2E6C5F67002B903F /* healthScannerTests */,
+				CEF23E662E6C5F67002B903F /* healthScannerUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CEF23E492E6C5F66002B903F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */,
+				CEF23E582E6C5F67002B903F /* Resources/Preview Content/Preview Assets.xcassets in Resources */,
+				CEF23E552E6C5F67002B903F /* Resources/Assets.xcassets in Resources */,
+				CEFFFF0A2E79B0010000000A /* Resources/Localization in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEF23E5B2E6C5F67002B903F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEF23E652E6C5F67002B903F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CEF23E472E6C5F66002B903F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEF23E832E6C655B002B903F /* BarcodeScannerView.swift in Sources */,
+				CEF23E512E6C5F66002B903F /* ContentView.swift in Sources */,
+				CEF23E852E6C658C002B903F /* Product.swift in Sources */,
+				CEF23E532E6C5F66002B903F /* Item.swift in Sources */,
+				CEF23E4F2E6C5F66002B903F /* norrishApp.swift in Sources */,
+				CEF23E892E6C65FA002B903F /* ProductService.swift in Sources */,
+				CEF23E872E6C65D0002B903F /* ProductDetailView.swift in Sources */,
+				CEF23E8B2E6C6600002B903F /* ImageCacheService.swift in Sources */,
+				CEFFFF7A2E79B0010000007A /* Services/OpenAIService.swift in Sources */,
+				CEFFFF1A2E79B0010000001A /* Extensions/String+Localization.swift in Sources */,
+				CEFFFF1B2E79B0010000001B /* Extensions/LocalizationDebug.swift in Sources */,
+				CEFFFF2A2E79B0010000002A /* Views/NutriScoreInfoView.swift in Sources */,
+				CEFFFF2B2E79B0010000002B /* Views/PlateAnalysisView.swift in Sources */,
+				CEFFFF2C2E79B0010000002C /* Views/PlateHistoryDetailView.swift in Sources */,
+				CEFFFF2D2E79B0010000002D /* Views/PlateAnalysisResultView.swift in Sources */,
+				CEFFFF2E2E79B0010000002E /* Views/PersonalizedInsightCarousel.swift in Sources */,
+				CEFFFF2F2E79B0010000002F /* Views/PlateDetailView.swift in Sources */,
+				CEFFFF3A2E79B0010000003A /* Views/Components/NutriScoreBadge.swift in Sources */,
+				CEFFFF3B2E79B0010000003B /* Views/Components/RecentScanRow.swift in Sources */,
+				CEFFFF3C2E79B0010000003C /* Views/Components/NutritionCard.swift in Sources */,
+				CEFFFF3D2E79B0010000003D /* Views/Components/CachedAsyncImage.swift in Sources */,
+				CEFFFF4A2E79B0010000004A /* Scanning/Overlay/PlateProgressRingView.swift in Sources */,
+				CEFFFF4B2E79B0010000004B /* Scanning/Barcode/BarcodeScannerViewController.swift in Sources */,
+				CEFFFF4C2E79B0010000004C /* Scanning/Barcode/CameraBarcodeScannerView.swift in Sources */,
+				CEFFFF4D2E79B0010000004D /* Scanning/AR/DualCameraPlateScannerViewController.swift in Sources */,
+				CEFFFF4E2E79B0010000004E /* Scanning/AR/ARPlateScanNutrition.swift in Sources */,
+				CEFFFF4F2E79B0010000004F /* Scanning/AR/ARPlateScannerViewController.swift in Sources */,
+				CEFFFF5A2E79B0010000005A /* Models/NutriScoreUtilities.swift in Sources */,
+				CEFFFF5B2E79B0010000005B /* Models/PlateAnalysisHistory.swift in Sources */,
+				CEFFFF5C2E79B0010000005C /* Models/RecentScan.swift in Sources */,
+				CEFFFF6A2E79B0010000006A /* ViewModels/BarcodeScannerViewModel.swift in Sources */,
+				CEFFFF6B2E79B0010000006B /* ViewModels/PlateAnalysisViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEF23E592E6C5F67002B903F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEF23E622E6C5F67002B903F /* healthScannerTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CEF23E632E6C5F67002B903F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEF23E6C2E6C5F67002B903F /* healthScannerUITests.swift in Sources */,
+				CEF23E6E2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CEF23E5F2E6C5F67002B903F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CEF23E4A2E6C5F66002B903F /* healthScanner */;
+			targetProxy = CEF23E5E2E6C5F67002B903F /* PBXContainerItemProxy */;
+		};
+		CEF23E692E6C5F67002B903F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CEF23E4A2E6C5F66002B903F /* healthScanner */;
+			targetProxy = CEF23E682E6C5F67002B903F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		CEF23E6F2E6C5F67002B903F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		CEF23E702E6C5F67002B903F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CEF23E722E6C5F67002B903F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"healthScanner/Resources/Preview Content\"";
+				DEVELOPMENT_TEAM = W68D4B8SR3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = healthScanner/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Norrish;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to take photos for your barcode.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.norrish;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		CEF23E732E6C5F67002B903F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"healthScanner/Resources/Preview Content\"";
+				DEVELOPMENT_TEAM = W68D4B8SR3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = healthScanner/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Norrish;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs access to the camera to take photos for your barcode.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.norrish;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		CEF23E752E6C5F67002B903F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.healthScannerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/healthScanner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/healthScanner";
+			};
+			name = Debug;
+		};
+		CEF23E762E6C5F67002B903F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.healthScannerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/healthScanner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/healthScanner";
+			};
+			name = Release;
+		};
+		CEF23E782E6C5F67002B903F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.healthScannerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = healthScanner;
+			};
+			name = Debug;
+		};
+		CEF23E792E6C5F67002B903F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.healthScannerUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = healthScanner;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CEF23E462E6C5F66002B903F /* Build configuration list for PBXProject "healthScanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEF23E6F2E6C5F67002B903F /* Debug */,
+				CEF23E702E6C5F67002B903F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CEF23E712E6C5F67002B903F /* Build configuration list for PBXNativeTarget "healthScanner" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEF23E722E6C5F67002B903F /* Debug */,
+				CEF23E732E6C5F67002B903F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CEF23E742E6C5F67002B903F /* Build configuration list for PBXNativeTarget "healthScannerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEF23E752E6C5F67002B903F /* Debug */,
+				CEF23E762E6C5F67002B903F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CEF23E772E6C5F67002B903F /* Build configuration list for PBXNativeTarget "healthScannerUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CEF23E782E6C5F67002B903F /* Debug */,
+				CEF23E792E6C5F67002B903F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CEF23E432E6C5F66002B903F /* Project object */;
+}

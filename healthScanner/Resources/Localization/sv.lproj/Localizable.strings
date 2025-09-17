@@ -1,0 +1,141 @@
+/* Navigation and Tab Bar */
+"tab.scan" = "Skanna";
+"tab.plate" = "Tallrik";
+"tab.history" = "Historik";
+"tab.profile" = "Profil";
+"tab.settings" = "Inställningar";
+
+/* Filter and Sort */
+"filter.all" = "Alla";
+"filter.grade_a" = "A";
+"filter.grade_b" = "B";
+"filter.grade_c" = "C";
+"filter.grade_d" = "D";
+"filter.grade_e" = "E";
+
+"sort.date" = "Datum";
+"sort.nutri_score" = "Nutri-Score";
+
+"history_type.all" = "Alla";
+"history_type.products" = "Produkter";
+"history_type.plates" = "Tallrikar";
+
+/* Search and Empty States */
+"search.placeholder" = "Sök i historik";
+"empty.no_scans" = "Inga skanningar än";
+"empty.start_scanning" = "Börja skanna produkter för att se din historik";
+
+/* Product Details */
+"product.details" = "Produktdetaljer";
+"nutrition.information" = "Näringsinformation";
+"nutrition.calories" = "Kalorier";
+"nutrition.fat" = "Fett";
+"nutrition.carbs" = "Kolhydrater";
+"nutrition.protein" = "Protein";
+"nutrition.fiber" = "Fiber";
+"nutrition.sugar" = "Socker";
+
+/* Plate Analysis */
+"plate.analysis" = "Tallriksanalys";
+"nutrition.overview" = "Näringsöversikt";
+"macronutrients" = "Makronäringsämnen";
+"micronutrients" = "Mikronäringsämnen";
+"connections" = "Kopplingar";
+"ingredient.breakdown" = "Ingrediensuppdelning";
+"insights.suggestions" = "Insikter och förslag";
+
+/* Feedback */
+"feedback.question" = "Är denna analys korrekt?";
+"feedback.help_text" = "Din feedback hjälper oss att förbättra vår AI.";
+"feedback.yes" = "Ja";
+"feedback.no" = "Nej";
+
+/* Micronutrients */
+"micronutrient.fiber" = "Fiber";
+"micronutrient.vitamin_c" = "Vitamin C";
+"micronutrient.iron" = "Järn";
+"micronutrient.other" = "Övrigt";
+
+/* Nutri-Score */
+"nutriscore.grade" = "Betyg %@";
+
+/* Profile */
+"profile.settings_coming_soon" = "Profilinställningar kommer snart";
+"profile.tagline" = "Gör hälsosamma val enklare";
+"profile.membership" = "Premium Medlem • Gick med 2021";
+"profile.dietary_preferences" = "Dietpreferenser";
+"profile.edit" = "Redigera";
+"profile.diet" = "Diet";
+"profile.allergies" = "Allergier";
+"profile.none" = "Inga";
+"profile.dietary_restrictions" = "Dietrestriktioner";
+"profile.vegetarian" = "Vegetarian";
+"profile.app_settings" = "Appinställningar";
+"profile.notification_settings" = "Notifikationsinställningar";
+"profile.meal_reminders" = "Måltidspåminnelser";
+"profile.promotional_updates" = "Reklamuppdateringar";
+"profile.notifications" = "Notifikationer";
+"profile.dark_mode" = "Mörkt läge";
+"profile.language" = "Språk";
+"profile.privacy_account" = "Integritet & Konto";
+"profile.manage_account" = "Hantera Konto";
+"profile.information" = "Information";
+"profile.about" = "Om";
+"profile.privacy" = "Integritet";
+"profile.logout" = "Logga ut";
+"profile.cancel" = "Avbryt";
+"profile.done" = "Klart";
+"profile.logout_confirmation" = "Är du säker på att du vill logga ut?";
+
+/* Scanning Status */
+"scanning.scanned_on" = "Skannad %@";
+"scanning.analyzed_on" = "Analyserad %@";
+
+/* Picker Labels */
+"picker.history_type" = "Historiktyp";
+"picker.sort" = "Sortera";
+
+/* Units */
+"unit.grams" = "g";
+"unit.milligrams" = "mg";
+"unit.kilocalories" = "kcal";
+
+/* Dietary Preferences */
+"preferences.your_preferences" = "Dina Preferenser";
+"preferences.profile_complete" = "Profil 75% klar";
+"preferences.allergies" = "Allergier";
+"preferences.allergies_description" = "Välj eventuella allergier du har. Detta hjälper oss att rekommendera säkra och hälsosamma alternativ.";
+"preferences.dietary_restrictions" = "Dietrestriktioner";
+"preferences.dietary_description" = "Berätta om dina dietmål eller val.";
+"preferences.add_custom" = "Lägg till anpassad allergi eller restriktion";
+"preferences.save_preferences" = "Spara Preferenser";
+"preferences.add_custom_allergy" = "Lägg till Anpassad Allergi";
+"preferences.custom_allergy_description" = "Ange en anpassad allergi eller dietrestriktion som inte finns listad ovan.";
+"preferences.allergy_name" = "Allergi- eller restriktionsnamn";
+"preferences.add" = "Lägg till";
+"preferences.cancel" = "Avbryt";
+"preferences.custom_allergy" = "Anpassad Allergi";
+
+/* Allergies */
+"allergies.peanuts" = "Jordnötter";
+"allergies.shellfish" = "Skaldjur";
+"allergies.soy" = "Soja";
+"allergies.dairy" = "Mejeriprodukter";
+"allergies.gluten" = "Gluten";
+"allergies.eggs" = "Ägg";
+"allergies.tree_nuts" = "Trädnötter";
+"allergies.fish" = "Fisk";
+"allergies.sesame" = "Sesam";
+
+/* Dietary Restrictions */
+"dietary.vegan" = "Vegan";
+"dietary.vegetarian" = "Vegetarian";
+"dietary.pescatarian" = "Pescatarian";
+"dietary.paleo" = "Paleo";
+"dietary.keto" = "Keto";
+"dietary.low_sodium" = "Lågsalt";
+"dietary.low_carb" = "Lågkolhydrat";
+"dietary.dairy_free" = "Mjölkfri";
+"dietary.gluten_free" = "Glutenfri";
+"dietary.halal" = "Halal";
+"dietary.kosher" = "Kosher";

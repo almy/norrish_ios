@@ -1,0 +1,171 @@
+/* Navigation and Tab Bar */
+"tab.scan" = "Scan";
+"tab.plate" = "Plate";
+"tab.history" = "History";
+"tab.profile" = "Profile";
+"tab.settings" = "Settings";
+
+/* Filter and Sort */
+"filter.all" = "All";
+"filter.grade_a" = "A";
+"filter.grade_b" = "B";
+"filter.grade_c" = "C";
+"filter.grade_d" = "D";
+"filter.grade_e" = "E";
+
+"sort.date" = "Date";
+"sort.nutri_score" = "Nutri-Score";
+
+"history_type.all" = "All";
+"history_type.products" = "Products";
+"history_type.plates" = "Plates";
+
+/* Search and Empty States */
+"search.placeholder" = "Search history";
+"empty.no_scans" = "No scans yet";
+"empty.start_scanning" = "Start scanning products to see your history";
+
+/* Product Details */
+"product.details" = "Product Details";
+"nutrition.information" = "Nutrition Information";
+"nutrition.calories" = "Calories";
+"nutrition.fat" = "Fat";
+"nutrition.carbs" = "Carbs";
+"nutrition.protein" = "Protein";
+"nutrition.fiber" = "Fiber";
+"nutrition.sugar" = "Sugar";
+
+/* Plate Analysis */
+"plate.analysis" = "Plate Analysis";
+"nutrition.overview" = "Nutrition Overview";
+"macronutrients" = "Macronutrients";
+"micronutrients" = "Micronutrients";
+"connections" = "Connections";
+"ingredient.breakdown" = "Ingredient Breakdown";
+"insights.suggestions" = "Insights & Suggestions";
+
+/* Feedback */
+"feedback.question" = "Is this analysis correct?";
+"feedback.help_text" = "Your feedback helps us improve our AI.";
+"feedback.yes" = "Yes";
+"feedback.no" = "No";
+
+/* Micronutrients */
+"micronutrient.fiber" = "Fiber";
+"micronutrient.vitamin_c" = "Vitamin C";
+"micronutrient.iron" = "Iron";
+"micronutrient.other" = "Other";
+
+/* Nutri-Score */
+"nutriscore.grade" = "Grade %@";
+
+/* Profile */
+"profile.settings_coming_soon" = "Profile settings coming soon";
+
+/* Scanning Status */
+"scanning.scanned_on" = "Scanned %@";
+"scanning.analyzed_on" = "Analyzed %@";
+
+/* Picker Labels */
+"picker.history_type" = "History Type";
+"picker.sort" = "Sort";
+
+/* Units */
+"unit.grams" = "g";
+"unit.milligrams" = "mg";
+"unit.kilocalories" = "kcal";
+
+/* Settings */
+"settings.title" = "Settings";
+"settings.appearance" = "Appearance";
+"settings.appearance_header" = "Appearance";
+"settings.theme" = "Theme";
+"settings.version" = "Version";
+"settings.about" = "About";
+"settings.privacy" = "Privacy";
+"settings.local_only" = "Local only";
+"settings.app_info_header" = "App Information";
+"settings.privacy_header" = "Privacy & Data";
+"settings.privacy_footer" = "All your data is stored locally on your device. Nothing is shared with third parties.";
+
+/* Theme Options */
+"theme.system" = "System";
+"theme.light" = "Light";
+"theme.dark" = "Dark";
+
+/* Profile */
+"profile.tagline" = "Making healthy choices easier";
+"profile.membership" = "Premium Member • Joined 2021";
+"profile.dietary_preferences" = "Dietary Preferences";
+"profile.edit" = "Edit";
+"profile.diet" = "Diet";
+"profile.allergies" = "Allergies";
+"profile.none" = "None";
+"profile.dietary_restrictions" = "Dietary Restrictions";
+"profile.vegetarian" = "Vegetarian";
+"profile.app_settings" = "App Settings";
+"profile.notification_settings" = "Notification Settings";
+"profile.meal_reminders" = "Meal Reminders";
+"profile.promotional_updates" = "Promotional Updates";
+"profile.notifications" = "Notifications";
+"profile.dark_mode" = "Dark Mode";
+"profile.language" = "Language";
+"profile.privacy_account" = "Privacy & Account";
+"profile.manage_account" = "Manage Account";
+"profile.information" = "Information";
+"profile.about" = "About";
+"profile.privacy" = "Privacy";
+"profile.logout" = "Logout";
+"profile.cancel" = "Cancel";
+"profile.done" = "Done";
+"profile.logout_confirmation" = "Are you sure you want to logout?";
+
+/* Dietary Preferences */
+"preferences.your_preferences" = "Your Preferences";
+"preferences.profile_complete" = "Profile 75% complete";
+"preferences.allergies" = "Allergies";
+"preferences.allergies_description" = "Select any allergies you have. This will help us recommend safe and healthy options.";
+"preferences.dietary_restrictions" = "Dietary Restrictions";
+"preferences.dietary_description" = "Tell us about your dietary goals or choices.";
+"preferences.add_custom" = "Add custom allergy or restriction";
+"preferences.save_preferences" = "Save Preferences";
+"preferences.add_custom_allergy" = "Add Custom Allergy";
+"preferences.custom_allergy_description" = "Enter a custom allergy or dietary restriction that's not listed above.";
+"preferences.allergy_name" = "Allergy or restriction name";
+"preferences.add" = "Add";
+"preferences.cancel" = "Cancel";
+"preferences.custom_allergy" = "Custom Allergy";
+
+/* Allergies */
+"allergies.peanuts" = "Peanuts";
+"allergies.shellfish" = "Shellfish";
+"allergies.soy" = "Soy";
+"allergies.dairy" = "Dairy";
+"allergies.gluten" = "Gluten";
+"allergies.eggs" = "Eggs";
+"allergies.tree_nuts" = "Tree Nuts";
+"allergies.fish" = "Fish";
+"allergies.sesame" = "Sesame";
+
+/* Dietary Restrictions */
+"dietary.vegan" = "Vegan";
+"dietary.vegetarian" = "Vegetarian";
+"dietary.pescatarian" = "Pescatarian";
+"dietary.paleo" = "Paleo";
+"dietary.keto" = "Keto";
+"dietary.low_sodium" = "Low-Sodium";
+"dietary.low_carb" = "Low-Carb";
+"dietary.dairy_free" = "Dairy-Free";
+"dietary.gluten_free" = "Gluten-Free";
+"dietary.halal" = "Halal";
+"dietary.kosher" = "Kosher";
+
+/* About Screen */
+"about.title" = "About";
+"about.tagline" = "Scan barcodes and analyze plates for better nutrition insights.";
+"about.features" = "Features";
+"about.feature_scan" = "Barcode scanning for product information";
+"about.feature_plate" = "AI-powered plate analysis";
+"about.feature_privacy" = "Privacy-first with local data storage";
+"about.feature_themes" = "Light and dark theme support";
+"about.done" = "Done";

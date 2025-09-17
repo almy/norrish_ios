@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild:*)",
+      "Bash(swiftc:*)",
+      "Bash(find:*)",
+      "Bash(./scripts/verify_localization.sh:*)",
+      "Bash(gem list:*)",
+      "Bash(gem install:*)",
+      "Bash(open:*)",
+      "Bash(chmod:*)",
+      "Bash(./rebuild_xcode_project.sh:*)",
+      "Bash(python3:*)",
+      "Bash(sed:*)",
+      "Read(//Users/user/Library/Developer/Xcode/DerivedData/**)",
+      "Bash(plutil:*)",
+      "Bash(pip3 install:*)",
+      "Bash(source:*)",
+      "Bash(pip install:*)",
+      "Bash(pip uninstall:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
