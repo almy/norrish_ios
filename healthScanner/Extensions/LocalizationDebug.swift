@@ -13,7 +13,7 @@ extension Bundle {
         print("=== Localization Debug ===")
 
         // Check current language
-        let currentLanguage = Locale.current.languageCode
+        let currentLanguage = Locale.current.language.languageCode?.identifier
         print("Current language code: \(currentLanguage ?? "unknown")")
 
         // Check preferred languages

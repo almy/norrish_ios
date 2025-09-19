@@ -139,3 +139,41 @@
 "dietary.gluten_free" = "Glutenfri";
 "dietary.halal" = "Halal";
 "dietary.kosher" = "Kosher";
+
+/* About Screen */
+"about.title" = "Om";
+"about.tagline" = "Skanna streckkoder och analysera tallrikar för bättre näringsinsikter.";
+"about.features" = "Funktioner";
+"about.feature_scan" = "Streckkodsscanning för produktinformation";
+"about.feature_plate" = "AI-driven tallriksanalys";
+"about.feature_privacy" = "Integritet-först med lokal datalagring";
+"about.feature_themes" = "Ljus och mörk tema-stöd";
+"about.done" = "Klar";
+
+/* CoreML AI Features */
+"ai.status.ready" = "AI Redo";
+"ai.status.loading" = "Laddar AI...";
+"ai.status.processing" = "Bearbetar...";
+"ai.status.not_available" = "AI-modeller hittades inte";
+"ai.food_detected" = "🍽️ %@";
+"ai.classification.full" = "Fullständiga AI-funktioner tillgängliga";
+"ai.classification.recognition_only" = "Matidentifiering tillgänglig";
+"ai.segmentation.volume_only" = "Förbättrad volymuppskattning tillgänglig";
+"ai.confidence.high" = "Hög säkerhet";
+"ai.confidence.medium" = "Medelhög säkerhet";
+"ai.confidence.low" = "Låg säkerhet";
+
+/* Camera and Analysis */
+"camera.take_photo" = "Ta foto";
+"camera.choose_photo" = "Välj från foton";
+"camera.analyzing" = "Analyserar…";
+"camera.tip_lighting" = "För bästa resultat, se till att det finns bra ljus";
+"camera.preview_hint" = "Ta ett foto eller välj från ditt bibliotek";
+
+/* Analysis Results */
+"analysis.detected_foods" = "Upptäckta maträtter";
+"analysis.confidence_score" = "Säkerhet: %.0f%%";
+"analysis.volume_estimation" = "Volymuppskattning";
+"analysis.enhanced_detection" = "Förbättrad AI-upptäckt";
+"analysis.food_recognition" = "Matidentifiering";
+"analysis.segmentation_analysis" = "Segmenteringsanalys";

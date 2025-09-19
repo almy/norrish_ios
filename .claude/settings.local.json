@@ -20,7 +20,11 @@
       "Bash(pip uninstall:*)",
       "Bash(cat:*)",
       "Bash(mkdir:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(echo $?)",
+      "Read(//Users/user/**)"
     ],
     "deny": [],
     "ask": []

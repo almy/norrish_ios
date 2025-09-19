@@ -49,77 +49,8 @@ public struct ARPlateScanNutrition: Equatable {
     }
 }
 
-// MARK: - PlateAnalysis Domain Model (used by views & history)
-public struct PlateAnalysis: Codable, Equatable {
-    public let nutritionScore: Double
-    public let description: String
-    public let macronutrients: Macronutrients
-    public let ingredients: [Ingredient]
-    public let insights: [Insight]
-    public let micronutrients: Micronutrients?
-    public let connections: [String]?
-
-    public static func mockAnalysis() -> PlateAnalysis {
-        PlateAnalysis(
-            nutritionScore: 8.2,
-            description: "Sample plate with balanced macros.",
-            macronutrients: Macronutrients(protein: 25, carbs: 40, fat: 18, calories: 480),
-            ingredients: [
-                Ingredient(name: "Chicken Breast", amount: "120 g"),
-                Ingredient(name: "Brown Rice", amount: "100 g")
-            ],
-            insights: [
-                Insight(type: .positive, title: "Great Protein", description: "Adequate lean protein for muscle support."),
-                Insight(type: .suggestion, title: "Add Greens", description: "Consider adding leafy vegetables for micronutrients.")
-            ],
-            micronutrients: Micronutrients(fiberG: 5, vitaminCMg: 20, ironMg: 2, other: "Likely contains potassium and magnesium"),
-            connections: ["Olive oil adds vitamin E", "Whole grains contribute B vitamins"]
-        )
-    }
-}
-
-public struct Macronutrients: Codable, Equatable {
-    public let protein: Int
-    public let carbs: Int
-    public let fat: Int
-    public let calories: Int
-}
-
-public struct Ingredient: Codable, Identifiable, Equatable {
-    public let id = UUID()
-    public let name: String
-    public let amount: String
-
-    private enum CodingKeys: String, CodingKey {
-        case name, amount
-    }
-}
-
-public struct Insight: Codable, Identifiable, Equatable {
-    public enum InsightType: String, Codable { case positive, suggestion, warning }
-    public let id = UUID()
-    public let type: InsightType
-    public let title: String
-    public let description: String
-
-    private enum CodingKeys: String, CodingKey {
-        case type, title, description
-    }
-}
-
-public struct Micronutrients: Codable, Equatable {
-    public let fiberG: Int?
-    public let vitaminCMg: Int?
-    public let ironMg: Int?
-    public let other: String?
-
-    private enum CodingKeys: String, CodingKey {
-        case fiberG = "fiberG"
-        case vitaminCMg = "vitaminCMg"
-        case ironMg = "ironMg"
-        case other
-    }
-}
+// Note: PlateAnalysis, Macronutrients, Ingredient, Insight, and Micronutrients
+// models are defined in Models/PlateAnalysis.swift to avoid duplication
 
 // MARK: - SwiftUI Wrapper presenting the REAL scanner(s)
 // On devices with ARKit sceneDepth → presents ARPlateScannerViewController

@@ -169,3 +169,31 @@
 "about.feature_privacy" = "Privacy-first with local data storage";
 "about.feature_themes" = "Light and dark theme support";
 "about.done" = "Done";
+
+/* CoreML AI Features */
+"ai.status.ready" = "AI Ready";
+"ai.status.loading" = "Loading AI...";
+"ai.status.processing" = "Processing...";
+"ai.status.not_available" = "AI models not found";
+"ai.food_detected" = "🍽️ %@";
+"ai.classification.full" = "Full AI capabilities available";
+"ai.classification.recognition_only" = "Food recognition available";
+"ai.segmentation.volume_only" = "Enhanced volume estimation available";
+"ai.confidence.high" = "High confidence";
+"ai.confidence.medium" = "Medium confidence";
+"ai.confidence.low" = "Low confidence";
+
+/* Camera and Analysis */
+"camera.take_photo" = "Take Photo";
+"camera.choose_photo" = "Choose from Photos";
+"camera.analyzing" = "Analyzing…";
+"camera.tip_lighting" = "For best results, ensure good lighting";
+"camera.preview_hint" = "Take a photo or choose from your library";
+
+/* Analysis Results */
+"analysis.detected_foods" = "Detected Foods";
+"analysis.confidence_score" = "Confidence: %.0f%%";
+"analysis.volume_estimation" = "Volume Estimation";
+"analysis.enhanced_detection" = "Enhanced AI Detection";
+"analysis.food_recognition" = "Food Recognition";
+"analysis.segmentation_analysis" = "Segmentation Analysis";

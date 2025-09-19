@@ -120,7 +120,22 @@ final class OpenAIService {
         let fat: Int
         let planeStableScore: Float?
         let device: String?
-        let method: String? // "LiDAR" or "DualCameraDepth"
+        let method: String? // Analysis method
+        let detectedItems: [DetectedItem]? // Detected food items
+    }
+
+    struct DetectedItem: Encodable {
+        let name: String
+        let confidence: Float
+        let boundingBox: BoundingBox
+        let pixelCount: Int?
+
+        struct BoundingBox: Encodable {
+            let x: Float
+            let y: Float
+            let width: Float
+            let height: Float
+        }
     }
 
     // Structured JSON you want back (screen-friendly)
@@ -129,12 +144,20 @@ final class OpenAIService {
         struct Micros: Decodable { let fiber_g: Double?; let vitamin_c_mg: Double?; let iron_mg: Double?; let other: String? }
         struct Ingredient: Decodable { let name: String; let amount: String }
         struct Insight: Decodable { let type: String; let title: String; let description: String }
+        struct FoodItem: Decodable {
+            let name: String
+            let confidence: Double
+            let macros: Macros
+            let amount: String
+            let description: String?
+        }
 
         let title: String
         let score: Double
         let macros: Macros
         let micros: Micros?
         let ingredients: [Ingredient]
+        let foodItems: [FoodItem]? // Individual detected food items
         let insights: [Insight]
         let connections: [String]?
     }
@@ -150,12 +173,21 @@ final class OpenAIService {
         let b64 = jpeg.base64EncodedString()
 
         let prompt = buildNutritionJSONPrompt()
+        let metadata = renderMetadata(context)
+        let fullPrompt = prompt + "\n\n" + metadata
+
+        print("📤 SENDING TO OPENAI - NUTRITION REQUEST:")
+        print("Model: \(modelName)")
+        print("Prompt: \(prompt)")
+        print("Metadata: \(metadata)")
+        print("Image size: \(image.size)")
+        print("---")
 
         // Build a single user message that contains both TEXT and IMAGE
         let userMessage: [String: Any] = [
             "role": "user",
             "content": [
-                ["type": "text", "text": prompt + "\n\n" + renderMetadata(context)],
+                ["type": "text", "text": fullPrompt],
                 ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(b64)"]]
             ]
         ]
@@ -186,11 +218,20 @@ final class OpenAIService {
         let b64 = jpeg.base64EncodedString()
 
         let prompt = instruction ?? defaultTextPrompt(context: context)
+        let metadata = renderMetadata(context)
+        let fullPrompt = prompt + "\n\n" + metadata
+
+        print("📤 SENDING TO OPENAI - TEXT REQUEST:")
+        print("Model: \(modelName)")
+        print("Prompt: \(prompt)")
+        print("Metadata: \(metadata)")
+        print("Image size: \(image.size)")
+        print("---")
 
         let userMessage: [String: Any] = [
             "role": "user",
             "content": [
-                ["type": "text", "text": prompt + "\n\n" + renderMetadata(context)],
+                ["type": "text", "text": fullPrompt],
                 ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(b64)"]]
             ]
         ]
@@ -238,7 +279,7 @@ final class OpenAIService {
 
     private func buildNutritionJSONPrompt() -> String {
         """
-        You are a nutrition and food composition expert. You will receive a meal photo and volume metadata.
+        You are a nutrition and food composition expert. You will receive a meal photo, volume metadata, and detected food items.
         Produce a compact JSON object ONLY (no prose), with this schema:
 
         {
@@ -247,6 +288,15 @@ final class OpenAIService {
           "macros": { "protein_g": number, "carbs_g": number, "fat_g": number, "calories_kcal": number },
           "micros": { "fiber_g": number?, "vitamin_c_mg": number?, "iron_mg": number?, "other": string? },
           "ingredients": [ { "name": "string", "amount": "g or ml" } ],
+          "foodItems": [
+            {
+              "name": "string",
+              "confidence": float 0-1,
+              "macros": { "protein_g": number, "carbs_g": number, "fat_g": number, "calories_kcal": number },
+              "amount": "estimated portion size",
+              "description": "brief nutrition note"
+            }
+          ],
           "insights": [
             { "type": "positive", "title": "string", "description": "string" },
             { "type": "suggestion", "title": "string", "description": "string" },
@@ -256,10 +306,12 @@ final class OpenAIService {
         }
 
         Rules:
-        - Ground portion sizes using the provided volume metadata.
-        - Infer ingredients from the photo; avoid random facts not related to the plate.
-        - Be concise, supportive, and avoid medical advice.
-        - Output valid JSON ONLY that matches the schema above.
+        - Use the detected food items list to analyze each item individually
+        - Ground portion sizes using both the overall volume metadata and individual item bounding boxes
+        - For each detected food item, provide specific nutritional analysis
+        - Overall macros should be the sum of individual food items
+        - Be concise, supportive, and avoid medical advice
+        - Output valid JSON ONLY that matches the schema above
         """
     }
 
@@ -288,6 +340,19 @@ final class OpenAIService {
         if let m = ctx.method { lines.append("- method: \(m)") }
         if let d = ctx.device { lines.append("- device: \(d)") }
         if let s = ctx.planeStableScore { lines.append("- plane_stability: \(String(format: "%.2f", s))") }
+
+        // Add detected food items information
+        if let items = ctx.detectedItems, !items.isEmpty {
+            lines.append("\nDetected Food Items:")
+            for (index, item) in items.enumerated() {
+                lines.append("- \(index + 1). \(item.name) (conf: \(String(format: "%.2f", item.confidence)))")
+                lines.append("  bbox: \(Int(item.boundingBox.x)),\(Int(item.boundingBox.y)) \(Int(item.boundingBox.width))x\(Int(item.boundingBox.height))")
+                if let pixelCount = item.pixelCount {
+                    lines.append("  pixels: \(pixelCount)")
+                }
+            }
+        }
+
         return lines.joined(separator: "\n")
     }
 

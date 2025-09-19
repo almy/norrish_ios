@@ -8,6 +8,23 @@
 import Foundation
 import UIKit
 
+// MARK: - UIImage Safety Extensions
+extension UIImage {
+    var isValid: Bool {
+        guard let cgImage = self.cgImage else { return false }
+        return cgImage.width > 0 && cgImage.height > 0
+    }
+
+    func safeJPEGData(compressionQuality: CGFloat = 0.8) -> Data? {
+        guard isValid else {
+            print("⚠️ Invalid UIImage - cannot convert to JPEG")
+            return nil
+        }
+
+        return self.jpegData(compressionQuality: compressionQuality)
+    }
+}
+
 class ImageCacheService: ObservableObject {
     static let shared = ImageCacheService()
     
@@ -32,12 +49,59 @@ class ImageCacheService: ObservableObject {
     private init() {
         print("🎯 ImageCacheService: Singleton initialized")
         print("📁 ImageCacheService: Cache directory: \(cacheDirectory.path)")
+        setupMemoryWarningHandler()
+    }
+
+    private func setupMemoryWarningHandler() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleMemoryWarning),
+            name: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleMemoryWarning() {
+        print("🧠 Memory warning - clearing image cache")
+        clearOldCacheFiles()
+    }
+
+    private func clearOldCacheFiles() {
+        let cacheDir = cacheDirectory
+        do {
+            let files = try fileManager.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: [.creationDateKey])
+            let sortedFiles = files.sorted { file1, file2 in
+                let date1 = (try? file1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
+                let date2 = (try? file2.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
+                return date1 < date2
+            }
+
+            // Keep only the 10 most recent files
+            let filesToDelete = Array(sortedFiles.dropLast(10))
+            for file in filesToDelete {
+                try? fileManager.removeItem(at: file)
+                print("🗑️ Deleted old cache file: \(file.lastPathComponent)")
+            }
+        } catch {
+            print("❌ Failed to clean cache directory: \(error)")
+        }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     // Save image to local cache
     func saveImage(_ image: UIImage, forKey key: String) {
         print("💾 ImageCacheService: Attempting to save image for key: \(key)")
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+
+        // Validate image first
+        guard image.isValid else {
+            print("❌ ImageCacheService: Invalid UIImage (no CGImage or invalid dimensions) for key: \(key)")
+            return
+        }
+
+        guard let imageData = image.safeJPEGData() else {
             print("❌ ImageCacheService: Failed to convert image to JPEG data for key: \(key)")
             return
         }

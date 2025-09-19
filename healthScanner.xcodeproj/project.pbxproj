@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		29A1F3A42E7D001F0086689E /* ARPlateScanNutrition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F39F2E7D001F0086689E /* ARPlateScanNutrition.swift */; };
+		29A1F3A52E7D00200086689E /* ARPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F3A02E7D00200086689E /* ARPlateScannerViewController.swift */; };
+		29A1F3A62E7D00210086689E /* DualCameraPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F3A12E7D00210086689E /* DualCameraPlateScannerViewController.swift */; };
 		03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */; };
 		1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42784632A507491D970BC129 /* ProductService.swift */; };
 		25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */; };
@@ -16,10 +19,7 @@
 		3DF611CC8AAC484DAB977179 /* PlateProgressRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */; };
 		413BC6B4A94B42A8B165E381 /* PlateAnalysisResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F6370882F47499FF0ED7A /* PlateAnalysisResultView.swift */; };
 		5066ECD1C42A429BBA1B96B3 /* OpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE9DF8501314CD2902886EE /* OpenAIService.swift */; };
-		6B8123F9C9D24602BCF3CD60 /* DualCameraPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D87C82B702B84EDEA99F77EF /* DualCameraPlateScannerViewController.swift */; };
-		85E71252DF764A68BE80C31D /* ARPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D673209E4CE94F0BB11DD937 /* ARPlateScannerViewController.swift */; };
 		882BF269549A4DCD812F01D5 /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */; };
-		8A68C1D9194640EE8379934C /* ARPlateScanNutrition.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7ADF9877CC44A168F3D6A8B /* ARPlateScanNutrition.swift */; };
 		8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81035EE2844A4F00BBF876A6 /* ContentView.swift */; };
 		95AEB268BBD64AF48958000C /* BarcodeScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A536FD72F7B241AD82F63CC6 /* BarcodeScannerViewModel.swift */; };
 		A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */; };
@@ -28,10 +28,8 @@
 		AA4E74354E3F4D09AEB43BCC /* PlateAnalysisHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC72322DD2E4453A4C2D888 /* PlateAnalysisHistory.swift */; };
 		B798BDB59DD74C6683177ABA /* ImageCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82DFF5309F184C0FB1325862 /* ImageCacheService.swift */; };
 		B8095E02957F4171B841C804 /* NutritionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BC128FAFB74C179A5E9536 /* NutritionCard.swift */; };
-		BBB8547B52DC44FEA1638E69 /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FEEEE1A39D4805AF3793AE /* String+Localization.swift */; };
 		BE202E34E36B4A9C878BE655 /* NutriScoreUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48AEA9EE1BF54A6F8B04F5D1 /* NutriScoreUtilities.swift */; };
 		BF23ACB8A4C64D57B38B7E93 /* PlateAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24C299B25754410095024FCE /* PlateAnalysisViewModel.swift */; };
-		BFD04C1EAE35481097DD0F85 /* LocalizationDebug.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8FEDCE15996435F8F129E09 /* LocalizationDebug.swift */; };
 		C358554B9C544942B6474322 /* PlateDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D636EC943F04417B920D1E0E /* PlateDetailView.swift */; };
 		CBB558377628423593EC12D3 /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBF5C9CFF11E4AFF8EEFA817 /* Product.swift */; };
 		CE5335CC2E79A8CF0086689E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3536F7FE078741BDB3B86EBC /* Localizable.strings */; };
@@ -47,6 +45,16 @@
 		CE5335E72E79DDB40086689E /* DietaryPreferences+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335E32E79DDB40086689E /* DietaryPreferences+Utilities.swift */; };
 		CE5335E82E79DDB40086689E /* LocalizationDebug.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335E42E79DDB40086689E /* LocalizationDebug.swift */; };
 		CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335E52E79DDB40086689E /* String+Localization.swift */; };
+		CE5335F32E7AB1A00086689E /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335F22E7AB1A00086689E /* CameraPreviewView.swift */; };
+		CE5335FD2E7AEBE60086689E /* NutritionRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335FC2E7AEBE60086689E /* NutritionRecommendationEngine.swift */; };
+		CE5335FF2E7AEBFF0086689E /* NutritionRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335FE2E7AEBFF0086689E /* NutritionRecommendation.swift */; };
+		CE5336012E7AEC1C0086689E /* Recommendation+Insight.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336002E7AEC1C0086689E /* Recommendation+Insight.swift */; };
+		CE5336042E7AEC390086689E /* RecommendationListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336022E7AEC390086689E /* RecommendationListView.swift */; };
+		CE5336062E7AEDA90086689E /* DashboardInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */; };
+		CE5336082E7AF1FE0086689E /* LocalRecommendationML.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */; };
+		CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FFD0EA8EF747698BE82BC6 /* PlateAnalysis.swift */; };
+		CE53360D2E7C62140086689E /* Food101_Classification_fp16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CE53360B2E7C62130086689E /* Food101_Classification_fp16.mlpackage */; };
+		CE53360E2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CE53360C2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage */; };
 		CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */; };
 		CEF23E552E6C5F67002B903F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E542E6C5F67002B903F /* Assets.xcassets */; };
 		CEF23E582E6C5F67002B903F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */; };
@@ -78,8 +86,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		29A1F39F2E7D001F0086689E /* ARPlateScanNutrition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlateScanNutrition.swift; sourceTree = "<group>"; };
+		29A1F3A02E7D00200086689E /* ARPlateScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlateScannerViewController.swift; sourceTree = "<group>"; };
+		29A1F3A12E7D00210086689E /* DualCameraPlateScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualCameraPlateScannerViewController.swift; sourceTree = "<group>"; };
 		00BC128FAFB74C179A5E9536 /* NutritionCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionCard.swift; sourceTree = "<group>"; };
+		0903CD2FFBCA4A9B98060CDB /* EnhancedCameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCameraPreviewView.swift; sourceTree = "<group>"; };
+		09FFD0EA8EF747698BE82BC6 /* PlateAnalysis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysis.swift; sourceTree = "<group>"; };
 		0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutriScoreBadge.swift; sourceTree = "<group>"; };
+		1D58B90F2829457C892B5917 /* CoreMLFoodAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreMLFoodAnalysisService.swift; sourceTree = "<group>"; };
 		24C299B25754410095024FCE /* PlateAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisViewModel.swift; sourceTree = "<group>"; };
 		2DC72322DD2E4453A4C2D888 /* PlateAnalysisHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisHistory.swift; sourceTree = "<group>"; };
 		42784632A507491D970BC129 /* ProductService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductService.swift; sourceTree = "<group>"; };
@@ -113,6 +127,15 @@
 		CE5335E32E79DDB40086689E /* DietaryPreferences+Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DietaryPreferences+Utilities.swift"; sourceTree = "<group>"; };
 		CE5335E42E79DDB40086689E /* LocalizationDebug.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
 		CE5335E52E79DDB40086689E /* String+Localization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
+		CE5335F22E7AB1A00086689E /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		CE5335FC2E7AEBE60086689E /* NutritionRecommendationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NutritionRecommendationEngine.swift; sourceTree = "<group>"; };
+		CE5335FE2E7AEBFF0086689E /* NutritionRecommendation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NutritionRecommendation.swift; sourceTree = "<group>"; };
+		CE5336002E7AEC1C0086689E /* Recommendation+Insight.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Recommendation+Insight.swift"; sourceTree = "<group>"; };
+		CE5336022E7AEC390086689E /* RecommendationListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecommendationListView.swift; sourceTree = "<group>"; };
+		CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardInsightsView.swift; sourceTree = "<group>"; };
+		CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalRecommendationML.swift; sourceTree = "<group>"; };
+		CE53360B2E7C62130086689E /* Food101_Classification_fp16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = Food101_Classification_fp16.mlpackage; sourceTree = "<group>"; };
+		CE53360C2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = UECFoodPix_Seg_fp16.mlpackage; sourceTree = "<group>"; };
 		CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		CEF23E4B2E6C5F66002B903F /* healthScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = healthScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEF23E542E6C5F67002B903F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -123,9 +146,6 @@
 		CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITests.swift; sourceTree = "<group>"; };
 		CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		D636EC943F04417B920D1E0E /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
-		D673209E4CE94F0BB11DD937 /* ARPlateScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlateScannerViewController.swift; sourceTree = "<group>"; };
-		D7ADF9877CC44A168F3D6A8B /* ARPlateScanNutrition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARPlateScanNutrition.swift; sourceTree = "<group>"; };
-		D87C82B702B84EDEA99F77EF /* DualCameraPlateScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualCameraPlateScannerViewController.swift; sourceTree = "<group>"; };
 		D8FEDCE15996435F8F129E09 /* LocalizationDebug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
 		DBF5C9CFF11E4AFF8EEFA817 /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
 		DCB50747134A414389719CA1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -174,6 +194,7 @@
 		2E144E98C5B141AF9F71E5C3 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */,
 				FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */,
 				0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */,
 				00BC128FAFB74C179A5E9536 /* NutritionCard.swift */,
@@ -194,6 +215,9 @@
 		4F5B6A56DCD94F7CABA3981A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				1D58B90F2829457C892B5917 /* CoreMLFoodAnalysisService.swift */,
+				CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */,
+				CE5335FC2E7AEBE60086689E /* NutritionRecommendationEngine.swift */,
 				82DFF5309F184C0FB1325862 /* ImageCacheService.swift */,
 				ABE9DF8501314CD2902886EE /* OpenAIService.swift */,
 				42784632A507491D970BC129 /* ProductService.swift */,
@@ -223,9 +247,11 @@
 		99AD44EA923649048C415328 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CE5335FE2E7AEBFF0086689E /* NutritionRecommendation.swift */,
 				CE5335DF2E79DD5B0086689E /* DietaryPreferences.swift */,
 				FF6E4A499A014860AA425C4D /* Item.swift */,
 				48AEA9EE1BF54A6F8B04F5D1 /* NutriScoreUtilities.swift */,
+				09FFD0EA8EF747698BE82BC6 /* PlateAnalysis.swift */,
 				2DC72322DD2E4453A4C2D888 /* PlateAnalysisHistory.swift */,
 				DBF5C9CFF11E4AFF8EEFA817 /* Product.swift */,
 				8355D74FBF394F90B7C1A84C /* RecentScan.swift */,
@@ -233,11 +259,22 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		29A1F39E2E7D001F0086689E /* AR */ = {
+			isa = PBXGroup;
+			children = (
+				29A1F39F2E7D001F0086689E /* ARPlateScanNutrition.swift */,
+				29A1F3A02E7D00200086689E /* ARPlateScannerViewController.swift */,
+				29A1F3A12E7D00210086689E /* DualCameraPlateScannerViewController.swift */,
+			);
+			path = AR;
+			sourceTree = "<group>";
+		};
 		BCE332B57D4349F490E0A768 /* Scanning */ = {
 			isa = PBXGroup;
 			children = (
-				E13578C3F24C437AAD5D983E /* AR */,
+				CE5335F12E7AB19A0086689E /* Common */,
 				94ADEA25B08846B091928E48 /* Barcode */,
+				29A1F39E2E7D001F0086689E /* AR */,
 				F595988B5A6B45FC9C571FED /* Overlay */,
 			);
 			name = Scanning;
@@ -282,11 +319,38 @@
 		CE5335E62E79DDB40086689E /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				CE5336002E7AEC1C0086689E /* Recommendation+Insight.swift */,
 				CE5335E32E79DDB40086689E /* DietaryPreferences+Utilities.swift */,
 				CE5335E42E79DDB40086689E /* LocalizationDebug.swift */,
 				CE5335E52E79DDB40086689E /* String+Localization.swift */,
 			);
 			path = Extensions;
+			sourceTree = "<group>";
+		};
+		CE5335F12E7AB19A0086689E /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				CE5335F22E7AB1A00086689E /* CameraPreviewView.swift */,
+				0903CD2FFBCA4A9B98060CDB /* EnhancedCameraPreviewView.swift */,
+			);
+			path = Common;
+			sourceTree = "<group>";
+		};
+		CE5336032E7AEC390086689E /* Recommendations */ = {
+			isa = PBXGroup;
+			children = (
+				CE5336022E7AEC390086689E /* RecommendationListView.swift */,
+			);
+			path = Recommendations;
+			sourceTree = "<group>";
+		};
+		CE53360A2E7C61C60086689E /* CoreML */ = {
+			isa = PBXGroup;
+			children = (
+				CE53360B2E7C62130086689E /* Food101_Classification_fp16.mlpackage */,
+				CE53360C2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage */,
+			);
+			path = CoreML;
 			sourceTree = "<group>";
 		};
 		CEF23E422E6C5F66002B903F = {
@@ -313,6 +377,7 @@
 		CEF23E4D2E6C5F66002B903F /* healthScanner */ = {
 			isa = PBXGroup;
 			children = (
+				CE53360A2E7C61C60086689E /* CoreML */,
 				CE5335E62E79DDB40086689E /* Extensions */,
 				CE5335D72E79D2350086689E /* Styles */,
 				CE5335D32E79D1E00086689E /* Settings */,
@@ -357,16 +422,6 @@
 			path = healthScannerUITests;
 			sourceTree = "<group>";
 		};
-		E13578C3F24C437AAD5D983E /* AR */ = {
-			isa = PBXGroup;
-			children = (
-				D7ADF9877CC44A168F3D6A8B /* ARPlateScanNutrition.swift */,
-				D673209E4CE94F0BB11DD937 /* ARPlateScannerViewController.swift */,
-				D87C82B702B84EDEA99F77EF /* DualCameraPlateScannerViewController.swift */,
-			);
-			path = AR;
-			sourceTree = "<group>";
-		};
 		F595988B5A6B45FC9C571FED /* Overlay */ = {
 			isa = PBXGroup;
 			children = (
@@ -378,6 +433,7 @@
 		F66EE23448934565A9CAC556 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CE5336032E7AEC390086689E /* Recommendations */,
 				BCE332B57D4349F490E0A768 /* Scanning */,
 				CE5335DB2E79D4230086689E /* Profile */,
 				2E144E98C5B141AF9F71E5C3 /* Components */,
@@ -550,31 +606,39 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BFD04C1EAE35481097DD0F85 /* LocalizationDebug.swift in Sources */,
+				29A1F3A42E7D001F0086689E /* ARPlateScanNutrition.swift in Sources */,
+				29A1F3A52E7D00200086689E /* ARPlateScannerViewController.swift in Sources */,
+				29A1F3A62E7D00210086689E /* DualCameraPlateScannerViewController.swift in Sources */,
+				CE5335F32E7AB1A00086689E /* CameraPreviewView.swift in Sources */,
 				CE5335D82E79D2350086689E /* AppStyles.swift in Sources */,
-				BBB8547B52DC44FEA1638E69 /* String+Localization.swift in Sources */,
+				CE5336042E7AEC390086689E /* RecommendationListView.swift in Sources */,
 				BE202E34E36B4A9C878BE655 /* NutriScoreUtilities.swift in Sources */,
+				CE5336012E7AEC1C0086689E /* Recommendation+Insight.swift in Sources */,
 				CE5335D92E79D2350086689E /* NutritionStyles.swift in Sources */,
 				AA4E74354E3F4D09AEB43BCC /* PlateAnalysisHistory.swift in Sources */,
 				CE5335DC2E79D4230086689E /* ProfileView.swift in Sources */,
 				FD4AF8AB5ED2421B8442279A /* RecentScan.swift in Sources */,
 				CE5335D42E79D1E00086689E /* SettingsView.swift in Sources */,
-				8A68C1D9194640EE8379934C /* ARPlateScanNutrition.swift in Sources */,
-				85E71252DF764A68BE80C31D /* ARPlateScannerViewController.swift in Sources */,
-				6B8123F9C9D24602BCF3CD60 /* DualCameraPlateScannerViewController.swift in Sources */,
 				A5F1B41B55D944F6BD142399 /* BarcodeScannerViewController.swift in Sources */,
+				CE5336062E7AEDA90086689E /* DashboardInsightsView.swift in Sources */,
+				CE5335FF2E7AEBFF0086689E /* NutritionRecommendation.swift in Sources */,
 				25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */,
+				CE5335FD2E7AEBE60086689E /* NutritionRecommendationEngine.swift in Sources */,
 				3DF611CC8AAC484DAB977179 /* PlateProgressRingView.swift in Sources */,
 				5066ECD1C42A429BBA1B96B3 /* OpenAIService.swift in Sources */,
 				95AEB268BBD64AF48958000C /* BarcodeScannerViewModel.swift in Sources */,
 				BF23ACB8A4C64D57B38B7E93 /* PlateAnalysisViewModel.swift in Sources */,
+				CE53360D2E7C62140086689E /* Food101_Classification_fp16.mlpackage in Sources */,
 				A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */,
 				03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */,
 				CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */,
+				CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */,
+				CE53360E2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage in Sources */,
 				B8095E02957F4171B841C804 /* NutritionCard.swift in Sources */,
 				CE5335E02E79DD5B0086689E /* DietaryPreferences.swift in Sources */,
 				F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */,
 				CE5335DE2E79D6C30086689E /* LocalizationManager.swift in Sources */,
+				CE5336082E7AF1FE0086689E /* LocalRecommendationML.swift in Sources */,
 				3A248FE00C6F46A99D51CEC2 /* NutriScoreInfoView.swift in Sources */,
 				32E8B7B641224A8C9040BE0B /* PersonalizedInsightCarousel.swift in Sources */,
 				413BC6B4A94B42A8B165E381 /* PlateAnalysisResultView.swift in Sources */,
@@ -775,7 +839,8 @@
 				INFOPLIST_FILE = healthScanner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Norrish;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to scan barcodes and analyze plates with AR.";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
+				INFOPLIST_KEY_NSCameraUsageDescription = Noorish;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -813,7 +878,8 @@
 				INFOPLIST_FILE = healthScanner/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Norrish;
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to scan barcodes and analyze plates with AR.";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
+				INFOPLIST_KEY_NSCameraUsageDescription = Noorish;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

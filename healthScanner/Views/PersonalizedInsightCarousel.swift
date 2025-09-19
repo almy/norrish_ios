@@ -15,6 +15,10 @@ struct PersonalizedInsight {
     let title: String
     let message: String
     let category: InsightCategory
+    // Added fields to explain relation to user history
+    var reason: String? = nil
+    var evidence: [String] = []
+    var tags: [String] = []
     
     enum InsightCategory {
         case preference
@@ -155,7 +159,7 @@ struct PersonalizedInsightCarousel: View {
                     }
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .frame(height: 100)
+                .frame(height: 160)
                 .animation(.easeInOut(duration: 0.5), value: currentIndex)
             } else {
                 // Placeholder when no insights
@@ -198,6 +202,39 @@ struct PersonalizedInsightCard: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
+
+                // Tags from underlying recommendation/correlation
+                if !insight.tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(insight.tags, id: \.self) { tag in
+                                Text(tag.replacingOccurrences(of: "_", with: " "))
+                                    .font(.caption2)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.gray.opacity(0.15))
+                                    .cornerRadius(6)
+                            }
+                        }
+                    }
+                }
+
+                // Brief causal line to connect to user data
+                if let reason = insight.reason, !reason.isEmpty {
+                    Text("Because: \(reason)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+
+                // Show up to 2 pieces of evidence
+                if !insight.evidence.isEmpty {
+                    ForEach(Array(insight.evidence.prefix(2)), id: \.self) { ev in
+                        Text("• \(ev)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             
             Spacer()

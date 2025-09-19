@@ -104,30 +104,8 @@ struct BarcodeScannerView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 40)
                     
-                    // Insight Carousel
-                    PersonalizedInsightCarousel(insights: [
-                        PersonalizedInsight(
-                            icon: "lightbulb.fill",
-                            iconColor: .yellow,
-                            title: "Scan Smart",
-                            message: "Look for products with fewer ingredients for healthier choices!",
-                            category: .recommendation
-                        ),
-                        PersonalizedInsight(
-                            icon: "heart.fill",
-                            iconColor: .red,
-                            title: "Health Tip",
-                            message: "Products with less than 5g of sugar per serving are better for your heart.",
-                            category: .health
-                        ),
-                        PersonalizedInsight(
-                            icon: "leaf.fill",
-                            iconColor: .green,
-                            title: "Go Natural",
-                            message: "Choose products with organic certifications when possible.",
-                            category: .preference
-                        )
-                    ])
+                    // Your Dashboard: generated, swipable recommendations
+                    DashboardInsightsView()
                     .padding(.horizontal, 20)
                     .padding(.bottom, 30)
                     

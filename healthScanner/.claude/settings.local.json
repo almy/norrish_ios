@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swift:*)",
+      "Read(//Users/user/Documents/appleworkspace/healthScanner/**)",
+      "Bash(xcodebuild:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Read(//Users/user/Library/Developer/Xcode/DerivedData/**)",
+      "Bash(uuidgen)",
+      "Read(//Users/user/Downloads/**)",
+      "Bash(xcrun simctl boot:*)",
+      "Bash(xcrun simctl install:*)",
+      "Bash(xcrun simctl launch:*)",
+      "Bash(xcrun simctl spawn:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash(timeout 30 xcodebuild:*)",
+      "Bash(echo $?)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

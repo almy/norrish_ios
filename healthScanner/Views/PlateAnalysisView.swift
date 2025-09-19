@@ -1,15 +1,7 @@
-// PlateAnalysisView.swift — AR Scanner Integrated (fixed)
-// - Uses ARPlateScannerView for simulator & device (no LiveARPlateScannerView).
-// - Maps ARPlateScanNutrition -> PlateAnalysis.
-// - Sends photo + metadata to OpenAIService and (optionally) appends AI text as an Insight.
-
 import SwiftUI
 import PhotosUI
 import SwiftData
 import UIKit
-#if canImport(ARKit)
-import ARKit
-#endif
 
 struct PlateAnalysisView: View {
     // MARK: State
@@ -17,8 +9,8 @@ struct PlateAnalysisView: View {
     @StateObject private var viewModel = PlateAnalysisViewModel()
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImage: UIImage?
-    @State private var showingARScanner = false
     @State private var showingAnalysis = false
+    @State private var showingCamera = false
 
     var body: some View {
         NavigationView {
@@ -40,19 +32,6 @@ struct PlateAnalysisView: View {
         .onChange(of: selectedItem) { _, newItem in
             Task { await loadPickedImage(newItem) }
         }
-        .sheet(isPresented: $showingARScanner) {
-            // Single entry point (simulator & device)
-            ARPlateScannerView { scan, capturedImage in
-                showingARScanner = false
-                // Small delay avoids showing stale camera frame under the result sheet animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                    handleScanResult(scan: scan, image: capturedImage)
-                }
-            } onCancel: {
-                showingARScanner = false
-            }
-            .ignoresSafeArea()
-        }
         .sheet(isPresented: $showingAnalysis) {
             if let analysis = viewModel.analysisResult {
                 PlateAnalysisResultView(
@@ -61,6 +40,16 @@ struct PlateAnalysisView: View {
                     onStartNewScan: { resetAfterAnalysis() },
                     onClose: { showingAnalysis = false }
                 )
+            }
+        }
+        .sheet(isPresented: $showingCamera) {
+            CameraPreviewView { image in
+                selectedImage = image
+                showingCamera = false
+                Task { @MainActor in
+                    await viewModel.handleImageAnalysis(image: image, modelContext: modelContext)
+                    showingAnalysis = true
+                }
             }
         }
     }
@@ -94,7 +83,7 @@ private extension PlateAnalysisView {
                     Image(systemName: "fork.knife.circle")
                         .font(.system(size: 56))
                         .foregroundColor(.mint)
-                    Text("Center your plate and move a little when scanning")
+                    Text("camera.preview_hint".localized)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -106,19 +95,24 @@ private extension PlateAnalysisView {
 
     var actionButtons: some View {
         VStack(spacing: 14) {
-            Button { showingARScanner = true } label: {
-                HStack { Image(systemName: "camera.viewfinder"); Text("Scan with AR") }
+            Button {
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    showingCamera = true
+                }
+            } label: {
+                HStack { Image(systemName: "camera.viewfinder"); Text("camera.take_photo".localized) }
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color.indigo)
+                    .background(UIImagePickerController.isSourceTypeAvailable(.camera) ? Color.indigo : Color.gray)
                     .cornerRadius(24)
             }
+            .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
             .padding(.horizontal, 20)
 
             PhotosPicker(selection: $selectedItem, matching: .images) {
-                HStack { Image(systemName: "photo.on.rectangle"); Text("Choose from Gallery") }
+                HStack { Image(systemName: "photo.on.rectangle"); Text("camera.choose_photo".localized) }
                     .font(.headline)
                     .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
@@ -128,14 +122,14 @@ private extension PlateAnalysisView {
             }
             .padding(.horizontal, 20)
 
-            if viewModel.isAnalyzing { ProgressView("Analyzing…").padding(.top, 4) }
+            if viewModel.isAnalyzing { ProgressView("camera.analyzing".localized).padding(.top, 4) }
         }
     }
 
     var tips: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Pro tip").font(.footnote).fontWeight(.semibold)
-            Text("For best accuracy, move slightly left/right and let the app say ‘Hold still’ before capture.")
+            Text("camera.tip_lighting".localized)
                 .font(.footnote)
                 .foregroundColor(.secondary)
         }
@@ -179,13 +173,14 @@ private extension PlateAnalysisView {
             let data = try? await item.loadTransferable(type: Data.self),
             let image = UIImage(data: data)
         else { return }
-        selectedImage = image
-        // Optionally: run static analysis for gallery image here.
-    }
 
-    func nutritionScore(for scan: ARPlateScanNutrition) -> Double {
-        let macroSum = Double(scan.protein + scan.carbs + scan.fat)
-        return min(10, max(0, macroSum / 30.0 * 10.0))
+        selectedImage = image
+
+        // Analyze the selected image
+        Task { @MainActor in
+            await viewModel.handleImageAnalysis(image: image, modelContext: modelContext)
+            showingAnalysis = true
+        }
     }
 
     func resetAfterAnalysis() {
@@ -195,15 +190,4 @@ private extension PlateAnalysisView {
         viewModel.analysisResult = nil
         showingAnalysis = false
     }
-
-    /// Unified handler for both simulator and device scans
-    func handleScanResult(scan: ARPlateScanNutrition, image: UIImage) {
-        // Keep showing the captured photo during analysis
-        withAnimation { selectedImage = image }
-        Task { @MainActor in
-            await viewModel.handleScanResult(scan: scan, image: image, modelContext: modelContext)
-            showingAnalysis = true
-        }
-    }
 }
- 

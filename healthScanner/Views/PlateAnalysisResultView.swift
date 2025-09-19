@@ -35,88 +35,81 @@ struct PlateAnalysisResultView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    
-                    // Plate Image
-                    Group {
-                        if let image {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 220)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                        } else {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(height: 220)
-                                .overlay(
-                                    Image(systemName: "fork.knife.circle.fill")
-                                        .font(.system(size: 60))
-                                        .foregroundColor(.mint)
-                                )
+
+                    // Main Plate Card with integrated image and details
+                    VStack(spacing: 0) {
+                        // Plate Image
+                        Group {
+                            if let image {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(height: 200)
+                                    .clipped()
+                            } else {
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.1))
+                                    .frame(height: 200)
+                                    .overlay(
+                                        Image(systemName: "fork.knife.circle.fill")
+                                            .font(.system(size: 60))
+                                            .foregroundColor(.mint)
+                                    )
+                            }
                         }
+
+                        // Card content overlay
+                        VStack(spacing: 16) {
+                            // Dish name
+                            Text(analysis.description)
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+
+                            // Nutrition score with grade
+                            HStack(spacing: 20) {
+                                // Large grade letter
+                                Text(nutriScoreForPlate(score0to10: analysis.nutritionScore).rawValue)
+                                    .font(.system(size: 64, weight: .bold))
+                                    .foregroundColor(.green)
+
+                                VStack(alignment: .leading, spacing: 8) {
+                                    // Score rating
+                                    Text("\(Int(analysis.nutritionScore))/10")
+                                        .font(.system(size: 24, weight: .semibold))
+                                        .foregroundColor(.white)
+
+                                    // Macronutrients grid
+                                    HStack(spacing: 16) {
+                                        ResultNutrientDot(label: "Protein", value: "\(analysis.macronutrients.protein)g", color: .green)
+                                        ResultNutrientDot(label: "Carbs", value: "\(analysis.macronutrients.carbs)g", color: .blue)
+                                    }
+
+                                    HStack(spacing: 16) {
+                                        ResultNutrientDot(label: "Fat", value: "\(analysis.macronutrients.fat)g", color: .orange)
+                                        ResultNutrientDot(label: "Calories", value: "\(analysis.macronutrients.calories) kcal", color: .gray)
+                                    }
+                                }
+
+                                Spacer()
+                            }
+                        }
+                        .padding(20)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.black.opacity(0.0), Color.black.opacity(0.8)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
                     }
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
                     .padding(.horizontal, 20)
-
-                    // Title (centered)
-                    Text(analysis.description)
-                        .font(.system(size: 28, weight: .bold))
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 20)
-
-                    // Score ring
-                    HStack {
-                        Spacer()
-                        ScoreRingView(score: analysis.nutritionScore)
-                        Spacer()
-                    }
-                    .padding(.bottom, 4)
-
-                    // Nutri-Score badge
-                    HStack {
-                        Spacer()
-                        NutriScoreBadge(letter: nutriScoreForPlate(score0to10: analysis.nutritionScore), compact: false)
-                        Button {
-                            showNutriInfo = true
-                        } label: {
-                            Image(systemName: "info.circle").foregroundColor(.secondary)
-                        }
-                        Spacer()
-                    }
-                    .padding(.bottom, 8)
                     .sheet(isPresented: $showNutriInfo) {
                         NutriScoreInfoView(productBreakdown: nil, plateScore: analysis.nutritionScore)
                     }
-
-                    // Nutrition Overview card
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Nutrition Overview")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                        Text(overviewText)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(16)
-                    .shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
-                    .padding(.horizontal, 20)
-                    
-                    // Macronutrients — styled like the reference
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Macronutrients")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                            ResultMacroCard(title: "Protein", value: "\(analysis.macronutrients.protein)g", color: .green)
-                            ResultMacroCard(title: "Carbs", value: "\(analysis.macronutrients.carbs)g", color: .blue)
-                            ResultMacroCard(title: "Fat", value: "\(analysis.macronutrients.fat)g", color: .orange)
-                            ResultMacroCard(title: "Calories", value: "\(analysis.macronutrients.calories) kcal", color: .purple)
-                        }
-                    }
-                    .padding(.horizontal, 20)
 
                     // Micronutrients
                     if let micros = analysis.micronutrients {
@@ -186,91 +179,88 @@ struct PlateAnalysisResultView: View {
                     // Ingredient Breakdown
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Ingredient Breakdown")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                        
-                        VStack(spacing: 12) {
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+
+                        VStack(spacing: 0) {
                             ForEach(analysis.ingredients.indices, id: \.self) { index in
                                 let ingredient = analysis.ingredients[index]
-                                HStack {
-                                    Text(ingredient.name)
-                                        .font(.body)
-                                    Spacer()
-                                    Text(ingredient.amount)
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                if index < analysis.ingredients.count - 1 {
-                                    Divider()
-                                }
+                                ResultIngredientRow(name: ingredient.name, amount: ingredient.amount)
                             }
                         }
-                        .padding()
-                        .background(Color.gray.opacity(0.05))
-                        .cornerRadius(12)
                     }
                     .padding(.horizontal, 20)
                     
                     // Insights & Suggestions
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Insights & Suggestions")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                        
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+
                         VStack(spacing: 12) {
                             ForEach(analysis.insights.indices, id: \.self) { index in
                                 let insight = analysis.insights[index]
-                                InsightCard(insight: insight)
+                                ResultModernInsightCard(insight: insight)
                             }
                         }
                     }
                     .padding(.horizontal, 20)
                     
                     // Feedback Section
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(spacing: 16) {
                         Text("Is this analysis correct?")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                        
-                        Text("Your feedback helps us improve our AI.")
                             .font(.body)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                            .multilineTextAlignment(.center)
+
+                        Text("Your feedback helps us improve our AI.")
+                            .font(.caption)
                             .foregroundColor(.secondary)
-                        
+                            .multilineTextAlignment(.center)
+
                         HStack(spacing: 16) {
                             Button(action: {
                                 feedbackGiven = true
                             }) {
-                                HStack {
-                                    Image(systemName: "hand.thumbsup")
+                                HStack(spacing: 8) {
+                                    Image(systemName: "hand.thumbsup.fill")
                                     Text("Yes")
                                 }
-                                .font(.body)
+                                .font(.body.weight(.medium))
                                 .foregroundColor(feedbackGiven ? .white : .primary)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(feedbackGiven ? Color.green : Color.gray.opacity(0.1))
-                                .cornerRadius(20)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 14)
+                                .background(feedbackGiven ? Color.green : Color(.systemGray5))
+                                .clipShape(RoundedRectangle(cornerRadius: 25))
                             }
-                            
+
                             Button(action: {
                                 feedbackGiven = true
                             }) {
-                                HStack {
-                                    Image(systemName: "hand.thumbsdown")
+                                HStack(spacing: 8) {
+                                    Image(systemName: "hand.thumbsdown.fill")
                                     Text("No")
                                 }
-                                .font(.body)
+                                .font(.body.weight(.medium))
                                 .foregroundColor(.primary)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(20)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 14)
+                                .background(Color(.systemGray5))
+                                .clipShape(RoundedRectangle(cornerRadius: 25))
                             }
-                            
-                            Spacer()
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
                     .padding(.horizontal, 20)
                     
                     Button(action: {
@@ -293,6 +283,7 @@ struct PlateAnalysisResultView: View {
                     Spacer(minLength: 100)
                 }
             }
+            .background(Color(.systemGroupedBackground))
             .navigationBarHidden(true)
         }
     }
@@ -442,6 +433,148 @@ private struct ResultMacroCard: View {
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(12)
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06), lineWidth: 1))
+    }
+}
+
+struct ResultNutrientDot: View {
+    let label: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                Text(label)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+
+            Text(value)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(.white)
+        }
+    }
+}
+
+struct ResultIngredientRow: View {
+    let name: String
+    let amount: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack {
+            Text(name)
+                .font(.body)
+                .foregroundColor(.primary)
+
+            Spacer()
+
+            Text(amount)
+                .font(.body)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(
+            colorScheme == .dark
+                ? Color(.systemGray6)
+                : Color(.systemBackground)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    colorScheme == .dark
+                        ? Color.white.opacity(0.1)
+                        : Color.black.opacity(0.05),
+                    lineWidth: 1
+                )
+        )
+        .padding(.bottom, 8)
+    }
+}
+
+struct ResultModernInsightCard: View {
+    let insight: Insight
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: iconName)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(iconColor)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(insight.title)
+                    .font(.headline)
+                    .foregroundColor(textColor)
+
+                Text(insight.description)
+                    .font(.body)
+                    .foregroundColor(descriptionColor)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .background(backgroundColor)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var iconName: String {
+        switch insight.type {
+        case .positive:
+            return "checkmark.circle.fill"
+        case .suggestion:
+            return "lightbulb.fill"
+        case .warning:
+            return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private var iconColor: Color {
+        switch insight.type {
+        case .positive:
+            return colorScheme == .dark ? .green : .white
+        case .suggestion:
+            return colorScheme == .dark ? .orange : .white
+        case .warning:
+            return colorScheme == .dark ? .red : .white
+        }
+    }
+
+    private var backgroundColor: Color {
+        switch insight.type {
+        case .positive:
+            return colorScheme == .dark
+                ? Color.green.opacity(0.2)
+                : Color.green.opacity(0.8)
+        case .suggestion:
+            return colorScheme == .dark
+                ? Color.orange.opacity(0.2)
+                : Color.orange.opacity(0.8)
+        case .warning:
+            return colorScheme == .dark
+                ? Color.red.opacity(0.2)
+                : Color.red.opacity(0.8)
+        }
+    }
+
+    private var textColor: Color {
+        switch insight.type {
+        case .positive, .suggestion, .warning:
+            return colorScheme == .dark ? .primary : .white
+        }
+    }
+
+    private var descriptionColor: Color {
+        switch insight.type {
+        case .positive, .suggestion, .warning:
+            return colorScheme == .dark ? .secondary : Color.white.opacity(0.9)
+        }
     }
 }
 

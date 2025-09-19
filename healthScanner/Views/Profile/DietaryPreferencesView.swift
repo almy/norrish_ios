@@ -196,7 +196,7 @@ struct DietaryPreferencesView: View {
     private var progressBarWidth: CGFloat {
         let screenWidth = UIScreen.main.bounds.width - 40 // Account for padding
         let percentage = preferencesManager.profileCompletionPercentage / 100
-        return screenWidth * 0.75 // 75% as shown in mockup
+        return screenWidth * CGFloat(percentage)
     }
 }
 

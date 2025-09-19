@@ -2,9 +2,6 @@ import Foundation
 import SwiftUI
 import SwiftData
 import UIKit
-#if canImport(ARKit)
-import ARKit
-#endif
 
 @MainActor
 final class PlateAnalysisViewModel: ObservableObject {
@@ -12,11 +9,13 @@ final class PlateAnalysisViewModel: ObservableObject {
     @Published var analysisResult: PlateAnalysis?
     @Published var lastAnalysisResult: PlateAnalysis?
     @Published var lastAnalyzedImage: UIImage?
+
     // Keep a handle to the most-recently inserted history row so we can enrich it after AI returns
     private var currentHistory: PlateAnalysisHistory?
 
     private let lastAnalysisKey = "lastPlateAnalysis"
     private let openAI = OpenAIService()
+    // private let coreMLService = CoreMLFoodAnalysisService.shared // Temporarily disabled
 
     func loadLastAnalysisFromDefaults() {
         if let data = UserDefaults.standard.data(forKey: lastAnalysisKey),
@@ -40,29 +39,17 @@ final class PlateAnalysisViewModel: ObservableObject {
         }
     }
 
-    func nutritionScore(for scan: ARPlateScanNutrition) -> Double {
-        let macroSum = Double(scan.protein + scan.carbs + scan.fat)
-        return min(10, max(0, macroSum / 30.0 * 10.0))
-    }
-
-    func buildNutritionPrompt(ctx: OpenAIService.PlateContext) -> String {
+    func buildNutritionPrompt(imageName: String) -> String {
         return """
-        You are an expert nutritionist and health coach. Analyze this plate image along with the provided AR measurements and produce the entire nutrition assessment (macros, calories, micronutrients) without relying on any client estimations.
-
-        **MEASUREMENT DATA:**
-        • Food detected: \(ctx.label) (confidence: \(String(format: "%.1f", ctx.confidence * 100))%)
-        • Estimated volume: \(Int(ctx.volumeML)) ml
-        • Note: Any macros/calories in client context may be placeholders. You must estimate calories and P/C/F grams yourself from the image and portion size.
-        \(ctx.method != nil ? "• Detection method: \(ctx.method!)" : "")
-        \(ctx.device != nil ? "• Device: \(ctx.device!)" : "")
+        You are an expert nutritionist and health coach. Analyze this plate image and provide a comprehensive nutrition assessment.
 
         **YOUR TASK:**
-        Provide a comprehensive nutritional analysis. Estimate calories and macronutrients (protein, carbs, fat) for this portion and include a clear numeric summary. Also include specific mentions of micronutrients present in this food.
+        Analyze the food shown in the image and estimate the nutritional content including calories, macronutrients, and micronutrients.
 
         **REQUIRED RESPONSE STRUCTURE:**
-        1. Food verification and portion assessment (1-2 sentences)
-        2. Estimated calories and macronutrients (P/C/F grams) for this plate as a short bullet list
-        3. Micronutrient analysis (vitamins, minerals, antioxidants, fiber) with terms like: vitamin C, vitamin A, vitamin K, vitamin E, B vitamins, folate, iron, calcium, potassium, magnesium, zinc, antioxidants, omega-3 fatty acids
+        1. Food identification and portion assessment (1-2 sentences)
+        2. Estimated calories and macronutrients (protein, carbs, fat in grams) for this plate as a short bullet list
+        3. Micronutrient analysis (vitamins, minerals, antioxidants, fiber) with specific mentions of: vitamin C, vitamin A, vitamin K, vitamin E, B vitamins, folate, iron, calcium, potassium, magnesium, zinc, antioxidants, omega-3 fatty acids
         4. Macronutrient balance comment (1 sentence)
         5. Specific recommendations (2-3 actionable suggestions)
 
@@ -71,7 +58,7 @@ final class PlateAnalysisViewModel: ObservableObject {
     }
 
     @discardableResult
-    func savePlateAnalysisToHistory(analysis: PlateAnalysis, image: UIImage?, scan: ARPlateScanNutrition, modelContext: ModelContext) -> PlateAnalysisHistory {
+    func savePlateAnalysisToHistory(analysis: PlateAnalysis, image: UIImage?, modelContext: ModelContext) -> PlateAnalysisHistory {
         let plateInsights: [PlateInsight] = analysis.insights.map { insight in
             let type: PlateInsight.PlateInsightType
             switch insight.type {
@@ -83,7 +70,8 @@ final class PlateAnalysisViewModel: ObservableObject {
         }
         let plateIngredients: [PlateIngredient] = analysis.ingredients.map { PlateIngredient(name: $0.name, amount: $0.amount) }
         let imageData = image?.jpegData(compressionQuality: 0.8)
-        let mealName = scan.label
+        let mealName = analysis.description
+
         let history = PlateAnalysisHistory(
             name: mealName,
             imageData: imageData,
@@ -99,26 +87,28 @@ final class PlateAnalysisViewModel: ObservableObject {
             connections: analysis.connections
         )
         modelContext.insert(history)
-        if let img = image { ImageCacheService.shared.saveImage(img, forKey: history.cacheKey) }
+        if let img = image {
+            ImageCacheService.shared.saveImage(img, forKey: history.cacheKey)
+        }
         currentHistory = history
         return history
     }
 
-    func handleScanResult(scan: ARPlateScanNutrition, image: UIImage, modelContext: ModelContext) async {
-        // 1) Initial mapping (nutrition deferred to OpenAI)
+    func handleImageAnalysis(image: UIImage, modelContext: ModelContext) async {
+        // 1) Initial analysis structure
         let baseAnalysis = PlateAnalysis(
             nutritionScore: 0,
-            description: "Estimated \(scan.label) • \(Int(scan.volumeML)) ml",
+            description: "Analyzing food image...",
             macronutrients: Macronutrients(
                 protein: 0,
                 carbs: 0,
                 fat: 0,
                 calories: 0
             ),
-            ingredients: [Ingredient(name: scan.label.capitalized, amount: scan.massG > 0 ? "\(Int(scan.massG)) g" : "—")],
+            ingredients: [Ingredient(name: "Analyzing...", amount: "—")],
             insights: [
-                Insight(type: .positive, title: "Hands-free portioning", description: "Volume derived from depth above the plate plane."),
-                Insight(type: .suggestion, title: "For best accuracy", description: "Move slightly left/right until prompted to hold still.")
+                Insight(type: .positive, title: "Image uploaded", description: "Analyzing your plate for nutritional content."),
+                Insight(type: .suggestion, title: "Getting AI Analysis", description: "Please wait while we analyze your food...")
             ],
             micronutrients: nil,
             connections: nil
@@ -126,20 +116,16 @@ final class PlateAnalysisViewModel: ObservableObject {
 
         isAnalyzing = true
         saveLastAnalysisToDefaults(analysis: baseAnalysis, image: image)
-        let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: image, scan: scan, modelContext: modelContext)
+        let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: image, modelContext: modelContext)
 
-        // 2) Enrich with OpenAI
+        // 2) AI analysis with OpenAI (CoreML temporarily disabled)
         do {
-            #if canImport(ARKit)
-            let method = ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) ? "LiDAR" : "DualCameraDepth"
-            #else
-            let method = "Simulator/mock"
-            #endif
-            print("🔵 [VM] Preparing OpenAI request: label=\(scan.label) conf=\(String(format: "%.2f", scan.confidence)) vol=\(Int(scan.volumeML))ml")
+            print("🔵 [VM] Starting image analysis with OpenAI")
+
             let ctx = OpenAIService.PlateContext(
-                label: scan.label,
-                confidence: scan.confidence,
-                volumeML: scan.volumeML,
+                label: "Food Image",
+                confidence: 1.0,
+                volumeML: 0,
                 massG: 0,
                 calories: 0,
                 protein: 0,
@@ -147,14 +133,17 @@ final class PlateAnalysisViewModel: ObservableObject {
                 fat: 0,
                 planeStableScore: nil,
                 device: UIDevice.current.model,
-                method: method
+                method: "Image Analysis",
+                detectedItems: nil
             )
+
             // Ask AI for structured nutrition
             let structured = try await openAI.sendPlateForNutrition(image: image, context: ctx)
             print("🟢 [VM] Received structured nutrition: title=\(structured.title) score=\(String(format: "%.2f", structured.score))")
 
             // Map AI response into our domain model
-            var insights: [Insight] = baseAnalysis.insights
+            var insights: [Insight] = []
+
             // Add AI-provided insights
             for i in structured.insights {
                 let t: Insight.InsightType
@@ -165,7 +154,8 @@ final class PlateAnalysisViewModel: ObservableObject {
                 }
                 insights.append(Insight(type: t, title: i.title, description: i.description))
             }
-            // Prepare micronutrients and connections for the analysis model (UI will render them)
+
+            // Prepare micronutrients and connections for the analysis model
             let microModel: Micronutrients? = {
                 guard let m = structured.micros else { return nil }
                 return Micronutrients(
@@ -194,7 +184,7 @@ final class PlateAnalysisViewModel: ObservableObject {
             analysisResult = final
             print("🟢 [VM] Analysis updated and displayed")
 
-            // Enrich the saved history row with AI results so History shows full details
+            // Enrich the saved history row with AI results
             if let history = currentHistory ?? historyRef as PlateAnalysisHistory? {
                 history.name = structured.title
                 history.nutritionScore = structured.score
@@ -203,6 +193,7 @@ final class PlateAnalysisViewModel: ObservableObject {
                 history.carbs = Int((structured.macros.carbs_g).rounded())
                 history.fat = Int((structured.macros.fat_g).rounded())
                 history.calories = Int((structured.macros.calories_kcal).rounded())
+
                 // Re-encode ingredients/insights/micros/connections
                 let updatedIngredients = structured.ingredients.map { PlateIngredient(name: $0.name, amount: $0.amount) }
                 let updatedInsights: [PlateInsight] = insights.map { i in
@@ -224,17 +215,18 @@ final class PlateAnalysisViewModel: ObservableObject {
                 }
             }
         } catch {
-            // Fallback to base analysis on failure, but surface the error for the user
+            // Fallback to base analysis on failure
             var fallback = baseAnalysis
             let message = (error as NSError).userInfo[NSLocalizedDescriptionKey] as? String ?? error.localizedDescription
             let hint = message.isEmpty ? "AI request failed. Check API key and network." : message
             print("🔴 [VM] OpenAI error: \(hint)")
+
             fallback = PlateAnalysis(
                 nutritionScore: baseAnalysis.nutritionScore,
-                description: baseAnalysis.description,
+                description: "Analysis unavailable",
                 macronutrients: baseAnalysis.macronutrients,
-                ingredients: baseAnalysis.ingredients,
-                insights: baseAnalysis.insights + [
+                ingredients: [Ingredient(name: "Food items", amount: "Unknown")],
+                insights: [
                     Insight(type: .warning, title: "AI Unavailable", description: hint)
                 ],
                 micronutrients: nil,

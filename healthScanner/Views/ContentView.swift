@@ -155,7 +155,7 @@ struct ContentView: View {
             }
             .tag(0)
             
-            // Plate Tab
+            // Plate Tab - Now using photo-based analysis (AR disabled)
             NavigationView {
                 PlateAnalysisView()
                     .navigationBarHidden(true)
@@ -315,7 +315,9 @@ struct ContentView: View {
             ProductDetailView(product: product)
         }
         .sheet(item: $selectedPlateAnalysis) { plateAnalysis in
-            PlateHistoryDetailView(plateAnalysis: plateAnalysis)
+            PlateHistoryDetailView(plateAnalysis: plateAnalysis) {
+                selectedPlateAnalysis = nil
+            }
         }
     }
 }
