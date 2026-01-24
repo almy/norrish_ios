@@ -175,6 +175,8 @@ extension Product {
 extension String {
     func contains(_ keywords: String) -> Bool {
         let keywordList = keywords.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        return keywordList.contains { self.contains($0) }
+        return keywordList.contains { keyword in
+            range(of: keyword, options: .caseInsensitive) != nil
+        }
     }
 }

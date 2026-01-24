@@ -25,7 +25,6 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
     private var movementThreshold: Float = 0.004  // meters
 
     public var autoSendToOpenAI = false                  // default off to avoid double-send
-    private var openAIServiceFactory: () -> OpenAIService = { OpenAIService() }
     public var onAIText: ((String) -> Void)?             // bubble AI text up if you want
 
     // UI

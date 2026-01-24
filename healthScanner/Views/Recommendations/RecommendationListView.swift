@@ -6,11 +6,19 @@ struct RecommendationListView: View {
     @Query(sort: \PlateAnalysisHistory.analyzedDate, order: .reverse) private var plateHistory: [PlateAnalysisHistory]
     @Query(sort: \Product.scannedDate, order: .reverse) private var products: [Product]
 
-    @StateObject private var engine = OnDeviceNutritionRecommendationEngine()
+    @StateObject private var viewModel = RecommendationsViewModel()
     @State private var insights: [PersonalizedInsight] = []
 
     var body: some View {
         List {
+            if let error = viewModel.errorMessage {
+                Section {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             if !insights.isEmpty {
                 Section(header: Text("Highlights")) {
                     ForEach(insights.indices, id: \.self) { i in
@@ -19,9 +27,9 @@ struct RecommendationListView: View {
                 }
             }
 
-            if !engine.currentRecommendations.isEmpty {
+            if !viewModel.recommendations.isEmpty {
                 Section(header: Text("Recommendations")) {
-                    ForEach(engine.currentRecommendations) { rec in
+                    ForEach(viewModel.recommendations) { rec in
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
                                 Text(rec.title).font(.headline)
@@ -44,9 +52,9 @@ struct RecommendationListView: View {
                 }
             }
 
-            if !engine.currentCorrelations.isEmpty {
+            if !viewModel.correlations.isEmpty {
                 Section(header: Text("Correlations")) {
-                    ForEach(engine.currentCorrelations) { c in
+                    ForEach(viewModel.correlations) { c in
                         VStack(alignment: .leading, spacing: 4) {
                             Text(c.type.rawValue.replacingOccurrences(of: "Vs", with: " vs "))
                                 .font(.headline)
@@ -66,9 +74,11 @@ struct RecommendationListView: View {
         }
         .navigationTitle("Insights")
         .task(id: plateHistory.first?.id) {
-            // Recompute when history changes
-            let recs = await engine.generateRecommendations(plates: Array(plateHistory.prefix(50)), products: Array(products.prefix(100)))
-            insights = recs.prefix(8).map { $0.asPersonalizedInsight() }
+            await viewModel.refresh(
+                plates: Array(plateHistory.prefix(50)),
+                products: Array(products.prefix(100))
+            )
+            insights = viewModel.recommendations.prefix(8).map { $0.asPersonalizedInsight() }
         }
     }
 }
@@ -76,4 +86,3 @@ struct RecommendationListView: View {
 #Preview {
     NavigationView { RecommendationListView() }
 }
-

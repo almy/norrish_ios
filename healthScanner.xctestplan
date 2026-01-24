@@ -1,0 +1,52 @@
+{
+  "configurations" : [
+    {
+      "id" : "FEE1706A-0129-404E-B71F-AECC74B7075D",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "environmentVariableEntries" : [
+      {
+        "key" : "API_KEY",
+        "value" : "ILKsICSXgJDHJK7fNsiWtfeRTt4uMBj"
+      },
+      {
+        "key" : "IDEPreferLogStreaming",
+        "value" : "YES"
+      },
+      {
+        "key" : "API_BASE_URL",
+        "value" : "https:\/\/norrish.myftiu.al"
+      }
+    ],
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:healthScanner.xcodeproj",
+      "identifier" : "CEF23E4A2E6C5F66002B903F",
+      "name" : "healthScanner"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:healthScanner.xcodeproj",
+        "identifier" : "CEF23E5C2E6C5F67002B903F",
+        "name" : "healthScannerTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:healthScanner.xcodeproj",
+        "identifier" : "CEF23E662E6C5F67002B903F",
+        "name" : "healthScannerUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
