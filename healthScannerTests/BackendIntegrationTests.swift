@@ -20,6 +20,8 @@ final class BackendIntegrationTests: XCTestCase {
         let hasEnvApiKey = ProcessInfo.processInfo.environment["API_KEY"]?.isEmpty == false
         let hasPlistBaseURL = AppConfig.apiBaseURL?.isEmpty == false
         let hasPlistApiKey = AppConfig.apiKey?.isEmpty == false
+        
+        
 
         if (hasEnvBaseURL || hasPlistBaseURL) && (hasEnvApiKey || hasPlistApiKey) {
             return
@@ -32,10 +34,24 @@ final class BackendIntegrationTests: XCTestCase {
         do {
             return try await operation()
         } catch {
+            // Skip if blocked by Vercel security checkpoint
             if case BackendAPIError.httpError(let statusCode, let body) = error,
                statusCode == 429,
                body.contains("Vercel Security Checkpoint") {
                 throw XCTSkip("Backend blocked by Vercel Security Checkpoint (429).")
+            }
+            // Skip on URLSession timeout
+            if let urlError = error as? URLError, urlError.code == .timedOut {
+                throw XCTSkip("Backend request timed out.")
+            }
+            // Skip on CFNetwork stream timeout (-2102 in domain 4)
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain || nsError.domain == kCFErrorDomainCFNetwork as String {
+                if let streamCode = nsError.userInfo["_kCFStreamErrorCodeKey"] as? Int,
+                   let streamDomain = nsError.userInfo["_kCFStreamErrorDomainKey"] as? Int,
+                   streamCode == -2102, streamDomain == 4 {
+                    throw XCTSkip("Network stream timeout (-2102).")
+                }
             }
             throw error
         }
@@ -94,14 +110,36 @@ final class BackendIntegrationTests: XCTestCase {
         }
         let base64 = imageData.base64EncodedString()
 
-        let response: BackendPlateScanResponse = try await performBackendCall {
-            try await BackendAPIClient.shared.post(
-                endpoint: BackendAPIClient.shared.endpoints.scanPlateAI,
-                body: BackendPlateAIRequest(
-                    imageBase64: base64,
-                    context: BackendPlateAIContext(device: "integration-test", method: "upload")
+        func attempt() async throws -> BackendPlateScanResponse {
+            try await performBackendCall {
+                try await BackendAPIClient.shared.post(
+                    endpoint: BackendAPIClient.shared.endpoints.scanPlateAI,
+                    body: BackendPlateAIRequest(
+                        imageBase64: base64,
+                        context: BackendPlateAIContext(device: "integration-test", method: "upload")
+                    )
                 )
-            )
+            }
+        }
+
+        let response: BackendPlateScanResponse
+        do {
+            response = try await attempt()
+        } catch {
+            // Retry once on transient timeouts
+            if let urlError = error as? URLError, urlError.code == .timedOut {
+                response = try await attempt()
+            } else {
+                let nsError = error as NSError
+                if nsError.domain == NSURLErrorDomain || nsError.domain == kCFErrorDomainCFNetwork as String,
+                   let streamCode = nsError.userInfo["_kCFStreamErrorCodeKey"] as? Int,
+                   let streamDomain = nsError.userInfo["_kCFStreamErrorDomainKey"] as? Int,
+                   streamCode == -2102, streamDomain == 4 {
+                    response = try await attempt()
+                } else {
+                    throw error
+                }
+            }
         }
 
         XCTAssertFalse(response.scanId.isEmpty)

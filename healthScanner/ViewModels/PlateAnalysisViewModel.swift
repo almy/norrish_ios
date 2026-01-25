@@ -95,22 +95,22 @@ final class PlateAnalysisViewModel: ObservableObject {
         saveLastAnalysisToDefaults(analysis: baseAnalysis, image: image)
         let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: image, modelContext: modelContext)
 
-        do {
-            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+        do {            let resized = resizedImage(image, maxSide: 1024)
+            guard let imageData = resized.jpegData(compressionQuality: 0.75) else {
                 throw BackendAPIError.encodingFailed
             }
 
-            let request = BackendPlateAIRequest(
-                imageBase64: imageData.base64EncodedString(),
-                context: BackendPlateAIContext(
-                    device: UIDevice.current.model,
-                    method: "Image Analysis"
-                )
-            )
+            let contextPayload: [String: String] = [
+                "device": UIDevice.current.model,
+                "method": "Image Analysis"
+            ]
+            let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
+            let contextJSON = String(data: contextData, encoding: .utf8)
 
-            let response: BackendPlateScanResponse = try await BackendAPIClient.shared.post(
+            let response: BackendPlateScanResponse = try await BackendAPIClient.shared.postMultipart(
                 endpoint: BackendAPIClient.shared.endpoints.scanPlateAI,
-                body: request
+                imageData: imageData,
+                contextJSON: contextJSON
             )
 
             let analysis = mapPlateAnalysis(response.analysis)
@@ -140,6 +140,19 @@ final class PlateAnalysisViewModel: ObservableObject {
 
         isAnalyzing = false
     }
+
+    private func resizedImage(_ image: UIImage, maxSide: CGFloat) -> UIImage {
+        let size = image.size
+        let maxCurrentSide = max(size.width, size.height)
+        guard maxCurrentSide > maxSide, maxSide > 0 else { return image }
+        let scale = maxSide / maxCurrentSide
+        let newSize = CGSize(width: max(1, size.width * scale), height: max(1, size.height * scale))
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+
 
     private func mapPlateAnalysis(_ analysis: BackendPlateAnalysis) -> PlateAnalysis {
         let insights = analysis.insights.map { insight in

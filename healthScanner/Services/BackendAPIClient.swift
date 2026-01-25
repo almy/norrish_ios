@@ -60,6 +60,56 @@ final class BackendAPIClient {
         return try await send(request)
     }
 
+    func postMultipart<Response: Decodable>(
+        endpoint: String,
+        imageData: Data,
+        imageFilename: String = "photo.jpg",
+        mimeType: String = "image/jpeg",
+        contextJSON: String? = nil,
+        token: String? = nil
+    ) async throws -> Response {
+        var request = try makeRequest(endpoint: endpoint, method: "POST", token: token)
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+
+        func appendFormField(name: String, value: String) {
+            body.append("--\(boundary)
+".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name="\(name)"
+
+".data(using: .utf8)!)
+            body.append("\(value)
+".data(using: .utf8)!)
+        }
+
+        func appendFileField(name: String, filename: String, mimeType: String, fileData: Data) {
+            body.append("--\(boundary)
+".data(using: .utf8)!)
+            body.append(
+                "Content-Disposition: form-data; name="\(name)"; filename="\(filename)"
+".data(using: .utf8)!
+            )
+            body.append("Content-Type: \(mimeType)
+
+".data(using: .utf8)!)
+            body.append(fileData)
+            body.append("
+".data(using: .utf8)!)
+        }
+
+        if let contextJSON {
+            appendFormField(name: "context", value: contextJSON)
+        }
+        appendFileField(name: "image", filename: imageFilename, mimeType: mimeType, fileData: imageData)
+        body.append("--\(boundary)--
+".data(using: .utf8)!)
+
+        request.httpBody = body
+        return try await send(request)
+    }
+
     private func makeRequest(endpoint: String, method: String, token: String?) throws -> URLRequest {
         guard let baseURL = AppConfig.apiBaseURL, !baseURL.isEmpty else {
             throw BackendAPIError.missingConfig("API_BASE_URL")
@@ -80,6 +130,7 @@ final class BackendAPIClient {
         if let token, !token.isEmpty {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
+        logRequest(request, apiKey: apiKey)
         return request
     }
 
@@ -88,6 +139,7 @@ final class BackendAPIClient {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw BackendAPIError.invalidResponse
         }
+        logResponse(httpResponse: httpResponse, data: data)
         guard (200..<300).contains(httpResponse.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? "<no body>"
             throw BackendAPIError.httpError(statusCode: httpResponse.statusCode, body: truncate(body))
@@ -103,5 +155,56 @@ final class BackendAPIClient {
     private func truncate(_ body: String, limit: Int = 800) -> String {
         guard body.count > limit else { return body }
         return String(body.prefix(limit)) + "…"
+    }
+
+    private func logRequest(_ request: URLRequest, apiKey: String) {
+        #if DEBUG
+        let shouldLog = true
+        #else
+        let shouldLog = ProcessInfo.processInfo.environment["BACKEND_DEBUG"] == "1"
+        #endif
+        guard shouldLog else { return }
+
+        let urlString = request.url?.absoluteString ?? "<no url>"
+        let method = request.httpMethod ?? "<no method>"
+        let authHeader = request.value(forHTTPHeaderField: "Authorization")
+        print("[BackendAPI] \(method) \(urlString)")
+        print("[BackendAPI] X-API-Key: \(apiKey)")
+        print("[BackendAPI] Authorization: \(authHeader ?? "<none>")")
+        if method.uppercased() == "POST" {
+            let contentType = request.value(forHTTPHeaderField: "Content-Type") ?? "application/json"
+            let bodyString = request.httpBody.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+            let escapedBody = bodyString.replacingOccurrences(of: "'", with: "'\"'\"'")
+            let authLine = authHeader.map { "  -H 'Authorization: \($0)' \\\n" } ?? ""
+            let curl = """
+            curl -X POST '\(urlString)' \\
+              -H 'Content-Type: \(contentType)' \\
+              -H 'X-API-Key: \(apiKey)' \\
+            \(authLine)  -d '\(escapedBody)'
+            """
+            print("[BackendAPI] POST curl:\n\(curl)")
+        }
+    }
+
+    private func maskSecret(_ value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > 8 else { return "****" }
+        let suffix = trimmed.suffix(4)
+        return "****\(suffix)"
+    }
+
+    private func logResponse(httpResponse: HTTPURLResponse, data: Data) {
+        #if DEBUG
+        let shouldLog = true
+        #else
+        let shouldLog = ProcessInfo.processInfo.environment["BACKEND_DEBUG"] == "1"
+        #endif
+        guard shouldLog else { return }
+
+        let urlString = httpResponse.url?.absoluteString ?? "<no url>"
+        let status = httpResponse.statusCode
+        let body = String(data: data, encoding: .utf8) ?? "<non-utf8 body>"
+        print("[BackendAPI] Response \(status) \(urlString)")
+        print("[BackendAPI] Response body: \(body)")
     }
 }

@@ -34,15 +34,6 @@ struct BackendNutritionData: Codable {
     let fruitsVegetablesNutsPercent: Double?
 }
 
-struct BackendPlateAIRequest: Encodable {
-    let imageBase64: String
-    let context: BackendPlateAIContext?
-}
-
-struct BackendPlateAIContext: Encodable {
-    let device: String?
-    let method: String?
-}
 
 struct BackendPlateScanResponse: Decodable {
     let scanId: String
