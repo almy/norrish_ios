@@ -11,6 +11,7 @@ struct PlateAnalysisView: View {
     @State private var selectedImage: UIImage?
     @State private var showingAnalysis = false
     @State private var showingCamera = false
+    @State private var showingRegionOverlay = false
 
     var body: some View {
         NavigationView {
@@ -32,6 +33,9 @@ struct PlateAnalysisView: View {
         .onChange(of: selectedItem) { _, newItem in
             Task { await loadPickedImage(newItem) }
         }
+        .onChange(of: viewModel.analysisResult) { _, newValue in
+            if newValue != nil { showingAnalysis = true }
+        }
         .sheet(isPresented: $showingAnalysis) {
             if let analysis = viewModel.analysisResult {
                 PlateAnalysisResultView(
@@ -42,14 +46,16 @@ struct PlateAnalysisView: View {
                 )
             }
         }
+        .sheet(isPresented: $showingRegionOverlay) {
+            if let img = selectedImage {
+                FoodRegionSelectionView(image: img, viewModel: viewModel)
+            }
+        }
         .sheet(isPresented: $showingCamera) {
             CameraPreviewView { image in
                 selectedImage = image
                 showingCamera = false
-                Task { @MainActor in
-                    await viewModel.handleImageAnalysis(image: image, modelContext: modelContext)
-                    showingAnalysis = true
-                }
+                showingRegionOverlay = true
             }
         }
     }
@@ -176,11 +182,8 @@ private extension PlateAnalysisView {
 
         selectedImage = image
 
-        // Analyze the selected image
-        Task { @MainActor in
-            await viewModel.handleImageAnalysis(image: image, modelContext: modelContext)
-            showingAnalysis = true
-        }
+        // Present region selection overlay for manual adjustment
+        showingRegionOverlay = true
     }
 
     func resetAfterAnalysis() {
@@ -191,3 +194,4 @@ private extension PlateAnalysisView {
         showingAnalysis = false
     }
 }
+

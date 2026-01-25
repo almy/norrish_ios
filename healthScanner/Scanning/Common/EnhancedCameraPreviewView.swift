@@ -13,10 +13,45 @@ struct EnhancedCameraPreviewView: View {
     @StateObject private var coreMLService = CoreMLFoodAnalysisService.shared
     @State private var detectedFood: String?
     @State private var confidence: Float = 0.0
+    @State private var capturedImage: UIImage?
+    @State private var showAnalyzingOverlay = false
+    @State private var showResultOverlay = false
+    @State private var latestAnalysis: PlateAnalysis?
+    @State private var analysisTask: Task<Void, Never>?
+    @State private var analysisError: String?
 
     var body: some View {
         ZStack {
-            CameraPreviewView(onImageCaptured: onImageCaptured)
+            CameraPreviewView(onImageCaptured: { image in
+                // 1) Show analyzing overlay immediately
+                capturedImage = image
+                showAnalyzingOverlay = true
+                latestAnalysis = nil
+                analysisError = nil
+
+                // 2) Kick off backend analysis
+                analysisTask?.cancel()
+                analysisTask = Task {
+                    do {
+                        let analysis = try await PlateAnalysisService.analyze(image: image)
+                        await MainActor.run {
+                            latestAnalysis = analysis
+                            showAnalyzingOverlay = false
+                            showResultOverlay = true
+                        }
+                    } catch is CancellationError {
+                        // User dismissed analyzing overlay
+                    } catch {
+                        await MainActor.run {
+                            analysisError = (error as? LocalizedError)?.errorDescription ?? "Failed to analyze plate."
+                            showAnalyzingOverlay = false
+                        }
+                    }
+                }
+
+                // Forward to any parent listeners if needed
+                onImageCaptured(image)
+            })
 
             // AI Status Overlay
             VStack {
@@ -52,6 +87,54 @@ struct EnhancedCameraPreviewView: View {
                 Spacer()
             }
             .padding()
+        }
+        .fullScreenCover(isPresented: $showAnalyzingOverlay, onDismiss: {
+            // If dismissed manually, cancel the task
+            analysisTask?.cancel()
+        }) {
+            AnalyzingOverlayView(
+                message: analysisError == nil ? NSLocalizedString("Analyzing your plate…", comment: "Analyzing state") : (analysisError ?? "Error"),
+                isError: analysisError != nil,
+                onCancel: {
+                    analysisTask?.cancel()
+                    showAnalyzingOverlay = false
+                },
+                onRetry: {
+                    guard let img = capturedImage else { return }
+                    analysisError = nil
+                    showAnalyzingOverlay = true
+                    analysisTask?.cancel()
+                    analysisTask = Task {
+                        do {
+                            let analysis = try await PlateAnalysisService.analyze(image: img)
+                            await MainActor.run {
+                                latestAnalysis = analysis
+                                showAnalyzingOverlay = false
+                                showResultOverlay = true
+                            }
+                        } catch is CancellationError {
+                        } catch {
+                            await MainActor.run {
+                                analysisError = (error as? LocalizedError)?.errorDescription ?? "Failed to analyze plate."
+                                showAnalyzingOverlay = true
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        .fullScreenCover(isPresented: $showResultOverlay) {
+            PlateAnalysisResultView(
+                analysis: latestAnalysis ?? PlateAnalysis.mockAnalysis(),
+                image: capturedImage,
+                onStartNewScan: {
+                    showResultOverlay = false
+                },
+                onClose: {
+                    analysisTask?.cancel()
+                    showResultOverlay = false
+                }
+            )
         }
         .onReceive(NotificationCenter.default.publisher(for: .mlDetectionUpdate)) { notification in
             if let userInfo = notification.userInfo,
@@ -103,3 +186,57 @@ extension CoreMLFoodAnalysisService {
 #Preview {
     EnhancedCameraPreviewView { _ in }
 }
+struct AnalyzingOverlayView: View {
+    let message: String
+    let isError: Bool
+    let onCancel: () -> Void
+    let onRetry: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.8).ignoresSafeArea()
+            VStack(spacing: 20) {
+                if !isError {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.6)
+                    Text(message)
+                        .foregroundColor(.white)
+                        .font(.headline)
+                } else {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.yellow)
+                        .font(.system(size: 48))
+                    Text(message)
+                        .foregroundColor(.white)
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+
+                    HStack(spacing: 16) {
+                        Button(action: onRetry) {
+                            Text("Retry")
+                                .font(.headline)
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(Color.white)
+                                .cornerRadius(24)
+                        }
+                        Button(action: onCancel) {
+                            Text("Close")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(24)
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+}
+

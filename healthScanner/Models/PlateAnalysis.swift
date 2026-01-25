@@ -8,7 +8,7 @@
 import Foundation
 
 // MARK: - Main PlateAnalysis Model
-struct PlateAnalysis: Codable {
+struct PlateAnalysis: Codable, Equatable {
     let nutritionScore: Double
     let description: String
     let macronutrients: Macronutrients
@@ -51,31 +51,31 @@ struct PlateAnalysis: Codable {
 }
 
 // MARK: - Supporting Models
-struct Macronutrients: Codable {
+struct Macronutrients: Codable, Equatable {
     let protein: Int
     let carbs: Int
     let fat: Int
     let calories: Int
 }
 
-struct Micronutrients: Codable {
+struct Micronutrients: Codable, Equatable {
     let fiberG: Int?
     let vitaminCMg: Int?
     let ironMg: Int?
     let other: String?
 }
 
-struct Ingredient: Codable {
+struct Ingredient: Codable, Equatable {
     let name: String
     let amount: String
 }
 
-struct Insight: Codable {
+struct Insight: Codable, Equatable {
     let type: InsightType
     let title: String
     let description: String
 
-    enum InsightType: String, Codable {
+    enum InsightType: String, Codable, Equatable {
         case positive
         case suggestion
         case warning

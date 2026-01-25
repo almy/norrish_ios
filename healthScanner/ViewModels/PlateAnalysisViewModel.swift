@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 import SwiftData
 import UIKit
+import Vision
+import CoreGraphics
 
 @MainActor
 final class PlateAnalysisViewModel: ObservableObject {
@@ -72,7 +74,18 @@ final class PlateAnalysisViewModel: ObservableObject {
         return history
     }
 
-    func handleImageAnalysis(image: UIImage, modelContext: ModelContext) async {
+    func detectFoodRegions(in image: UIImage, maxRegions: Int = 3) -> [ImagePreprocessor.Result] {
+        let regions = ImagePreprocessor.preprocessFoodRegions(image, maxRegions: maxRegions, padding: 0.08, confidenceThreshold: 0.05)
+        return regions
+    }
+
+    func analyzeSelectedRegions(_ regions: [ImagePreprocessor.Result], originalImage: UIImage, modelContext: ModelContext) async {
+        guard !regions.isEmpty else { return await handleImageAnalysis(image: originalImage, modelContext: modelContext) }
+        let imageForUpload = ImagePreprocessor.mosaic(from: regions, columns: 1, spacing: 8, background: .black) ?? regions[0].image
+        await analyzePreparedImage(imageForUpload, regions: regions, originalImage: originalImage, modelContext: modelContext)
+    }
+
+    private func analyzePreparedImage(_ uploadImage: UIImage, regions: [ImagePreprocessor.Result]?, originalImage: UIImage, modelContext: ModelContext) async {
         let baseAnalysis = PlateAnalysis(
             nutritionScore: 0,
             description: "Analyzing food image...",
@@ -92,18 +105,36 @@ final class PlateAnalysisViewModel: ObservableObject {
         )
 
         isAnalyzing = true
-        saveLastAnalysisToDefaults(analysis: baseAnalysis, image: image)
-        let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: image, modelContext: modelContext)
+        saveLastAnalysisToDefaults(analysis: baseAnalysis, image: originalImage)
+        let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: originalImage, modelContext: modelContext)
 
-        do {            let resized = resizedImage(image, maxSide: 1024)
+        do {
+            let resized = resizedImage(uploadImage, maxSide: 1024)
             guard let imageData = resized.jpegData(compressionQuality: 0.75) else {
                 throw BackendAPIError.encodingFailed
             }
 
-            let contextPayload: [String: String] = [
+            var contextPayload: [String: Any] = [
                 "device": UIDevice.current.model,
                 "method": "Image Analysis"
             ]
+            if let regions {
+                let boxes: [[String: Int]] = regions.map { r in
+                    [
+                        "x": Int(r.boundingBox.origin.x),
+                        "y": Int(r.boundingBox.origin.y),
+                        "width": Int(r.boundingBox.size.width),
+                        "height": Int(r.boundingBox.size.height)
+                    ]
+                }
+                let pixels: [Int] = regions.map { $0.pixelCount }
+                let confidences: [Float] = regions.map { $0.confidence }
+                contextPayload["regions"] = [
+                    "bboxes": boxes,
+                    "pixels": pixels,
+                    "confidences": confidences
+                ]
+            }
             let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
             let contextJSON = String(data: contextData, encoding: .utf8)
 
@@ -115,7 +146,7 @@ final class PlateAnalysisViewModel: ObservableObject {
 
             let analysis = mapPlateAnalysis(response.analysis)
             analysisResult = analysis
-            saveLastAnalysisToDefaults(analysis: analysis, image: image)
+            saveLastAnalysisToDefaults(analysis: analysis, image: originalImage)
 
             if let history = currentHistory ?? historyRef as PlateAnalysisHistory? {
                 update(history: history, with: analysis)
@@ -139,6 +170,21 @@ final class PlateAnalysisViewModel: ObservableObject {
         }
 
         isAnalyzing = false
+    }
+
+    func handleImageAnalysis(image: UIImage, modelContext: ModelContext) async {
+        // Detect multiple regions; if none, fall back to single-region preprocess
+        let regions = detectFoodRegions(in: image, maxRegions: 3)
+        if regions.count > 1 {
+            let mosaic = ImagePreprocessor.mosaic(from: regions, columns: 1, spacing: 8, background: .black) ?? regions[0].image
+            await analyzePreparedImage(mosaic, regions: regions, originalImage: image, modelContext: modelContext)
+        } else if let first = regions.first {
+            await analyzePreparedImage(first.image, regions: [first], originalImage: image, modelContext: modelContext)
+        } else {
+            // Fallback to original single preprocess
+            let pre = ImagePreprocessor.preprocessFoodImage(image)
+            await analyzePreparedImage(pre.image, regions: [pre], originalImage: image, modelContext: modelContext)
+        }
     }
 
     private func resizedImage(_ image: UIImage, maxSide: CGFloat) -> UIImage {
@@ -223,3 +269,4 @@ final class PlateAnalysisViewModel: ObservableObject {
         }
     }
 }
+

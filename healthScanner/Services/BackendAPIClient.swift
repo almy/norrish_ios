@@ -75,36 +75,24 @@ final class BackendAPIClient {
         var body = Data()
 
         func appendFormField(name: String, value: String) {
-            body.append("--\(boundary)
-".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name="\(name)"
-
-".data(using: .utf8)!)
-            body.append("\(value)
-".data(using: .utf8)!)
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
         }
 
         func appendFileField(name: String, filename: String, mimeType: String, fileData: Data) {
-            body.append("--\(boundary)
-".data(using: .utf8)!)
-            body.append(
-                "Content-Disposition: form-data; name="\(name)"; filename="\(filename)"
-".data(using: .utf8)!
-            )
-            body.append("Content-Type: \(mimeType)
-
-".data(using: .utf8)!)
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
             body.append(fileData)
-            body.append("
-".data(using: .utf8)!)
+            body.append("\r\n".data(using: .utf8)!)
         }
 
         if let contextJSON {
             appendFormField(name: "context", value: contextJSON)
         }
         appendFileField(name: "image", filename: imageFilename, mimeType: mimeType, fileData: imageData)
-        body.append("--\(boundary)--
-".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
         request.httpBody = body
         return try await send(request)

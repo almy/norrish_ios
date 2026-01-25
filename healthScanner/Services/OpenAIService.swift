@@ -3,6 +3,7 @@
 
 import Foundation
 import UIKit
+import Vision
 
 // MARK: - Models
 
@@ -359,17 +360,27 @@ final class OpenAIService {
     // MARK: - Image
 
     private func optimizeImageForAPI(_ image: UIImage) -> UIImage {
+        // Prefer salient regions and build a compact mosaic if multiple items are present
+        let regions = ImagePreprocessor.preprocessFoodRegions(image, maxRegions: 3, padding: 0.08, confidenceThreshold: 0.05)
+        let chosen: UIImage
+        if regions.isEmpty {
+            chosen = image
+        } else if regions.count == 1 {
+            chosen = regions[0].image
+        } else {
+            chosen = ImagePreprocessor.mosaic(from: regions, columns: 1, spacing: 8, background: .black) ?? regions[0].image
+        }
         // Resize longest side to 1024 px
         let maxDim: CGFloat = 1024
-        let size = image.size
+        let size = chosen.size
         let scale = min(maxDim / max(size.width, size.height), 1.0)
-        guard scale < 1.0 else { return image }
+        guard scale < 1.0 else { return chosen }
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
         UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        image.draw(in: CGRect(origin: .zero, size: newSize))
+        chosen.draw(in: CGRect(origin: .zero, size: newSize))
         let out = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return out ?? image
+        return out ?? chosen
     }
 }
 

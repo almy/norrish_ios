@@ -108,16 +108,19 @@ final class BackendIntegrationTests: XCTestCase {
             let imageURL = try XCTUnwrap(bundle.url(forResource: "plate", withExtension: "jpg"))
             imageData = try Data(contentsOf: imageURL)
         }
-        let base64 = imageData.base64EncodedString()
+        let contextPayload: [String: String] = [
+            "device": "integration-test",
+            "method": "upload"
+        ]
+        let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
+        let contextJSON = String(data: contextData, encoding: .utf8)
 
         func attempt() async throws -> BackendPlateScanResponse {
             try await performBackendCall {
-                try await BackendAPIClient.shared.post(
+                try await BackendAPIClient.shared.postMultipart(
                     endpoint: BackendAPIClient.shared.endpoints.scanPlateAI,
-                    body: BackendPlateAIRequest(
-                        imageBase64: base64,
-                        context: BackendPlateAIContext(device: "integration-test", method: "upload")
-                    )
+                    imageData: imageData,
+                    contextJSON: contextJSON
                 )
             }
         }
