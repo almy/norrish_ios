@@ -22,3 +22,14 @@ EnhancedCameraPreviewView.showAnalyzingOverlay()
 
 // On result ready
 EnhancedCameraPreviewView.showResultScreen(with: result)
+
+
+
+If you’d like, I can also:
+• Add a small “Overlay On/Off” toggle in the HUD.
+• Visualize the current readiness score in sync with the overlay for additional guidance.
+• Wire in your CoreML food segmentation model to replace the saliency fallback for much higher accuracy.
+
+
+
+1. Real‑time “pre‑detection” overlays: segmentation vs. saliency

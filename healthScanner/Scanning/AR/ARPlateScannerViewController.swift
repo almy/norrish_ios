@@ -31,6 +31,12 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
     private let sceneView = ARSCNView(frame: .zero)
     private let hud = HUD()
     private let closeBtn = UIButton(type: .close)
+    
+    // Segmentation/saliency overlay
+    private let segmentationOverlayView = UIImageView()
+    private let overlayQueue = DispatchQueue(label: "ar.segmentation.overlay")
+    private var lastOverlayTime: CFTimeInterval = 0
+    private var overlayBusy = false
 
     // Vision
     private var segmentationRequest: VNCoreMLRequest?
@@ -62,6 +68,7 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         sceneView.frame = view.bounds
+        segmentationOverlayView.frame = view.bounds
         hud.frame = view.bounds
         cropOverlay.frame = view.bounds
     }
@@ -77,6 +84,14 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         sceneView.session.delegate = self
         sceneView.scene = SCNScene()
         view.addSubview(sceneView)
+        
+        // Add segmentation overlay above scene view
+        segmentationOverlayView.backgroundColor = .clear
+        segmentationOverlayView.contentMode = .scaleAspectFill
+        segmentationOverlayView.isUserInteractionEnabled = false
+        segmentationOverlayView.alpha = 0.0
+        view.addSubview(segmentationOverlayView)
+        
         view.addSubview(hud)
         // Insert overlay above scene, below buttons
         cropOverlay.isUserInteractionEnabled = false
@@ -192,6 +207,24 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
     // MARK: ARSessionDelegate
     public func session(_ session: ARSession, didUpdate frame: ARFrame) {
         guard !didEmit else { return }
+
+        // Throttled pre-detection overlay (~5 FPS)
+        let nowOverlay = CACurrentMediaTime()
+        if !overlayBusy && (nowOverlay - lastOverlayTime) > 0.20 {
+            overlayBusy = true
+            lastOverlayTime = nowOverlay
+            let pb = frame.capturedImage
+            overlayQueue.async { [weak self] in
+                guard let self else { return }
+                if let overlayImage = self.generateOverlayImage(from: pb) {
+                    DispatchQueue.main.async {
+                        self.segmentationOverlayView.image = overlayImage
+                        self.segmentationOverlayView.alpha = 0.55
+                    }
+                }
+                self.overlayBusy = false
+            }
+        }
 
         // Gather anchors/camera history
         camHistory.append(frame.camera.transform)
@@ -333,6 +366,70 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         if !depth { return "Move closer or add light…" }
         return "Almost there…"
     }
+
+    // MARK: - Overlay generation (segmentation or saliency)
+    private func generateOverlayImage(from pixelBuffer: CVPixelBuffer) -> UIImage? {
+        // Prefer segmentationRequest if available; else fall back to saliency
+        if let seg = segmentationRequest {
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+            do {
+                try handler.perform([seg])
+                if let mask = (seg.results?.first as? VNPixelBufferObservation)?.pixelBuffer {
+                    return makeColoredOverlay(fromMask: mask)
+                }
+            } catch { /* ignore and fall through */ }
+        }
+        let saliency = VNGenerateAttentionBasedSaliencyImageRequest()
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+        do {
+            try handler.perform([saliency])
+            if let obs = saliency.results?.first as? VNSaliencyImageObservation,
+               let boxes = obs.salientObjects, !boxes.isEmpty {
+                return makeOverlayFromBoxes(boxes: boxes, sourceSize: pixelBufferSize(pixelBuffer))
+            }
+        } catch { /* ignore */ }
+        return nil
+    }
+
+    private func pixelBufferSize(_ pb: CVPixelBuffer) -> CGSize {
+        return CGSize(width: CVPixelBufferGetWidth(pb), height: CVPixelBufferGetHeight(pb))
+    }
+
+    private func makeColoredOverlay(fromMask mask: CVPixelBuffer) -> UIImage? {
+        let ciMask = CIImage(cvPixelBuffer: mask)
+        let green = CIColor(red: 0, green: 1, blue: 0, alpha: 1)
+        let transparent = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+        let colored = ciMask.applyingFilter("CIFalseColor", parameters: [
+            "inputColor0": transparent,
+            "inputColor1": green
+        ])
+        let blurred = colored.applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 1.0])
+        let context = CIContext(options: [.useSoftwareRenderer: false])
+        guard let cg = context.createCGImage(blurred, from: blurred.extent) else { return nil }
+        return UIImage(cgImage: cg, scale: 1.0, orientation: .right)
+    }
+
+    private func makeOverlayFromBoxes(boxes: [VNRectangleObservation], sourceSize: CGSize) -> UIImage? {
+        let size = sourceSize
+        UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
+        guard let ctx = UIGraphicsGetCurrentContext() else { return nil }
+        ctx.setFillColor(UIColor.clear.cgColor)
+        ctx.fill(CGRect(origin: .zero, size: size))
+        ctx.setFillColor(UIColor.green.withAlphaComponent(0.9).cgColor)
+        for box in boxes {
+            let w = CGFloat(box.boundingBox.width) * size.width
+            let h = CGFloat(box.boundingBox.height) * size.height
+            let x = CGFloat(box.boundingBox.origin.x) * size.width
+            let yFromBottom = CGFloat(box.boundingBox.origin.y) * size.height
+            let y = size.height - yFromBottom - h
+            ctx.fill(CGRect(x: x, y: y, width: w, height: h))
+        }
+        let img = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        guard let out = img, let cg = out.cgImage else { return nil }
+        return UIImage(cgImage: cg, scale: 1.0, orientation: .right)
+    }
+
 
     private func captureAndFinish(from frame: ARFrame, depth: ARDepthData) {
         guard !didEmit else { return }
@@ -555,3 +652,4 @@ private enum NutritionDB {
         return (e.kcal * f, e.protein * f, e.carbs * f, e.fat * f)
     }
 }
+

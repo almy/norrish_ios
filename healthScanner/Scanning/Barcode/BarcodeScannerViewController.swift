@@ -8,6 +8,10 @@ class BarcodeScannerViewController: UIViewController {
     private var captureSession: AVCaptureSession?
     private var previewLayer: AVCaptureVideoPreviewLayer?
     
+    // New: debounce/throttle to avoid multiple emissions
+    private var didEmitCode = false
+    private var lastEmittedCode: String?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCamera()
@@ -39,6 +43,8 @@ class BarcodeScannerViewController: UIViewController {
     }
     
     func startScanning() {
+        didEmitCode = false
+        lastEmittedCode = nil
         if captureSession?.isRunning == false {
             DispatchQueue.global(qos: .userInitiated).async {
                 self.captureSession?.startRunning()
@@ -191,7 +197,15 @@ extension BarcodeScannerViewController: AVCaptureMetadataOutputObjectsDelegate {
         if let metadataObject = metadataObjects.first,
            let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
            let stringValue = readableObject.stringValue {
+            // Throttle duplicate emissions
+            if didEmitCode, lastEmittedCode == stringValue {
+                return
+            }
+            didEmitCode = true
+            lastEmittedCode = stringValue
+            // Subtle haptic
             AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+            // Notify delegate once
             delegate?.didScanBarcode(stringValue)
         }
     }
