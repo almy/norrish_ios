@@ -19,6 +19,11 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
     // MARK: UI
     private let preview = PreviewView()
+    // Segmentation/saliency overlay
+    private let segmentationOverlayView = UIImageView()
+    private let overlayQueue = DispatchQueue(label: "segmentation.overlay")
+    private var lastOverlayTime: CFTimeInterval = 0
+    private var overlayBusy = false
     private let hud = HUD()
     private let closeBtn = UIButton(type: .close)
 
@@ -86,6 +91,14 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     private func setupUI() {
         preview.videoGravity = .resizeAspectFill
         view.addSubview(preview)
+        
+        // Add segmentation overlay above preview
+        segmentationOverlayView.translatesAutoresizingMaskIntoConstraints = false
+        segmentationOverlayView.backgroundColor = .clear
+        segmentationOverlayView.contentMode = .scaleAspectFill
+        segmentationOverlayView.isUserInteractionEnabled = false
+        view.addSubview(segmentationOverlayView)
+        
         view.addSubview(hud)
         preview.translatesAutoresizingMaskIntoConstraints = false
         hud.translatesAutoresizingMaskIntoConstraints = false
@@ -94,6 +107,12 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             preview.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             preview.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             preview.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            segmentationOverlayView.topAnchor.constraint(equalTo: view.topAnchor),
+            segmentationOverlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            segmentationOverlayView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            segmentationOverlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
             hud.topAnchor.constraint(equalTo: view.topAnchor),
             hud.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             hud.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -134,19 +153,44 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
     // MARK: Vision
     private func setupVision() {
-        // TODO: Uncomment when FoodSegmentation and FoodClassifier models are added
-        /*
-        if let segModel = try? VNCoreMLModel(for: FoodSegmentation().model) {
+        // Dynamically load compiled Core ML models if present in the app bundle.
+        func loadVNModel(named: String) -> VNCoreMLModel? {
+            if let url = Bundle.main.url(forResource: named, withExtension: "mlmodelc") {
+                do {
+                    let mlModel = try MLModel(contentsOf: url)
+                    let vnModel = try VNCoreMLModel(for: mlModel)
+                    return vnModel
+                } catch {
+                    print("⚠️ [Vision] Failed to load model \(named): \(error)")
+                }
+            } else {
+                print("ℹ️ [Vision] Model \(named).mlmodelc not found in bundle")
+            }
+            return nil
+        }
+
+        if let segModel = loadVNModel(named: "FoodSegmentation") {
             let r = VNCoreMLRequest(model: segModel)
             r.imageCropAndScaleOption = .scaleFill
             segmentationRequest = r
+            print("✅ [Vision] Segmentation model enabled")
         }
-        if let clsModel = try? VNCoreMLModel(for: FoodClassifier().model) {
+        if let clsModel = loadVNModel(named: "FoodClassifier") {
             let r = VNCoreMLRequest(model: clsModel)
             r.imageCropAndScaleOption = .centerCrop
             classificationRequest = r
+            print("✅ [Vision] Classification model enabled")
         }
-        */
+        let segAvailable = (segmentationRequest != nil)
+        let clsAvailable = (classificationRequest != nil)
+        print("🔎 [Vision] Segmentation model available: \(segAvailable ? "YES" : "NO")")
+        print("🔎 [Vision] Classification model available: \(clsAvailable ? "YES" : "NO")")
+    }
+
+    public static func modelsAvailableInBundle() -> (segmentation: Bool, classification: Bool) {
+        let seg = Bundle.main.url(forResource: "FoodSegmentation", withExtension: "mlmodelc") != nil
+        let cls = Bundle.main.url(forResource: "FoodClassifier", withExtension: "mlmodelc") != nil
+        return (segmentation: seg, classification: cls)
     }
 
     // MARK: Capture config
@@ -206,6 +250,24 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     // MARK: Delegates
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard !didEmit, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+
+        // Throttled pre-detection overlay (segmentation or saliency)
+        let nowOverlay = CACurrentMediaTime()
+        if !overlayBusy && (nowOverlay - lastOverlayTime) > 0.20 { // ~5 FPS
+            overlayBusy = true
+            lastOverlayTime = nowOverlay
+            let pb = pixelBuffer
+            overlayQueue.async { [weak self] in
+                guard let self else { return }
+                if let overlayImage = self.generateOverlayImage(from: pb) {
+                    DispatchQueue.main.async {
+                        self.segmentationOverlayView.image = overlayImage
+                        self.segmentationOverlayView.alpha = 0.65
+                    }
+                }
+                self.overlayBusy = false
+            }
+        }
 
         // Camera intrinsics (if present)
         if let att = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, attachmentModeOut: nil) as? NSData {
@@ -354,6 +416,82 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         return (ready, score, hint, depthOK, planeStableOK)
     }
 
+    // MARK: - Overlay generation (segmentation or saliency)
+    private func generateOverlayImage(from pixelBuffer: CVPixelBuffer) -> UIImage? {
+        // Prefer segmentationRequest if available; else fall back to saliency map
+        if let seg = segmentationRequest {
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+            do {
+                try handler.perform([seg])
+                if let mask = (seg.results?.first as? VNPixelBufferObservation)?.pixelBuffer {
+                    return makeColoredOverlay(fromMask: mask)
+                }
+            } catch { /* ignore and fall through */ }
+        }
+        // Saliency fallback (attention-based first, then objectness-based)
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+        do {
+            // 1) Attention-based saliency
+            let attention = VNGenerateAttentionBasedSaliencyImageRequest()
+            try handler.perform([attention])
+            if let obs = attention.results?.first as? VNSaliencyImageObservation,
+               let boxes = obs.salientObjects, !boxes.isEmpty {
+                return makeOverlayFromBoxes(boxes: boxes, sourceSize: pixelBufferSize(pixelBuffer))
+            }
+            // 2) Objectness-based saliency fallback
+            let objectness = VNGenerateObjectnessBasedSaliencyImageRequest()
+            try handler.perform([objectness])
+            if let obs2 = objectness.results?.first as? VNSaliencyImageObservation,
+               let boxes2 = obs2.salientObjects, !boxes2.isEmpty {
+                return makeOverlayFromBoxes(boxes: boxes2, sourceSize: pixelBufferSize(pixelBuffer))
+            }
+        } catch { /* ignore */ }
+        return nil
+    }
+
+    private func pixelBufferSize(_ pb: CVPixelBuffer) -> CGSize {
+        return CGSize(width: CVPixelBufferGetWidth(pb), height: CVPixelBufferGetHeight(pb))
+    }
+
+    private func makeColoredOverlay(fromMask mask: CVPixelBuffer) -> UIImage? {
+        // Convert grayscale mask (0..1) to green RGBA with alpha scaled by intensity
+        let ciMask = CIImage(cvPixelBuffer: mask)
+        // Normalize and tint to green with alpha
+        let green = CIColor(red: 0, green: 1, blue: 0, alpha: 1)
+        let transparent = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+        let colored = ciMask.applyingFilter("CIFalseColor", parameters: [
+            "inputColor0": transparent, // low
+            "inputColor1": green        // high
+        ])
+        // Slight blur to soften edges
+        let blurred = colored.applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 1.0])
+        let context = CIContext(options: [.useSoftwareRenderer: false])
+        guard let cg = context.createCGImage(blurred, from: blurred.extent) else { return nil }
+        // Orient upright portrait
+        return UIImage(cgImage: cg, scale: 1.0, orientation: .right)
+    }
+    
+    private func makeOverlayFromBoxes(boxes: [VNRectangleObservation], sourceSize: CGSize) -> UIImage? {
+        let size = sourceSize
+        UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
+        let ctx = UIGraphicsGetCurrentContext()!
+        ctx.setFillColor(UIColor.clear.cgColor)
+        ctx.fill(CGRect(origin: .zero, size: size))
+        ctx.setFillColor(UIColor.green.withAlphaComponent(0.9).cgColor)
+        for box in boxes {
+            // VN boxes are normalized with origin at bottom-left; convert
+            let w = CGFloat(box.boundingBox.width) * size.width
+            let h = CGFloat(box.boundingBox.height) * size.height
+            let x = CGFloat(box.boundingBox.origin.x) * size.width
+            let yFromBottom = CGFloat(box.boundingBox.origin.y) * size.height
+            let y = size.height - yFromBottom - h
+            let rect = CGRect(x: x, y: y, width: w, height: h)
+            ctx.fill(rect)
+        }
+        let img = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .right) }
+    }
 
     // MARK: Plane fit
     private static func estimatePlane(depth: CVPixelBuffer, intrinsics: simd_float3x3) -> simd_float4? {
@@ -588,3 +726,4 @@ private extension UIImage {
         return normalized ?? self
     }
 }
+

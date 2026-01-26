@@ -186,18 +186,22 @@ struct BarcodeScannerView: View {
                     isPresented: $showingCamera
                 )
             }
+            .onChange(of: showingCamera) { old, new in
+                if new == false { isScanning = false }
+            }
             .onAppear {
                 viewModel.loadRecentScans(from: products)
             }
             .onChange(of: scannedCode) { oldValue, newValue in
-                if let code = newValue {
-                    Task {
-                        if let product = try? await viewModel.fetchProduct(barcode: code, existing: products, modelContext: modelContext) {
-                            selectedProduct = product
-                        }
-                        viewModel.loadRecentScans(from: products)
+                guard let code = newValue else { return }
+                Task {
+                    viewModel.isLoading = true
+                    defer { viewModel.isLoading = false }
+                    if let product = try? await viewModel.fetchProduct(barcode: code, existing: products, modelContext: modelContext) {
+                        selectedProduct = product
+                        showingProductDetail = true
                     }
-                    dismiss()
+                    viewModel.loadRecentScans(from: products)
                 }
             }
         }
@@ -210,3 +214,4 @@ struct BarcodeScannerView: View {
 
 // MARK: - Original Scanner Logic (kept for camera functionality)
 // Camera barcode UIKit controller moved to Scanning/Barcode/BarcodeScannerViewController.swift
+
