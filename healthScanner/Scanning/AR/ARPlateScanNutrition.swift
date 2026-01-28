@@ -61,7 +61,7 @@ public struct ARPlateScanNutrition: Equatable {
 import ARKit
 
 public struct ARPlateScannerView: UIViewControllerRepresentable {
-    public typealias UIViewControllerType = ARPlateScannerViewController
+    public typealias UIViewControllerType = UIViewController
 
     public let onResult: (ARPlateScanNutrition, UIImage) -> Void
     public let onCancel: () -> Void
@@ -72,16 +72,29 @@ public struct ARPlateScannerView: UIViewControllerRepresentable {
         self.onCancel = onCancel
     }
 
-    public func makeUIViewController(context: Context) -> ARPlateScannerViewController {
-        let vc = ARPlateScannerViewController()
-        vc.onResult = { result, image in
-            onResult(result, image)
+    public func makeUIViewController(context: Context) -> UIViewController {
+        // Decide at wrapper level to avoid stacking controllers
+        if ARWorldTrackingConfiguration.isSupported,
+           ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+            // LiDAR path: use ARKit scanner
+            let vc = ARPlateScannerViewController()
+            vc.onResult = { result, image in
+                onResult(result, image)
+            }
+            vc.onCancel = { onCancel() }
+            return vc
+        } else {
+            // Non-LiDAR or AR not supported: use dual-camera fallback directly
+            let fallback = DualCameraPlateScannerViewController()
+            fallback.onResult = { result, image in
+                onResult(result, image)
+            }
+            fallback.onCancel = { onCancel() }
+            return fallback
         }
-        vc.onCancel = { onCancel() }
-        return vc
     }
 
-    public func updateUIViewController(_ uiViewController: ARPlateScannerViewController, context: Context) { }
+    public func updateUIViewController(_ uiViewController: UIViewController, context: Context) { }
 }
 
 #else
@@ -154,3 +167,4 @@ public struct ARPlateScannerView: View {
     } onCancel: {}
     .preferredColorScheme(.dark)
 }
+
