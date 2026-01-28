@@ -261,9 +261,10 @@ final class OpenAIService {
         req.timeoutInterval = 120
         req.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
 
-        // (Optional) log without base64
+        // Log the JSON payload being sent (sanitized to remove base64 image)
         if let pretty = try? JSONSerialization.data(withJSONObject: redactBody(body), options: [.prettyPrinted]),
            let s = String(data: pretty, encoding: .utf8) {
+            print("📤 JSON payload (sanitized):")
             print("🔵 OpenAI Request (\(path)):\n\(s)")
         }
 
@@ -427,3 +428,4 @@ private func redactBody(_ body: [String: Any]) -> [String: Any] {
     }
     return copy
 }
+

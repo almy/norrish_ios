@@ -95,6 +95,35 @@ final class BackendAPIClient {
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
 
         request.httpBody = body
+
+        // DEBUG: Log multipart payload in a readable form
+        #if DEBUG
+        do {
+            let urlString = request.url?.absoluteString ?? "<no url>"
+            let apiKeyHeader = request.value(forHTTPHeaderField: "X-API-Key") ?? ""
+            let contentType = request.value(forHTTPHeaderField: "Content-Type") ?? "multipart/form-data"
+            let authHeader = request.value(forHTTPHeaderField: "Authorization")
+            print("[BackendAPI] Multipart payload:")
+            if let contextJSON {
+                print("[BackendAPI] context JSON: \(truncate(contextJSON))")
+            } else {
+                print("[BackendAPI] context JSON: <none>")
+            }
+            print("[BackendAPI] image bytes: \(imageData.count)")
+
+            // Pseudo curl for multipart (-F fields); file is in-memory, so we show a placeholder
+            print("[BackendAPI] POST multipart curl (pseudo):")
+            var curl = "curl -X POST '\(urlString)' \\\n  -H 'Content-Type: \(contentType)' \\\n  -H 'X-API-Key: \(apiKeyHeader)' \\"
+            if let authHeader { curl += "\n  -H 'Authorization: \(authHeader)' \\\n" }
+            if let contextJSON {
+                let shortCtx = truncate(contextJSON)
+                curl += "  -F 'context=\(shortCtx.replacingOccurrences(of: "'", with: "'\"'\"'"))' \\\n"
+            }
+            curl += "  -F 'image=@\(imageFilename);type=\(mimeType)'"
+            print(curl)
+        }
+        #endif
+
         return try await send(request)
     }
 

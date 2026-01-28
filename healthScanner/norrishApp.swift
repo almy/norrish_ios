@@ -18,6 +18,12 @@ struct norrishApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var localizationManager = LocalizationManager.shared
 
+    init() {
+        // Kick off Core ML model prewarm at app launch (guaranteed entry point)
+        print("🚀 [Prewarm] Launch prewarm from norrishApp.init()")
+        DualCameraPlateScannerViewController.prewarmModels()
+    }
+
     var sharedModelContainer: ModelContainer = {
         do {
             // Explicitly list models to build the container schema
@@ -45,3 +51,4 @@ struct norrishApp: App {
         .modelContainer(sharedModelContainer)
     }
 }
+

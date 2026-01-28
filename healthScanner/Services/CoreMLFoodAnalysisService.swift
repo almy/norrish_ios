@@ -54,6 +54,15 @@ final class CoreMLFoodAnalysisService: ObservableObject {
     // Model info
     private let classificationModelName = "Food101_Classification_fp16"
     private let segmentationModelName = "UECFoodPix_Seg_fp16"
+    
+    // Prefer compiled models (.mlmodelc), fall back to packages (.mlpackage)
+    private func findModelURL(named baseName: String, in bundle: Bundle = .main) -> URL? {
+        if let url = bundle.url(forResource: baseName, withExtension: "mlmodelc") { return url }
+        if let url = bundle.url(forResource: baseName, withExtension: "mlmodelc", subdirectory: "CoreML") { return url }
+        if let url = bundle.url(forResource: baseName, withExtension: "mlpackage") { return url }
+        if let url = bundle.url(forResource: baseName, withExtension: "mlpackage", subdirectory: "CoreML") { return url }
+        return nil
+    }
 
     private init() {
         initializeModels()
@@ -90,26 +99,20 @@ final class CoreMLFoodAnalysisService: ObservableObject {
     private func loadClassificationModel() async {
         print("🔍 Looking for classification model: \(classificationModelName)")
 
-        // Debug: List all available .mlpackage resources
-        if let modelPaths = Bundle.main.paths(forResourcesOfType: "mlpackage", inDirectory: nil) {
+        // Diagnostics: list compiled and package models present
+        let compiled = Bundle.main.paths(forResourcesOfType: "mlmodelc", inDirectory: nil)
+        if !compiled.isEmpty {
+            print("📦 Available .mlmodelc files in bundle:")
+            compiled.forEach { print("  - \($0)") }
+        }
+        let packages = Bundle.main.paths(forResourcesOfType: "mlpackage", inDirectory: nil)
+        if !packages.isEmpty {
             print("📦 Available .mlpackage files in bundle:")
-            for path in modelPaths {
-                print("  - \(URL(fileURLWithPath: path).lastPathComponent)")
-            }
+            packages.forEach { print("  - \($0)") }
         }
 
-        guard let modelURL = Bundle.main.url(forResource: classificationModelName, withExtension: "mlpackage") else {
+        guard let modelURL = findModelURL(named: classificationModelName) else {
             print("❌ Classification model not found: \(classificationModelName)")
-            print("🔍 Trying alternative path lookup...")
-
-            // Try alternative path in CoreML directory
-            if let altURL = Bundle.main.url(forResource: classificationModelName, withExtension: "mlpackage", subdirectory: "CoreML") {
-                print("✅ Found classification model in CoreML subdirectory")
-                await loadModel(at: altURL, isClassification: true)
-                return
-            }
-
-            print("❌ Classification model not found in any location")
             return
         }
 
@@ -125,10 +128,10 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
             if isClassification {
                 classificationModel = model
-                print("✅ Classification model loaded successfully from: \(url.lastPathComponent)")
+                print("✅ Classification model loaded successfully from: \(url.lastPathComponent) (\(url.pathExtension))")
             } else {
                 segmentationModel = model
-                print("✅ Segmentation model loaded successfully from: \(url.lastPathComponent)")
+                print("✅ Segmentation model loaded successfully from: \(url.lastPathComponent) (\(url.pathExtension))")
             }
         } catch {
             let modelType = isClassification ? "classification" : "segmentation"
@@ -139,18 +142,8 @@ final class CoreMLFoodAnalysisService: ObservableObject {
     private func loadSegmentationModel() async {
         print("🔍 Looking for segmentation model: \(segmentationModelName)")
 
-        guard let modelURL = Bundle.main.url(forResource: segmentationModelName, withExtension: "mlpackage") else {
+        guard let modelURL = findModelURL(named: segmentationModelName) else {
             print("❌ Segmentation model not found: \(segmentationModelName)")
-            print("🔍 Trying alternative path lookup...")
-
-            // Try alternative path in CoreML directory
-            if let altURL = Bundle.main.url(forResource: segmentationModelName, withExtension: "mlpackage", subdirectory: "CoreML") {
-                print("✅ Found segmentation model in CoreML subdirectory")
-                await loadModel(at: altURL, isClassification: false)
-                return
-            }
-
-            print("❌ Segmentation model not found in any location")
             return
         }
 

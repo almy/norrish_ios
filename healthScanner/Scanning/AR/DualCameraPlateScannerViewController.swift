@@ -6,8 +6,92 @@ import AVFoundation
 import Vision
 import CoreML
 import CoreImage
+import CoreVideo
 import simd
 import SwiftUI
+
+// MARK: - Detection Model Provider (prewarm support)
+fileprivate final class DetectionModelProvider {
+    static let shared = DetectionModelProvider()
+    private let queue = DispatchQueue(label: "detection.model.loader")
+    private var detectionRequest: VNCoreMLRequest?
+    private var loading = false
+    private var completions: [(VNCoreMLRequest?) -> Void] = []
+
+    func preload() {
+        print("🔸 [Vision] Prewarm requested")
+        getDetectionRequest { _ in }
+    }
+
+    func getDetectionRequest(completion: @escaping (VNCoreMLRequest?) -> Void) {
+        queue.async {
+            if let req = self.detectionRequest {
+                print("⚡️ [Vision] Using cached detection request")
+                DispatchQueue.main.async { completion(req) }
+                return
+            }
+            self.completions.append(completion)
+            if self.loading { return }
+            self.loading = true
+            let start = CACurrentMediaTime()
+            let req = self.loadDetectionRequest()
+            self.detectionRequest = req
+            let ms = Int((CACurrentMediaTime() - start) * 1000)
+            print("✅ [Vision] Prewarm complete in \(ms) ms (success: \(req != nil))")
+            let callbacks = self.completions
+            self.completions.removeAll()
+            self.loading = false
+            for cb in callbacks {
+                DispatchQueue.main.async { cb(req) }
+            }
+        }
+    }
+
+    private func loadDetectionRequest() -> VNCoreMLRequest? {
+        guard let url = findModelURL(named: "yolov8x-oiv7") else {
+            print("ℹ️ [Vision] YOLOv8 model not available")
+            logBundleModels()
+            return nil
+        }
+        do {
+            let cfg = MLModelConfiguration(); cfg.computeUnits = .all
+            let ml = try MLModel(contentsOf: url, configuration: cfg)
+            if let vn = try? VNCoreMLModel(for: ml) {
+                let req = VNCoreMLRequest(model: vn)
+                req.imageCropAndScaleOption = .scaleFill
+                print("✅ [Vision] YOLOv8 detection model enabled (\(url.pathExtension)) [prewarmed]")
+                return req
+            } else {
+                print("⚠️ [Vision] Could not wrap model in VNCoreMLModel")
+            }
+        } catch {
+            print("⚠️ [Vision] Failed to load YOLOv8 model: \(error)")
+        }
+        logBundleModels()
+        return nil
+    }
+
+    private func findModelURL(named baseName: String, bundle: Bundle = .main) -> URL? {
+        if let url = bundle.url(forResource: baseName, withExtension: "mlmodelc") { return url }
+        if let url = bundle.url(forResource: baseName, withExtension: "mlmodelc", subdirectory: "CoreML") { return url }
+        if let url = bundle.url(forResource: baseName, withExtension: "mlpackage") { return url }
+        if let url = bundle.url(forResource: baseName, withExtension: "mlpackage", subdirectory: "CoreML") { return url }
+        return nil
+    }
+
+    private func logBundleModels() {
+        let compiled = Bundle.main.paths(forResourcesOfType: "mlmodelc", inDirectory: nil)
+        if !compiled.isEmpty {
+            print("📦 .mlmodelc in bundle:")
+            compiled.forEach { print("  - \($0)") }
+        }
+        let packages = Bundle.main.paths(forResourcesOfType: "mlpackage", inDirectory: nil)
+        if !packages.isEmpty {
+            print("📦 .mlpackage in bundle:")
+            packages.forEach { print("  - \($0)") }
+        }
+    }
+}
 
 public final class DualCameraPlateScannerViewController: UIViewController,
     AVCaptureVideoDataOutputSampleBufferDelegate,
@@ -17,15 +101,34 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     public var onResult: ((ARPlateScanNutrition, UIImage) -> Void)?
     public var onCancel: (() -> Void)?
 
+    // MARK: Prewarming
+    public static func prewarmModels() {
+        DetectionModelProvider.shared.preload()
+    }
+    public static func prewarmModels(completion: @escaping (Bool) -> Void) {
+        DetectionModelProvider.shared.getDetectionRequest { req in
+            completion(req != nil)
+        }
+    }
+
     // MARK: UI
     private let preview = PreviewView()
+    private var previewSize: CGSize = .zero
     // Segmentation/saliency overlay
     private let segmentationOverlayView = UIImageView()
     private let overlayQueue = DispatchQueue(label: "segmentation.overlay")
     private var lastOverlayTime: CFTimeInterval = 0
     private var overlayBusy = false
+    private var didLogDetectionResultType = false
     private let hud = HUD()
     private let closeBtn = UIButton(type: .close)
+    private let captureBtn = UIButton(type: .custom)
+    private var isReadyToCapture = false
+    private var pendingUserCapture = false
+    private var didShowFirstFrame = false
+    private var lastVideoPixelBuffer: CVPixelBuffer?
+    private var lastEffectiveDepthBuffer: CVPixelBuffer?
+    private var lastPlaneFit: simd_float4?
 
     // MARK: Capture
     private let session = AVCaptureSession()
@@ -46,10 +149,21 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         )
         return m
     }()
+    // Fused depth tracking (monocular path)
+    private var lastDepthData: AVDepthData?
+    private var lastDepthTimestamp: CMTime = .invalid
+    private var fusedDepthMap: CVPixelBuffer?
+    private var previousFusedDepthMap: CVPixelBuffer?
 
     // MARK: Vision (optional)
-    private var segmentationRequest: VNCoreMLRequest?
-    private var classificationRequest: VNCoreMLRequest?
+    // Load ML models off the main thread to avoid blocking UI
+    private func setupVisionAsync() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.setupVision()
+        }
+    }
+    
+    private var detectionRequest: VNCoreMLRequest?
 
     // Plane stability
     private var planeHistory: [simd_float4] = []
@@ -70,6 +184,17 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     private var stableFrameCount: Int = 0
     private var hapticLevel: Int = 0 // 0: none, 1: mid, 2: near-ready
 
+    // Progress smoothing & capture window
+    private var lastDisplayedProgress: CGFloat = 0
+    private var nearReadyFrameCount: Int = 0
+    private let requiredNearReadyFrames: Int = 10 // ~0.6s at ~16fps
+    private var nearReadyStartTime: CFTimeInterval = 0
+    private let nearReadyTimeout: CFTimeInterval = 4.0 // seconds
+
+    // Content gating
+    private var contentStableCount: Int = 0
+    private let requiredContentStableFrames: Int = 8 // ~0.5s at ~15fps
+
     // No local nutrition DB here; AI handles nutrition downstream
 
     public override func viewDidLoad() {
@@ -77,20 +202,33 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         view.backgroundColor = .black
         setupUI()
         addRingOverlay()
-        setupVision()
+        setupVisionAsync()
         configureSession()
-        session.startRunning()
+        // Removed session.startRunning() here as requested
+    }
+    
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.session.startRunning()
+        }
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         session.stopRunning()
     }
+    
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        self.previewSize = self.view.bounds.size
+    }
 
     // MARK: UI
     private func setupUI() {
         preview.videoGravity = .resizeAspectFill
         view.addSubview(preview)
+        preview.alpha = 0
         
         // Add segmentation overlay above preview
         segmentationOverlayView.translatesAutoresizingMaskIntoConstraints = false
@@ -118,6 +256,8 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             hud.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hud.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+        // Cache preview size for background-thread computations
+        self.previewSize = self.view.bounds.size
 
         closeBtn.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
         closeBtn.translatesAutoresizingMaskIntoConstraints = false
@@ -126,6 +266,22 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             closeBtn.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             closeBtn.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12)
         ])
+        
+        // Capture button (user-initiated)
+        captureBtn.translatesAutoresizingMaskIntoConstraints = false
+        captureBtn.isEnabled = false
+        captureBtn.alpha = 0.5
+        captureBtn.backgroundColor = .white
+        captureBtn.layer.cornerRadius = 40
+        captureBtn.addTarget(self, action: #selector(captureTapped), for: .touchUpInside)
+        view.addSubview(captureBtn)
+        NSLayoutConstraint.activate([
+            captureBtn.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            captureBtn.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
+            captureBtn.widthAnchor.constraint(equalToConstant: 80),
+            captureBtn.heightAnchor.constraint(equalToConstant: 80)
+        ])
+        
         hud.setStatus("Move slowly around the plate… (non-LiDAR mode)")
     }
     
@@ -133,6 +289,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     private func addRingOverlay() {
         let host = ringOverlayHost
         host.view.backgroundColor = .clear
+        host.view.isUserInteractionEnabled = false
         host.view.translatesAutoresizingMaskIntoConstraints = false
         addChild(host)
         view.addSubview(host.view)
@@ -143,6 +300,11 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             host.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         host.didMove(toParent: self)
+        view.bringSubviewToFront(segmentationOverlayView)
+        // Ensure buttons are above the overlay to receive touches
+        view.bringSubviewToFront(closeBtn)
+        view.bringSubviewToFront(captureBtn)
+        view.bringSubviewToFront(hud)
         // default ring position: center
         hudModel.ringCenter = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
         hudModel.ringSize = min(view.bounds.width, view.bounds.height) * 0.48
@@ -150,47 +312,21 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
 
     @objc private func closeTapped() { onCancel?(); dismiss(animated: true) }
+    @objc private func captureTapped() {
+        pendingUserCapture = true
+    }
 
     // MARK: Vision
     private func setupVision() {
-        // Dynamically load compiled Core ML models if present in the app bundle.
-        func loadVNModel(named: String) -> VNCoreMLModel? {
-            if let url = Bundle.main.url(forResource: named, withExtension: "mlmodelc") {
-                do {
-                    let mlModel = try MLModel(contentsOf: url)
-                    let vnModel = try VNCoreMLModel(for: mlModel)
-                    return vnModel
-                } catch {
-                    print("⚠️ [Vision] Failed to load model \(named): \(error)")
-                }
-            } else {
-                print("ℹ️ [Vision] Model \(named).mlmodelc not found in bundle")
+        DetectionModelProvider.shared.getDetectionRequest { [weak self] req in
+            guard let self else { return }
+            self.detectionRequest = req
+            let detAvailable = (req != nil) ? "YES" : "NO"
+            print("🔎 [Vision] Detection model available: \(detAvailable)")
+            if req != nil {
+                print("🔧 [Vision] Detection request configured; verifying observation type on first inference…")
             }
-            return nil
         }
-
-        if let segModel = loadVNModel(named: "FoodSegmentation") {
-            let r = VNCoreMLRequest(model: segModel)
-            r.imageCropAndScaleOption = .scaleFill
-            segmentationRequest = r
-            print("✅ [Vision] Segmentation model enabled")
-        }
-        if let clsModel = loadVNModel(named: "FoodClassifier") {
-            let r = VNCoreMLRequest(model: clsModel)
-            r.imageCropAndScaleOption = .centerCrop
-            classificationRequest = r
-            print("✅ [Vision] Classification model enabled")
-        }
-        let segAvailable = (segmentationRequest != nil)
-        let clsAvailable = (classificationRequest != nil)
-        print("🔎 [Vision] Segmentation model available: \(segAvailable ? "YES" : "NO")")
-        print("🔎 [Vision] Classification model available: \(clsAvailable ? "YES" : "NO")")
-    }
-
-    public static func modelsAvailableInBundle() -> (segmentation: Bool, classification: Bool) {
-        let seg = Bundle.main.url(forResource: "FoodSegmentation", withExtension: "mlmodelc") != nil
-        let cls = Bundle.main.url(forResource: "FoodClassifier", withExtension: "mlmodelc") != nil
-        return (segmentation: seg, classification: cls)
     }
 
     // MARK: Capture config
@@ -250,24 +386,20 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     // MARK: Delegates
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard !didEmit, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-
-        // Throttled pre-detection overlay (segmentation or saliency)
-        let nowOverlay = CACurrentMediaTime()
-        if !overlayBusy && (nowOverlay - lastOverlayTime) > 0.20 { // ~5 FPS
-            overlayBusy = true
-            lastOverlayTime = nowOverlay
-            let pb = pixelBuffer
-            overlayQueue.async { [weak self] in
+        
+        if !didShowFirstFrame {
+            didShowFirstFrame = true
+            DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                if let overlayImage = self.generateOverlayImage(from: pb) {
-                    DispatchQueue.main.async {
-                        self.segmentationOverlayView.image = overlayImage
-                        self.segmentationOverlayView.alpha = 0.65
-                    }
-                }
-                self.overlayBusy = false
+                UIView.animate(withDuration: 0.25) { self.preview.alpha = 1 }
             }
         }
+        self.lastVideoPixelBuffer = pixelBuffer
+
+        // Determine freshness of the last fused depth relative to this video frame
+        let videoTS = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        let depthForFrame: CVPixelBuffer? = isDepthFresh(for: videoTS) ? fusedDepthMap : nil
+        let effectiveDepth: CVPixelBuffer? = depthForFrame
 
         // Camera intrinsics (if present)
         if let att = CMGetAttachment(sampleBuffer, key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix, attachmentModeOut: nil) as? NSData {
@@ -276,32 +408,136 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
         // Vision (optional)
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
-        var mask: CVPixelBuffer? = nil
         var label = "food"
         var conf: Float = 0.5
+        var detections: [VNRecognizedObjectObservation] = []
         do {
-            if let seg = segmentationRequest {
-                try handler.perform([seg])
-                mask = (seg.results?.first as? VNPixelBufferObservation)?.pixelBuffer
-            }
-            if let cls = classificationRequest {
-                try handler.perform([cls])
-                if let top = cls.results?.first as? VNClassificationObservation {
-                    label = top.identifier; conf = top.confidence
+            if let det = detectionRequest {
+                try handler.perform([det])
+                if !didLogDetectionResultType {
+                    let types = (det.results ?? []).map { String(describing: type(of: $0)) }
+                    if let _ = det.results?.first as? VNRecognizedObjectObservation {
+                        print("✅ [YOLO] Vision is returning VNRecognizedObjectObservation – object detector mode ENABLED")
+                    } else if let _ = det.results?.first as? VNCoreMLFeatureValueObservation {
+                        print("⚠️ [YOLO] Vision returned VNCoreMLFeatureValueObservation – manual decoding required (object detector mode NOT enabled)")
+                    } else {
+                        print("ℹ️ [YOLO] Vision results types: \(types)")
+                    }
+                    print("[YOLO] VNCoreMLRequest results types: \(types)")
+                    didLogDetectionResultType = true
+                }
+                let objs = det.results as? [VNRecognizedObjectObservation] ?? []
+                detections = objs
+                if let best = objs.max(by: { $0.confidence < $1.confidence }),
+                   let top = best.labels.first {
+                    label = top.identifier
+                    conf = top.confidence
                 }
             }
         } catch { /* ignore */ }
 
+        // Throttled overlay update (prefer detection, fallback to saliency/mask via helper)
+        let nowOverlay = CACurrentMediaTime()
+        if !overlayBusy && (nowOverlay - lastOverlayTime) > 0.20 {
+            overlayBusy = true
+            lastOverlayTime = nowOverlay
+            overlayQueue.async { [weak self] in
+                guard let self else { return }
+                let overlayImage = self.generateOverlayImage(from: pixelBuffer)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    self.segmentationOverlayView.image = overlayImage
+                    self.segmentationOverlayView.alpha = (overlayImage != nil) ? 0.35 : 0.0
+                    self.segmentationOverlayView.isHidden = (overlayImage == nil)
+                }
+                self.overlayBusy = false
+            }
+        }
+
+        func detectionCoverage(_ obs: [VNRecognizedObjectObservation]) -> Float {
+            guard !obs.isEmpty else { return 0 }
+            let size = self.pixelBufferSize(pixelBuffer)
+            var totalArea: CGFloat = 0
+            for o in obs {
+                let bb = o.boundingBox
+                totalArea += (CGFloat(bb.width) * size.width) * (CGFloat(bb.height) * size.height)
+            }
+            let frameArea = max(1, size.width * size.height)
+            let cov = totalArea / frameArea
+            return Float(min(1.0, max(0.0, cov)))
+        }
+        let coverage: Float = detectionCoverage(detections)
+
+        var ringCoverage: CGFloat = 0
+        let viewSize = self.previewSize
+        let pbSize = self.pixelBufferSize(pixelBuffer)
+        let scale = max(viewSize.width / pbSize.width, viewSize.height / pbSize.height)
+        let displayedW = pbSize.width * scale
+        let displayedH = pbSize.height * scale
+        let offsetX = (viewSize.width - displayedW) * 0.5
+        let offsetY = (viewSize.height - displayedH) * 0.5
+        var ringCenter = CGPoint.zero
+        var ringSize: CGFloat = 0
+        DispatchQueue.main.sync {
+            ringCenter = self.hudModel.ringCenter
+            ringSize = self.hudModel.ringSize
+        }
+        let padFactor: CGFloat = 1.0
+        let ringRectView = CGRect(x: ringCenter.x - (ringSize*padFactor)/2,
+                                  y: ringCenter.y - (ringSize*padFactor)/2,
+                                  width: ringSize*padFactor,
+                                  height: ringSize*padFactor)
+        if !detections.isEmpty {
+            for o in detections {
+                let bb = o.boundingBox
+                let w = CGFloat(bb.width) * pbSize.width
+                let h = CGFloat(bb.height) * pbSize.height
+                let x = CGFloat(bb.origin.x) * pbSize.width
+                let yFromBottom = CGFloat(bb.origin.y) * pbSize.height
+                let y = pbSize.height - yFromBottom - h
+                let mapped = CGRect(
+                    x: offsetX + (x * scale),
+                    y: offsetY + (y * scale),
+                    width: w * scale,
+                    height: h * scale
+                )
+                let inter = mapped.intersection(ringRectView)
+                if inter.width > 0 && inter.height > 0 {
+                    let cov = inter.width * inter.height / max(1, ringRectView.width * ringRectView.height)
+                    ringCoverage = max(ringCoverage, cov)
+                }
+            }
+        }
+
+        // Texture/edge-density veto on the cropped ring image
+        var textureOK = false
+        do {
+            // Build a temporary UIImage from the current pixelBuffer and crop to ring
+            if let full = UIImage(pixelBuffer: pixelBuffer, orientation: .right) {
+                let ringCropped = self.cropToRing(full)
+                let density = edgeDensity(in: ringCropped)
+                textureOK = density > 0.10 // tune threshold as needed
+            }
+        }
+
+        // Combine gating: require coverage, ring overlap, and texture
+        let coverageOK = coverage > 0.20
+        let ringOK = ringCoverage > 0.50
+        let contentOK = coverageOK && ringOK && textureOK
+        if contentOK { contentStableCount += 1 } else { contentStableCount = 0 }
+
         // Plane fit from latest depth (if any)
         var plane: simd_float4? = nil
-        if let d = latestDepthMap { plane = Self.estimatePlane(depth: d, intrinsics: latestIntrinsics) }
+        if let d = effectiveDepth { plane = Self.estimatePlane(depth: d, intrinsics: latestIntrinsics) }
+        self.lastEffectiveDepthBuffer = effectiveDepth
+        self.lastPlaneFit = plane
         if let p = plane {
             planeHistory.append(p)
             if planeHistory.count > 20 { planeHistory.removeFirst() }
         }
 
         // Readiness
-        let r = readiness(depth: latestDepthMap, planeHistory: planeHistory)
+        let r = readiness(depth: effectiveDepth, planeHistory: planeHistory)
 
         // Update ring progress; if no depth, advance a time-based fallback
         let now = CACurrentMediaTime()
@@ -312,7 +548,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         // Advance a time-based fallback so progress completes even without perfect depth
         let ramp = Float(dt / 2.0) // ~2s to full
         fallbackProgress = min(1.0, fallbackProgress + ramp)
-        if latestDepthMap != nil {
+        if effectiveDepth != nil {
             // With depth, still allow fallback to drive to green if score is low
             progress = max(progress, min(1.0, fallbackProgress * 0.95))
         } else {
@@ -321,10 +557,54 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         if progress >= 0.99 { stableFrameCount += 1 } else { stableFrameCount = 0 }
         ready = ready || (stableFrameCount >= 4)
 
+        // Smooth progress to avoid oscillation and cap at 0.99 until finalize
+        let smoothedProgress = max(lastDisplayedProgress, CGFloat(progress))
+        let cappedProgress = min(smoothedProgress, 0.99)
+        lastDisplayedProgress = cappedProgress
+
+        // Near-ready window with dwell and timeout
+        let nearReadyThreshold: Float = 0.95
+        let isNearReady = progress >= nearReadyThreshold && (contentStableCount >= requiredContentStableFrames)
+        if isNearReady {
+            nearReadyFrameCount += 1
+            if nearReadyStartTime == 0 { nearReadyStartTime = CACurrentMediaTime() }
+        } else {
+            // gentle decay instead of hard reset
+            nearReadyFrameCount = max(0, nearReadyFrameCount - 1)
+            if nearReadyFrameCount == 0 { nearReadyStartTime = 0 }
+        }
+        let captureWindowActive = nearReadyFrameCount >= requiredNearReadyFrames
+        let timedOut: Bool = (nearReadyStartTime > 0) && ((CACurrentMediaTime() - nearReadyStartTime) > nearReadyTimeout)
+
+        // Combine: accept ready or capture window or timeout (best-effort)
+        ready = ready || captureWindowActive || timedOut
+
+        // Combine with content gating: require content to be valid for several frames
+        let contentReady = contentStableCount >= requiredContentStableFrames
+        // ready = ready && contentReady // moved into hint logic
+
         DispatchQueue.main.async {
-            self.hudModel.progress = CGFloat(progress)
-            self.hudModel.hint = "\(Int(progress*100))% – " + (ready ? "Hold still… capturing" : r.hint)
-            self.hudModel.hasDepth = (self.latestDepthMap != nil)
+            self.hudModel.progress = cappedProgress
+            // Specific, actionable hinting
+            let contentReady = (self.contentStableCount >= self.requiredContentStableFrames)
+            var hintText: String
+            if !contentReady {
+                // Determine which sub-condition is failing if possible
+                var parts: [String] = []
+                if !(coverage > 0.20) { parts.append("Fill the ring with the plate") }
+                if !(ringCoverage > 0.50) { parts.append("Center the plate in the ring") }
+                if !textureOK { parts.append("Point at food (not flat texture)") }
+                hintText = parts.first ?? "Center the plate and fill the ring"
+            } else if !r.planeStableOK {
+                hintText = "Hold the phone steady"
+            } else if !r.depthOK {
+                hintText = "Move closer or add light"
+            } else {
+                hintText = ready ? "Ready — tap shutter" : r.hint
+            }
+            let clsSuffix = conf > 0 ? " • \(label) \(Int(conf*100))%" : ""
+            self.hudModel.hint = "\(Int(progress*100))% – \(hintText)\(clsSuffix)"
+            self.hudModel.hasDepth = (effectiveDepth != nil)
             self.hudModel.planeStable = r.planeStableOK
         }
         // Haptics when crossing thresholds
@@ -336,19 +616,35 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             hapticLevel = 2
         }
         // Debug progress
-        if Int(progress*100) % 10 == 0 { print("🔵 [DualCam] progress=\(String(format: "%.2f", progress)) ready=\(ready) depth=\(latestDepthMap != nil)") }
+        if Int(progress*100) % 10 == 0 { print("🔵 [DualCam] progress=\(String(format: "%.2f", progress)) ready=\(ready) depth=\(effectiveDepth != nil)") }
 
-        guard ready else { return }
+        // Update capture button state based on readiness and content gating
+        let enableCapture = ready
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.isReadyToCapture = enableCapture
+            self.captureBtn.isEnabled = enableCapture
+            self.captureBtn.alpha = enableCapture ? 1.0 : 0.5
+        }
+
+        // Only capture when user taps the button and we are ready
+        guard enableCapture && pendingUserCapture else { return }
+        pendingUserCapture = false
 
         // Finalize - build full image first
         guard let fullImage = UIImage(pixelBuffer: pixelBuffer, orientation: .right) else {
             return
         }
         let croppedImage = cropToRing(fullImage)
-        let volML = Self.integrateVolume(depth: latestDepthMap, mask: mask, intrinsics: latestIntrinsics, plane: planeHistory.last)
-        print("🟢 [DualCam] depth=\(latestDepthMap != nil ? "yes" : "no"), volumeML=\(String(format: "%.1f", volML))")
-        // Do not estimate nutrition locally; let OpenAI handle macros downstream
+        let volML = Self.integrateVolume(depth: effectiveDepth, mask: nil, intrinsics: latestIntrinsics, plane: planeHistory.last)
+        print("🟢 [DualCam] depth=\(effectiveDepth != nil ? "yes" : "no"), volumeML=\(String(format: "%.1f", volML))")
         let mass: Float = 0
+
+        DispatchQueue.main.async { [weak self] in
+            self?.hudModel.progress = 1.0
+            self?.hudModel.hint = "100% – Capturing…"
+        }
+
         let result = ARPlateScanNutrition(
             label: label,
             confidence: conf,
@@ -368,11 +664,44 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     }
 
     public func depthDataOutput(_ output: AVCaptureDepthDataOutput, didOutput depthData: AVDepthData, timestamp: CMTime, connection: AVCaptureConnection) {
-        let converted = depthData.converting(toDepthDataType: kCVPixelFormatType_DepthFloat32)
-        latestDepthMap = converted.depthDataMap
-        let w = CVPixelBufferGetWidth(latestDepthMap!)
-        let h = CVPixelBufferGetHeight(latestDepthMap!)
-        print("🟢 [DualCam] depth map received: \(w)x\(h)")
+        // 1) Normalize to DepthFloat32 and portrait EXIF orientation to match our video/UI path
+        var data = depthData
+        let targetFormat = kCVPixelFormatType_DepthFloat32
+        if data.depthDataType != targetFormat {
+            data = data.converting(toDepthDataType: targetFormat)
+        }
+        // NOTE: Orientation alignment skipped to avoid SDK throwing variants; metrics use calibration instead
+
+        // 2) Fuse with previous (simple temporal smoothing) and replace depth map
+        let currentMap = data.depthDataMap
+        guard let fusedPB = Self.fuseDepth(current: currentMap, previous: previousFusedDepthMap) else {
+            // Fallback: no fusion possible, keep current
+            lastDepthData = data
+            fusedDepthMap = currentMap
+            previousFusedDepthMap = currentMap
+            lastDepthTimestamp = timestamp
+            // Prefer calibration intrinsics from depth data when available
+            if let calib = data.cameraCalibrationData {
+                latestIntrinsics = calib.intrinsicMatrix
+            }
+            let w = CVPixelBufferGetWidth(currentMap)
+            let h = CVPixelBufferGetHeight(currentMap)
+            print("🟢 [DualCam] depth map received (no fusion): \(w)x\(h)")
+            return
+        }
+
+        // Preserve original depth data for calibration; use fused pixel buffer for metrics
+        lastDepthData = data
+        fusedDepthMap = fusedPB
+        previousFusedDepthMap = fusedPB
+        lastDepthTimestamp = timestamp
+        latestDepthMap = fusedPB // keep legacy property updated for debugging/UI
+        if let calib = data.cameraCalibrationData {
+            latestIntrinsics = calib.intrinsicMatrix
+        }
+        let w = CVPixelBufferGetWidth(fusedPB)
+        let h = CVPixelBufferGetHeight(fusedPB)
+        print("🟢 [DualCam] fused depth map: \(w)x\(h)")
     }
 
     // MARK: Readiness
@@ -418,13 +747,24 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
     // MARK: - Overlay generation (segmentation or saliency)
     private func generateOverlayImage(from pixelBuffer: CVPixelBuffer) -> UIImage? {
-        // Prefer segmentationRequest if available; else fall back to saliency map
-        if let seg = segmentationRequest {
+        if let det = detectionRequest {
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
             do {
-                try handler.perform([seg])
-                if let mask = (seg.results?.first as? VNPixelBufferObservation)?.pixelBuffer {
-                    return makeColoredOverlay(fromMask: mask)
+                try handler.perform([det])
+                if !didLogDetectionResultType {
+                    let types = (det.results ?? []).map { String(describing: type(of: $0)) }
+                    if let _ = det.results?.first as? VNRecognizedObjectObservation {
+                        print("✅ [YOLO] Vision is returning VNRecognizedObjectObservation – object detector mode ENABLED")
+                    } else if let _ = det.results?.first as? VNCoreMLFeatureValueObservation {
+                        print("⚠️ [YOLO] Vision returned VNCoreMLFeatureValueObservation – manual decoding required (object detector mode NOT enabled)")
+                    } else {
+                        print("ℹ️ [YOLO] Vision results types: \(types)")
+                    }
+                    print("[YOLO] VNCoreMLRequest results types: \(types)")
+                    didLogDetectionResultType = true
+                }
+                if let objs = det.results as? [VNRecognizedObjectObservation], !objs.isEmpty {
+                    return makeOverlayFromDetections(objs: objs, sourceSize: pixelBufferSize(pixelBuffer))
                 }
             } catch { /* ignore and fall through */ }
         }
@@ -477,7 +817,8 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         let ctx = UIGraphicsGetCurrentContext()!
         ctx.setFillColor(UIColor.clear.cgColor)
         ctx.fill(CGRect(origin: .zero, size: size))
-        ctx.setFillColor(UIColor.green.withAlphaComponent(0.9).cgColor)
+        ctx.setStrokeColor(UIColor.green.withAlphaComponent(0.9).cgColor)
+        ctx.setLineWidth(2.0)
         for box in boxes {
             // VN boxes are normalized with origin at bottom-left; convert
             let w = CGFloat(box.boundingBox.width) * size.width
@@ -486,8 +827,68 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             let yFromBottom = CGFloat(box.boundingBox.origin.y) * size.height
             let y = size.height - yFromBottom - h
             let rect = CGRect(x: x, y: y, width: w, height: h)
-            ctx.fill(rect)
+            ctx.stroke(rect)
         }
+        let img = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .right) }
+    }
+
+    private func makeOverlayFromDetections(objs: [VNRecognizedObjectObservation], sourceSize: CGSize) -> UIImage? {
+        let size = sourceSize
+        UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
+        guard let ctx = UIGraphicsGetCurrentContext() else { return nil }
+        // Clear background
+        ctx.setFillColor(UIColor.clear.cgColor)
+        ctx.fill(CGRect(origin: .zero, size: size))
+
+        // Box style
+        let boxColor = UIColor.systemGreen.withAlphaComponent(0.95)
+        ctx.setStrokeColor(boxColor.cgColor)
+        ctx.setLineWidth(2.0)
+
+        // Text attributes
+        let font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        let textColor = UIColor.white
+        let pad: CGFloat = 6
+
+        for o in objs {
+            let bb = o.boundingBox
+            let w = CGFloat(bb.width) * size.width
+            let h = CGFloat(bb.height) * size.height
+            let x = CGFloat(bb.origin.x) * size.width
+            let yFromBottom = CGFloat(bb.origin.y) * size.height
+            let y = size.height - yFromBottom - h
+            let rect = CGRect(x: x, y: y, width: w, height: h)
+
+            // Draw box
+            ctx.stroke(rect)
+
+            // Build label string: "class 87%"
+            let labelText: String
+            if let top = o.labels.first {
+                labelText = "\(top.identifier) \(Int(top.confidence * 100))%"
+            } else {
+                labelText = "object"
+            }
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: textColor
+            ]
+            let textSize = (labelText as NSString).size(withAttributes: attrs)
+            let textRect = CGRect(x: rect.minX, y: max(0, rect.minY - textSize.height - 2*pad), width: textSize.width + 2*pad, height: textSize.height + 2*pad)
+
+            // Draw label background
+            let bgPath = UIBezierPath(roundedRect: textRect, cornerRadius: 6)
+            ctx.setFillColor(UIColor.black.withAlphaComponent(0.6).cgColor)
+            ctx.addPath(bgPath.cgPath)
+            ctx.fillPath()
+
+            // Draw text
+            let drawPoint = CGPoint(x: textRect.minX + pad, y: textRect.minY + pad)
+            (labelText as NSString).draw(at: drawPoint, withAttributes: attrs)
+        }
+
         let img = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
         return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .right) }
@@ -605,6 +1006,63 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         }
         return Float(volM3 * 1_000_000.0) // m^3 -> ml
     }
+
+    // MARK: - Monocular depth fusion helpers
+    private static func fuseDepth(current: CVPixelBuffer, previous: CVPixelBuffer?) -> CVPixelBuffer? {
+        let w = CVPixelBufferGetWidth(current)
+        let h = CVPixelBufferGetHeight(current)
+        var outPB: CVPixelBuffer?
+        let status = CVPixelBufferCreate(kCFAllocatorDefault, w, h, kCVPixelFormatType_DepthFloat32, nil, &outPB)
+        guard status == kCVReturnSuccess, let dst = outPB else { return nil }
+
+        CVPixelBufferLockBaseAddress(current, .readOnly)
+        CVPixelBufferLockBaseAddress(dst, [])
+        defer {
+            CVPixelBufferUnlockBaseAddress(dst, [])
+            CVPixelBufferUnlockBaseAddress(current, .readOnly)
+        }
+        guard let cptr = CVPixelBufferGetBaseAddress(current)?.assumingMemoryBound(to: Float32.self),
+              let dptr = CVPixelBufferGetBaseAddress(dst)?.assumingMemoryBound(to: Float32.self) else { return nil }
+
+        if let prev = previous,
+           CVPixelBufferGetWidth(prev) == w,
+           CVPixelBufferGetHeight(prev) == h {
+            CVPixelBufferLockBaseAddress(prev, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(prev, .readOnly) }
+            if let pptr = CVPixelBufferGetBaseAddress(prev)?.assumingMemoryBound(to: Float32.self) {
+                let alpha: Float = 0.6 // current weight
+                let beta: Float = 1.0 - alpha
+                let count = w * h
+                var i = 0
+                while i < count {
+                    let c = cptr[i]
+                    let p = pptr[i]
+                    if c.isFinite && c > 0 {
+                        if p.isFinite && p > 0 {
+                            dptr[i] = alpha * c + beta * p
+                        } else {
+                            dptr[i] = c
+                        }
+                    } else {
+                        dptr[i] = p.isFinite && p > 0 ? p : 0
+                    }
+                    i += 1
+                }
+                return dst
+            }
+        }
+        // No previous or mismatched size — just copy current
+        let count = w * h
+        var i = 0
+        while i < count { dptr[i] = cptr[i]; i += 1 }
+        return dst
+    }
+
+    private func isDepthFresh(for videoTimestamp: CMTime, toleranceSec: Double = 0.15) -> Bool {
+        guard lastDepthTimestamp.isValid, videoTimestamp.isValid else { return false }
+        let dt = CMTimeSubtract(videoTimestamp, lastDepthTimestamp)
+        return abs(CMTimeGetSeconds(dt)) <= toleranceSec
+    }
 }
 
 // MARK: - Density & Nutrition (local copies so this file compiles standalone)
@@ -668,7 +1126,7 @@ private extension DualCameraPlateScannerViewController {
         if ringSize <= 2 { // fallback normalized square
             return cropFallback(src, imgW: imgW, imgH: imgH)
         }
-        let viewSize = preview.bounds.size
+        let viewSize = previewSize
         guard viewSize.width > 0, viewSize.height > 0 else { return src }
         // Aspect-fill scaling from camera image (imgW x imgH) into preview bounds
         let scale = max(viewSize.width / imgW, viewSize.height / imgH)
@@ -703,6 +1161,39 @@ private extension DualCameraPlateScannerViewController {
                           height: r.size.height * imgH).integral
         guard let cropped = cg.cropping(to: rect.intersection(CGRect(x:0,y:0,width:imgW,height:imgH))) else { return src }
         return UIImage(cgImage: cropped, scale: src.scale, orientation: .up)
+    }
+    
+    func edgeDensity(in image: UIImage) -> Float {
+        guard let cg = image.cgImage else { return 0 }
+        let ci = CIImage(cgImage: cg)
+            .applyingFilter("CILanczosScaleTransform", parameters: ["inputScale": 0.5])
+            .applyingFilter("CIEdges", parameters: [kCIInputIntensityKey: 1.0])
+        let ctx = CIContext(options: [.useSoftwareRenderer: false])
+        guard let out = ctx.createCGImage(ci, from: ci.extent), let provider = out.dataProvider, let raw = provider.data else { return 0 }
+        let bytesPerPixel = 4
+        let width = out.width
+        let height = out.height
+        let bytesPerRow = out.bytesPerRow
+        guard let basePtr = CFDataGetBytePtr(raw) else { return 0 }
+        var countNonBlack = 0
+        var total = 0
+        let stepY = max(1, height / 80)
+        let stepX = max(1, width / 80)
+        var y = 0
+        while y < height {
+            var x = 0
+            while x < width {
+                let idx = y * bytesPerRow + x * bytesPerPixel
+                let r = basePtr[idx]
+                let g = basePtr[idx+1]
+                let b = basePtr[idx+2]
+                if r > 8 || g > 8 || b > 8 { countNonBlack += 1 }
+                total += 1
+                x += stepX
+            }
+            y += stepY
+        }
+        return total > 0 ? Float(countNonBlack) / Float(total) : 0
     }
 }
 

@@ -33,3 +33,4 @@ If you’d like, I can also:
 
 
 1. Real‑time “pre‑detection” overlays: segmentation vs. saliency
+2. (ARPlateScannerViewController.setupVision()) to use the package-based models instead of the commented placeholders, I can do that next so the entire AR path is aligned.

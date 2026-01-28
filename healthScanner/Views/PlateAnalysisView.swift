@@ -12,6 +12,8 @@ struct PlateAnalysisView: View {
     @State private var showingAnalysis = false
     @State private var showingCamera = false
     @State private var showingRegionOverlay = false
+    @State private var showingUnifiedScanner = false
+    @State private var didHandleUnifiedScannerPayload = false
 
     var body: some View {
         NavigationView {
@@ -56,6 +58,49 @@ struct PlateAnalysisView: View {
                 selectedImage = image
                 showingCamera = false
                 showingRegionOverlay = true
+            }
+        }
+        .sheet(isPresented: $showingUnifiedScanner, onDismiss: {
+            // Reset guard for future presentations
+            didHandleUnifiedScannerPayload = false
+        }) {
+            UnifiedPlateScannerView { payload in
+                // Option 4: guard multiple completions
+                if didHandleUnifiedScannerPayload { return }
+                didHandleUnifiedScannerPayload = true
+
+                // Log scale info
+                print("🟢 [UnifiedScanner] depthSource=\(payload.scaleInfo.depthSource) units=\(payload.scaleInfo.depthUnits)")
+
+                // Option 5: set image before dismissing for smoother transition
+                if let finalImage = payload.image {
+                    DispatchQueue.main.async {
+                        self.selectedImage = finalImage
+                    }
+                }
+
+                // Dismiss the unified scanner sheet
+                DispatchQueue.main.async {
+                    self.showingUnifiedScanner = false
+                }
+
+                // Chain to next step after a short delay to let dismissal animate
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    // If you want manual region selection next
+                    self.showingRegionOverlay = true
+
+                    // Alternatively, if you prefer automatic analysis, uncomment:
+                    /*
+                    if let finalImage = payload.image {
+                        Task {
+                            await viewModel.analyze(image: finalImage, scaleInfo: payload.scaleInfo, segmentationMask: payload.segmentationMask)
+                            if viewModel.analysisResult != nil {
+                                showingAnalysis = true
+                            }
+                        }
+                    }
+                    */
+                }
             }
         }
     }
@@ -124,6 +169,20 @@ private extension PlateAnalysisView {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(Color(.secondarySystemBackground))
+                    .cornerRadius(24)
+            }
+            .padding(.horizontal, 20)
+
+            Button {
+                print("🟢 [UnifiedScanner] presenting")
+                showingUnifiedScanner = true
+            } label: {
+                HStack { Image(systemName: "circle.grid.cross.up.fill"); Text("Try Unified Scanner (Beta)") }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.green)
                     .cornerRadius(24)
             }
             .padding(.horizontal, 20)

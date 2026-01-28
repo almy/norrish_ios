@@ -56,8 +56,6 @@
 		CE5336062E7AEDA90086689E /* DashboardInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */; };
 		CE5336082E7AF1FE0086689E /* LocalRecommendationML.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */; };
 		CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FFD0EA8EF747698BE82BC6 /* PlateAnalysis.swift */; };
-		CE53360D2E7C62140086689E /* Food101_Classification_fp16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CE53360B2E7C62130086689E /* Food101_Classification_fp16.mlpackage */; };
-		CE53360E2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CE53360C2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage */; };
 		CEA6620B2F2620A8002A7EA2 /* ImagePreprocessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */; };
 		CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */; };
 		CEA6620F2F2624FE002A7EA2 /* TODO.md in Resources */ = {isa = PBXBuildFile; fileRef = CEA6620E2F2624FE002A7EA2 /* TODO.md */; };
@@ -68,6 +66,10 @@
 		CEF23E622E6C5F67002B903F /* healthScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E612E6C5F67002B903F /* healthScannerTests.swift */; };
 		CEF23E6C2E6C5F67002B903F /* healthScannerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */; };
 		CEF23E6E2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */; };
+		CEF4FE512F281D07009FAA35 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = CEF4FE502F281D07009FAA35 /* ARCHITECTURE.md */; };
+		CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */; };
+		CEF4FE552F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */; };
+		CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */; };
 		D2E3F405162738495A6B7C8D /* RecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F3A405162738495A6B7C8D /* RecommendationService.swift */; };
 		D4E5F61728394A5B6C7D8E9F /* Resources/AppConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */; };
 		D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93339F43356641779417CA4A /* BarcodeScannerView.swift */; };
@@ -148,8 +150,6 @@
 		CE5336022E7AEC390086689E /* RecommendationListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecommendationListView.swift; sourceTree = "<group>"; };
 		CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DashboardInsightsView.swift; sourceTree = "<group>"; };
 		CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalRecommendationML.swift; sourceTree = "<group>"; };
-		CE53360B2E7C62130086689E /* Food101_Classification_fp16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = Food101_Classification_fp16.mlpackage; sourceTree = "<group>"; };
-		CE53360C2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = UECFoodPix_Seg_fp16.mlpackage; sourceTree = "<group>"; };
 		CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreprocessor.swift; sourceTree = "<group>"; };
 		CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodRegionSelectionView.swift; sourceTree = "<group>"; };
 		CEA6620E2F2624FE002A7EA2 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
@@ -163,6 +163,10 @@
 		CEF23E672E6C5F67002B903F /* healthScannerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = healthScannerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITests.swift; sourceTree = "<group>"; };
 		CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		CEF4FE502F281D07009FAA35 /* ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ARCHITECTURE.md; sourceTree = "<group>"; };
+		CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedPlateScannerView.swift; sourceTree = "<group>"; };
+		CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
+		CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8x-oiv7.mlpackage"; sourceTree = "<group>"; };
 		D1E2F3A405162738495A6B7C /* RecommendationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsViewModel.swift; sourceTree = "<group>"; };
 		D636EC943F04417B920D1E0E /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
 		D8FEDCE15996435F8F129E09 /* LocalizationDebug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
@@ -377,8 +381,8 @@
 		CE53360A2E7C61C60086689E /* CoreML */ = {
 			isa = PBXGroup;
 			children = (
-				CE53360B2E7C62130086689E /* Food101_Classification_fp16.mlpackage */,
-				CE53360C2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage */,
+				CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */,
+				CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */,
 			);
 			path = CoreML;
 			sourceTree = "<group>";
@@ -429,6 +433,7 @@
 				1E98B50519004D24A8E69F3D /* ViewModels */,
 				7C1F7392BF034004B88B8778 /* Extensions */,
 				3530367D545A436FA9F76DC0 /* Archive */,
+				CEF4FE502F281D07009FAA35 /* ARCHITECTURE.md */,
 			);
 			path = healthScanner;
 			sourceTree = "<group>";
@@ -483,6 +488,7 @@
 				D636EC943F04417B920D1E0E /* PlateDetailView.swift */,
 				59FF2D5BB40F44EA9634238C /* PlateHistoryDetailView.swift */,
 				BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */,
+				CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -594,6 +600,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE5335CE2E79CD2F0086689E /* Styles in Resources */,
+				CEF4FE512F281D07009FAA35 /* ARCHITECTURE.md in Resources */,
 				CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */,
 				CEA6620F2F2624FE002A7EA2 /* TODO.md in Resources */,
 				CE5335CC2E79A8CF0086689E /* Localizable.strings in Resources */,
@@ -659,6 +666,7 @@
 				AA4E74354E3F4D09AEB43BCC /* PlateAnalysisHistory.swift in Sources */,
 				CE5335DC2E79D4230086689E /* ProfileView.swift in Sources */,
 				FD4AF8AB5ED2421B8442279A /* RecentScan.swift in Sources */,
+				CEF4FE552F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage in Sources */,
 				CE5335D42E79D1E00086689E /* SettingsView.swift in Sources */,
 				A5F1B41B55D944F6BD142399 /* BarcodeScannerViewController.swift in Sources */,
 				CE5336062E7AEDA90086689E /* DashboardInsightsView.swift in Sources */,
@@ -666,6 +674,7 @@
 				25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */,
 				CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */,
 				CE5335FD2E7AEBE60086689E /* NutritionRecommendationEngine.swift in Sources */,
+				CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */,
 				3DF611CC8AAC484DAB977179 /* PlateProgressRingView.swift in Sources */,
 				5066ECD1C42A429BBA1B96B3 /* OpenAIService.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5D /* BackendAPIClient.swift in Sources */,
@@ -675,13 +684,12 @@
 				D2E3F405162738495A6B7C8D /* RecommendationService.swift in Sources */,
 				E3F405162738495A6B7C8D9E /* AppConfig.swift in Sources */,
 				BF23ACB8A4C64D57B38B7E93 /* PlateAnalysisViewModel.swift in Sources */,
-				CE53360D2E7C62140086689E /* Food101_Classification_fp16.mlpackage in Sources */,
 				A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */,
 				CEA6620B2F2620A8002A7EA2 /* ImagePreprocessor.swift in Sources */,
+				CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */,
 				03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */,
 				CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */,
 				CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */,
-				CE53360E2E7C62140086689E /* UECFoodPix_Seg_fp16.mlpackage in Sources */,
 				B8095E02957F4171B841C804 /* NutritionCard.swift in Sources */,
 				CE5335E02E79DD5B0086689E /* DietaryPreferences.swift in Sources */,
 				F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */,
