@@ -119,10 +119,15 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     private let overlayQueue = DispatchQueue(label: "segmentation.overlay")
     private var lastOverlayTime: CFTimeInterval = 0
     private var overlayBusy = false
+    private let showDetectionBoxes = true
     private var didLogDetectionResultType = false
     private let hud = HUD()
     private let closeBtn = UIButton(type: .close)
     private let captureBtn = UIButton(type: .custom)
+    // Classification badge UI
+    private let classificationBadge = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+    private let classificationIcon = UIImageView()
+    private let classificationText = UILabel()
     private var isReadyToCapture = false
     private var pendingUserCapture = false
     private var didShowFirstFrame = false
@@ -259,6 +264,34 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         // Cache preview size for background-thread computations
         self.previewSize = self.view.bounds.size
 
+        // Classification badge setup
+        classificationBadge.translatesAutoresizingMaskIntoConstraints = false
+        classificationBadge.layer.cornerRadius = 14
+        classificationBadge.clipsToBounds = true
+        let badgeContent = classificationBadge.contentView
+        classificationIcon.translatesAutoresizingMaskIntoConstraints = false
+        classificationIcon.tintColor = .white
+        classificationIcon.contentMode = .scaleAspectFit
+        classificationText.translatesAutoresizingMaskIntoConstraints = false
+        classificationText.textColor = .white
+        classificationText.font = .systemFont(ofSize: 16, weight: .semibold)
+        classificationText.text = "Detecting food…"
+        badgeContent.addSubview(classificationIcon)
+        badgeContent.addSubview(classificationText)
+        view.addSubview(classificationBadge)
+        NSLayoutConstraint.activate([
+            classificationBadge.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            classificationBadge.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            classificationIcon.leadingAnchor.constraint(equalTo: badgeContent.leadingAnchor, constant: 12),
+            classificationIcon.centerYAnchor.constraint(equalTo: badgeContent.centerYAnchor),
+            classificationIcon.widthAnchor.constraint(equalToConstant: 20),
+            classificationIcon.heightAnchor.constraint(equalToConstant: 20),
+            classificationText.leadingAnchor.constraint(equalTo: classificationIcon.trailingAnchor, constant: 8),
+            classificationText.trailingAnchor.constraint(equalTo: badgeContent.trailingAnchor, constant: -12),
+            classificationText.topAnchor.constraint(equalTo: badgeContent.topAnchor, constant: 8),
+            classificationText.bottomAnchor.constraint(equalTo: badgeContent.bottomAnchor, constant: -8)
+        ])
+
         closeBtn.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
         closeBtn.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(closeBtn)
@@ -282,7 +315,12 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             captureBtn.heightAnchor.constraint(equalToConstant: 80)
         ])
         
-        hud.setStatus("Move slowly around the plate… (non-LiDAR mode)")
+        hud.setStatus("Move slowly around the plate…")
+        
+        view.bringSubviewToFront(closeBtn)
+        view.bringSubviewToFront(captureBtn)
+        view.bringSubviewToFront(hud)
+        view.bringSubviewToFront(classificationBadge)
     }
     
     //adding overlay
@@ -328,6 +366,8 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             }
         }
     }
+
+    // Removed iconForLabel(_:) method as per instructions
 
     // MARK: Capture config
     private func configureSession() {
@@ -435,22 +475,37 @@ public final class DualCameraPlateScannerViewController: UIViewController,
                 }
             }
         } catch { /* ignore */ }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.classificationIcon.image = IconMapper.shared.icon(for: label)?.withRenderingMode(.alwaysTemplate)
+            let niceLabel = label.prefix(1).uppercased() + label.dropFirst()
+            let percent = Int(max(0, min(100, conf * 100)))
+            self.classificationText.text = percent > 0 ? "\(niceLabel) • \(percent)%" : niceLabel
+        }
 
-        // Throttled overlay update (prefer detection, fallback to saliency/mask via helper)
-        let nowOverlay = CACurrentMediaTime()
-        if !overlayBusy && (nowOverlay - lastOverlayTime) > 0.20 {
-            overlayBusy = true
-            lastOverlayTime = nowOverlay
-            overlayQueue.async { [weak self] in
-                guard let self else { return }
-                let overlayImage = self.generateOverlayImage(from: pixelBuffer)
-                DispatchQueue.main.async { [weak self] in
+        if showDetectionBoxes {
+            let nowOverlay = CACurrentMediaTime()
+            if !overlayBusy && (nowOverlay - lastOverlayTime) > 0.20 {
+                overlayBusy = true
+                lastOverlayTime = nowOverlay
+                overlayQueue.async { [weak self] in
                     guard let self else { return }
-                    self.segmentationOverlayView.image = overlayImage
-                    self.segmentationOverlayView.alpha = (overlayImage != nil) ? 0.35 : 0.0
-                    self.segmentationOverlayView.isHidden = (overlayImage == nil)
+                    let overlayImage = self.generateOverlayImage(from: pixelBuffer)
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self else { return }
+                        self.segmentationOverlayView.image = overlayImage
+                        self.segmentationOverlayView.alpha = (overlayImage != nil) ? 0.35 : 0.0
+                        self.segmentationOverlayView.isHidden = (overlayImage == nil)
+                    }
+                    self.overlayBusy = false
                 }
-                self.overlayBusy = false
+            }
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.segmentationOverlayView.image = nil
+                self?.segmentationOverlayView.alpha = 0.0
+                self?.segmentationOverlayView.isHidden = true
             }
         }
 
@@ -602,10 +657,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             } else {
                 hintText = ready ? "Ready — tap shutter" : r.hint
             }
-            let clsSuffix = conf > 0 ? " • \(label) \(Int(conf*100))%" : ""
-            self.hudModel.hint = "\(Int(progress*100))% – \(hintText)\(clsSuffix)"
-            self.hudModel.hasDepth = (effectiveDepth != nil)
-            self.hudModel.planeStable = r.planeStableOK
+            self.hudModel.hint = "\(Int(progress*100))% – \(hintText)"
         }
         // Haptics when crossing thresholds
         if hapticLevel == 0 && progress >= 0.6 {
@@ -716,7 +768,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         var planeStableOK = false
         if planeHistory.count > 6 {
             let normals: [SIMD3<Float>] = planeHistory.map { SIMD3($0.x, $0.y, $0.z) }
-            let avg: SIMD3<Float> = normals.reduce(SIMD3<Float>(0,0,0), +) / Float(normals.count)
+            let avg: SIMD3<Float> = normals.map { $0 }.reduce(SIMD3<Float>(0,0,0), +) / Float(normals.count)
             let varN: Float = normals.map { simd_length($0 - avg) }.reduce(0 as Float, +) / Float(normals.count)
 
             let dVals: [Float] = planeHistory.map { $0.w }
@@ -831,7 +883,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         }
         let img = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .right) }
+        return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .up) }
     }
 
     private func makeOverlayFromDetections(objs: [VNRecognizedObjectObservation], sourceSize: CGSize) -> UIImage? {
@@ -842,56 +894,62 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         ctx.setFillColor(UIColor.clear.cgColor)
         ctx.fill(CGRect(origin: .zero, size: size))
 
-        // Box style
-        let boxColor = UIColor.systemGreen.withAlphaComponent(0.95)
-        ctx.setStrokeColor(boxColor.cgColor)
-        ctx.setLineWidth(2.0)
-
-        // Text attributes
+        // Badge style
         let font = UIFont.systemFont(ofSize: 14, weight: .semibold)
         let textColor = UIColor.white
-        let pad: CGFloat = 6
+        let padH: CGFloat = 10
+        let padV: CGFloat = 6
+        let corner: CGFloat = 10
+        let iconSize: CGFloat = 18
 
         for o in objs {
-            let bb = o.boundingBox
-            let w = CGFloat(bb.width) * size.width
-            let h = CGFloat(bb.height) * size.height
-            let x = CGFloat(bb.origin.x) * size.width
-            let yFromBottom = CGFloat(bb.origin.y) * size.height
-            let y = size.height - yFromBottom - h
-            let rect = CGRect(x: x, y: y, width: w, height: h)
-
-            // Draw box
-            ctx.stroke(rect)
-
-            // Build label string: "class 87%"
-            let labelText: String
-            if let top = o.labels.first {
-                labelText = "\(top.identifier) \(Int(top.confidence * 100))%"
-            } else {
-                labelText = "object"
-            }
+            guard let top = o.labels.first else { continue }
+            let labelText = "\(top.identifier) \(Int(top.confidence * 100))%"
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: font,
                 .foregroundColor: textColor
             ]
             let textSize = (labelText as NSString).size(withAttributes: attrs)
-            let textRect = CGRect(x: rect.minX, y: max(0, rect.minY - textSize.height - 2*pad), width: textSize.width + 2*pad, height: textSize.height + 2*pad)
 
-            // Draw label background
-            let bgPath = UIBezierPath(roundedRect: textRect, cornerRadius: 6)
+            // Compute detection rect (normalized -> pixel coordinates)
+            let w = CGFloat(o.boundingBox.width) * size.width
+            let h = CGFloat(o.boundingBox.height) * size.height
+            let x = CGFloat(o.boundingBox.origin.x) * size.width
+            let yFromBottom = CGFloat(o.boundingBox.origin.y) * size.height
+            let y = size.height - yFromBottom - h
+            let rect = CGRect(x: x, y: y, width: w, height: h)
+
+            // Badge rect anchored to top-left of detection rect
+            let badgeW = iconSize + 8 + textSize.width + 2*padH
+            let badgeH = max(iconSize, textSize.height) + 2*padV
+            var badgeX = rect.minX
+            var badgeY = rect.minY - badgeH - 4
+            if badgeY < 0 { badgeY = rect.minY + 4 } // if not enough space above, place inside
+            if badgeX + badgeW > size.width { badgeX = max(0, size.width - badgeW - 4) }
+            let badgeRect = CGRect(x: badgeX, y: badgeY, width: badgeW, height: badgeH)
+
+            // Draw badge background
+            let bgPath = UIBezierPath(roundedRect: badgeRect, cornerRadius: corner)
             ctx.setFillColor(UIColor.black.withAlphaComponent(0.6).cgColor)
             ctx.addPath(bgPath.cgPath)
             ctx.fillPath()
 
+            // Draw icon
+            let iconX = badgeRect.minX + padH
+            let iconY = badgeRect.minY + (badgeH - iconSize)/2
+            if let icon = IconMapper.shared.icon(for: top.identifier)?.withTintColor(.white, renderingMode: .alwaysOriginal) {
+                icon.draw(in: CGRect(x: iconX, y: iconY, width: iconSize, height: iconSize))
+            }
+
             // Draw text
-            let drawPoint = CGPoint(x: textRect.minX + pad, y: textRect.minY + pad)
-            (labelText as NSString).draw(at: drawPoint, withAttributes: attrs)
+            let textX = iconX + iconSize + 8
+            let textY = badgeRect.minY + (badgeH - textSize.height)/2
+            (labelText as NSString).draw(at: CGPoint(x: textX, y: textY), withAttributes: attrs)
         }
 
         let img = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
-        return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .right) }
+        return img.map { UIImage(cgImage: $0.cgImage!, scale: 1.0, orientation: .up) }
     }
 
     // MARK: Plane fit

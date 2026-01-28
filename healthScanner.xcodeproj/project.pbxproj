@@ -70,6 +70,8 @@
 		CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */; };
 		CEF4FE552F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */; };
 		CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */; };
+		CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */; };
+		CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */ = {isa = PBXBuildFile; fileRef = CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */; };
 		D2E3F405162738495A6B7C8D /* RecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F3A405162738495A6B7C8D /* RecommendationService.swift */; };
 		D4E5F61728394A5B6C7D8E9F /* Resources/AppConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */; };
 		D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93339F43356641779417CA4A /* BarcodeScannerView.swift */; };
@@ -167,6 +169,8 @@
 		CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedPlateScannerView.swift; sourceTree = "<group>"; };
 		CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
 		CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8x-oiv7.mlpackage"; sourceTree = "<group>"; };
+		CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconMapper.swift; sourceTree = "<group>"; };
+		CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = IconMapping.json; sourceTree = "<group>"; };
 		D1E2F3A405162738495A6B7C /* RecommendationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsViewModel.swift; sourceTree = "<group>"; };
 		D636EC943F04417B920D1E0E /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
 		D8FEDCE15996435F8F129E09 /* LocalizationDebug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
@@ -227,6 +231,8 @@
 				29A1F39F2E7D001F0086689E /* ARPlateScanNutrition.swift */,
 				29A1F3A02E7D00200086689E /* ARPlateScannerViewController.swift */,
 				29A1F3A12E7D00210086689E /* DualCameraPlateScannerViewController.swift */,
+				CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */,
+				CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */,
 			);
 			path = AR;
 			sourceTree = "<group>";
@@ -601,6 +607,7 @@
 			files = (
 				CE5335CE2E79CD2F0086689E /* Styles in Resources */,
 				CEF4FE512F281D07009FAA35 /* ARCHITECTURE.md in Resources */,
+				CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */,
 				CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */,
 				CEA6620F2F2624FE002A7EA2 /* TODO.md in Resources */,
 				CE5335CC2E79A8CF0086689E /* Localizable.strings in Resources */,
@@ -705,6 +712,7 @@
 				CE5335E22E79DD800086689E /* DietaryPreferencesView.swift in Sources */,
 				30F0AD1B8C354DABA92020EB /* Item.swift in Sources */,
 				CBB558377628423593EC12D3 /* Product.swift in Sources */,
+				CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */,
 				D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */,
 				B798BDB59DD74C6683177ABA /* ImageCacheService.swift in Sources */,
 				1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */,
