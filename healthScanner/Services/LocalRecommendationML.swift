@@ -1,3 +1,21 @@
+/*
+ ADR-0001 Summary: Multi-horizon insights with short-window on-device regression and model snapshot persistence.
+ 
+ Context:
+ - Personalized recommendations are produced by fitting a tiny linear regression on device from persisted history (Products and PlateAnalysisHistory), aggregated per day.
+ - Raw training data is NOT persisted; it is derived on demand from SwiftData history.
+ 
+ Decision:
+ - Keep the training window short (driven by the engine) to capture near-term patterns for next-day signals.
+ - Persist a lightweight snapshot (featureNames + coefficients) so recommendations can warm-start and survive history wipes.
+ - Keep this module stateless aside from snapshot helpers.
+ 
+ Consequences:
+ - Fast training and privacy-preserving behavior.
+ - Snapshot enables recommendations even when recent history is insufficient or unavailable.
+ 
+ See also: docs/adr/0001-insights-strategy-and-ml-snapshot.md
+*/
 import Foundation
 import Accelerate
 
@@ -5,6 +23,10 @@ struct MLFeatureSpace {
     let featureNames: [String] // aligns with vector order
 }
 
+/// In-memory training dataset for the on-device linear regressor.
+/// - X: rows = samples (days), cols = ordered features (includes an intercept at index 0 as produced by `buildTrainingData`).
+/// - y: target = next-day average plate score (0..10).
+/// - space: carries the feature ordering via `featureNames`.
 struct MLTrainingData {
     let X: [[Double]] // rows = samples (days), cols = features
     let y: [Double]   // target: next-day avg plate score (0..10)
@@ -115,6 +137,12 @@ struct DailyAggregate {
     var plateScoreAvg: Double = 0
 }
 
+/// Builds short-horizon daily training data from persisted history.
+/// Notes:
+/// - Aggregates Products and PlateAnalysisHistory per calendar day.
+/// - Includes an intercept term, numeric nutrition features, and one-hot counts for top categories.
+/// - Requires at least 7 distinct days to produce meaningful next-day targets; returns `nil` otherwise.
+/// - Does not persist raw data; callers may persist snapshots of learned coefficients for warm-starts.
 struct LocalRecommendationML {
     // Builds training data from recent history. Requires at least 7 samples.
     static func buildTrainingData(plates: [PlateAnalysisHistory], products: [Product], maxCategories: Int = 8) -> MLTrainingData? {
@@ -170,3 +198,35 @@ struct LocalRecommendationML {
         return MLTrainingData(X: X, y: y, space: MLFeatureSpace(featureNames: featureNames))
     }
 }
+
+// MARK: - Snapshot Persistence
+
+/// Minimal persisted snapshot of a trained linear model.
+/// Stores the feature ordering and coefficients to enable warm-starts
+/// when recent history is insufficient or was intentionally cleared.
+struct ModelSnapshot: Codable {
+    let date: Date
+    let featureNames: [String]
+    let coefficients: [Double]
+}
+
+extension LocalRecommendationML {
+    private static let snapshotKey = "ml_model_snapshot_v1"
+
+    /// Persist the learned coefficients and feature ordering.
+    /// Uses UserDefaults for simplicity and durability across launches.
+    static func saveSnapshot(names: [String], coeffs: [Double]) {
+        guard !names.isEmpty, !coeffs.isEmpty, names.count == coeffs.count || (coeffs.count > 0) else { return }
+        let snap = ModelSnapshot(date: Date(), featureNames: names, coefficients: coeffs)
+        if let data = try? JSONEncoder().encode(snap) {
+            UserDefaults.standard.set(data, forKey: snapshotKey)
+        }
+    }
+
+    /// Load the most recent snapshot if present; returns `nil` if none is stored or decoding fails.
+    static func loadSnapshot() -> ModelSnapshot? {
+        guard let data = UserDefaults.standard.data(forKey: snapshotKey) else { return nil }
+        return try? JSONDecoder().decode(ModelSnapshot.self, from: data)
+    }
+}
+

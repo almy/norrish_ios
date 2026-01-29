@@ -1,3 +1,23 @@
+/*
+ ADR-0001 Summary: Multi-horizon insight strategy with short-window regression and snapshot fallback.
+ 
+ Context:
+ - We want responsive, privacy-preserving recommendations that adapt quickly to recent behavior (short window),
+   while still offering continuity when history is wiped or temporarily insufficient.
+ 
+ Decision:
+ - Use a short rolling window (e.g., 14–30 days) for on-device linear regression that targets next-day plate scores.
+ - Persist a lightweight snapshot (featureNames + coefficients) after fitting, to warm-start future sessions.
+ - When insufficient recent data is available, fall back to the saved snapshot to generate correlation-style recommendations.
+ - Keep rule-based insights and correlation discovery composable alongside ML-driven recommendations.
+ 
+ Consequences:
+ - Training remains fast and bounded by the recent window.
+ - Users still see personalized insights even after a history reset.
+ - Snapshot is small, and does not contain raw user data.
+ 
+ See also: docs/adr/0001-insights-strategy-and-ml-snapshot.md
+*/
 import Foundation
 import SwiftData
 
@@ -69,16 +89,51 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
 
     init() {}
 
-    // Entry point to generate on-device recommendations and correlation insights
+    /// Generates a ranked list of recommendations using a short-window ML model when possible,
+    /// falling back to a previously saved snapshot if recent data is insufficient.
+    /// Also intended to compose rule-based and correlation insights alongside ML.
     func generateRecommendations(plates: [PlateAnalysisHistory], products: [Product], preferences: DietaryPreferencesManager = .shared) async -> [NutritionRecommendation] {
         let recentPlates = filterRecent(items: plates, days: plateWindowDays, date: { $0.analyzedDate })
         let recentProducts = filterRecent(items: products, days: productWindowDays, date: { $0.scannedDate })
 
-        // ML-first: if insufficient data, produce a transparent info card rather than heuristics
+        // Attempt to build training data; if unavailable, try snapshot warm-start
+        let trainingData = LocalRecommendationML.buildTrainingData(plates: recentPlates, products: recentProducts)
         var recs: [NutritionRecommendation] = []
-        if let data = LocalRecommendationML.buildTrainingData(plates: recentPlates, products: recentProducts), data.X.count >= NutritionConstants.minTrainingDataSize {
+
+        if let data = trainingData, data.X.count >= NutritionConstants.minTrainingDataSize {
             let mlRecs = generateMLRecommendations(training: data)
             recs += mlRecs
+        } else if let snap = LocalRecommendationML.loadSnapshot() {
+            // Use snapshot coefficients to generate static correlation-style recommendations
+            let pairs = Array(zip(snap.featureNames, snap.coefficients))
+            let nonIntercept = pairs.filter { $0.0 != "intercept" }
+            let mostNegative = nonIntercept.sorted { $0.1 < $1.1 }.prefix(3)
+            let mostPositive = nonIntercept.sorted { $0.1 > $1.1 }.prefix(3)
+
+            for (name, weight) in mostNegative {
+                guard weight < -NutritionConstants.mlWeightThreshold else { continue }
+                recs.append(NutritionRecommendation(
+                    title: friendlyTitle(for: name, positive: false),
+                    message: "Learned previously: reducing this factor may improve next-day plate scores.",
+                    reason: "Warm-start from saved model",
+                    relevanceScore: min(1.0, NutritionConstants.baseRelevanceScore + min(0.4, abs(weight))),
+                    type: .correlationInsight,
+                    tags: [name],
+                    evidence: [String(format: "Coefficient: %.3f (negative)", weight)]
+                ))
+            }
+            for (name, weight) in mostPositive {
+                guard weight > NutritionConstants.mlWeightThreshold else { continue }
+                recs.append(NutritionRecommendation(
+                    title: friendlyTitle(for: name, positive: true),
+                    message: "Learned previously: leaning into this factor may help next-day plate scores.",
+                    reason: "Warm-start from saved model",
+                    relevanceScore: min(1.0, NutritionConstants.baseRelevanceScore + min(0.4, abs(weight))),
+                    type: .correlationInsight,
+                    tags: [name],
+                    evidence: [String(format: "Coefficient: %.3f (positive)", weight)]
+                ))
+            }
         } else {
             recs.append(NutritionRecommendation(
                 title: "Keep Building Your Model",
@@ -481,7 +536,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
                 evidence: [
                     "Window: last \(productWindowDays)d",
                     "High-sugar scans (≥\(Int(NutritionConstants.highSugarThreshold))g): \(highSugarCount)"
-                ] + (exampleNames.isEmpty ? [] : ["Examples: \(exampleNames.joined(separator: ", "))"]) 
+                ] + (exampleNames.isEmpty ? [] : ["Examples: \(exampleNames.joined(separator: ", "))"])
             ))
         }
 
@@ -501,7 +556,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
                 evidence: [
                     "Window: last \(productWindowDays)d",
                     "High-sodium scans (≥\(String(format: "%.1f", NutritionConstants.highSodiumThreshold))g): \(highSodiumCount)"
-                ] + (exampleNames.isEmpty ? [] : ["Examples: \(exampleNames.joined(separator: ", "))"]) 
+                ] + (exampleNames.isEmpty ? [] : ["Examples: \(exampleNames.joined(separator: ", "))"])
             ))
         }
 
@@ -519,7 +574,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
                 evidence: [
                     "Window: last \(plateWindowDays)d",
                     "Low-fiber plates (<\(Int(NutritionConstants.lowFiberPlateThreshold))g): \(lowFiberPlates.count)"
-                ] + (examplePlates.isEmpty ? [] : ["Examples: \(examplePlates.joined(separator: ", "))"]) 
+                ] + (examplePlates.isEmpty ? [] : ["Examples: \(examplePlates.joined(separator: ", "))"])
             ))
         }
 
@@ -575,12 +630,22 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
         }
     }
 
-    // MARK: - ML-based recommendations
+    /// Fits a small ridge-regularized linear model and maps learned weights to human-friendly recommendations.
+    /// Side-effect: persists a snapshot of (featureNames, coefficients) for warm-start fallback.
     private func generateMLRecommendations(training: MLTrainingData) -> [NutritionRecommendation] {
+        func persistSnapshotIfNeeded(featureNames: [String], coefficients: [Double]) {
+            // Persist learned coefficients and feature ordering for warm-starts
+            LocalRecommendationML.saveSnapshot(names: featureNames, coeffs: coefficients)
+        }
+
         var recs: [NutritionRecommendation] = []
         let model = LinearRegressor()
         model.fit(data: training, lambda: NutritionConstants.mlRegularization)
         let w = model.coefficients
+
+        // Save a snapshot so we can warm-start or fall back when history is missing
+        persistSnapshotIfNeeded(featureNames: training.space.featureNames, coefficients: w)
+
         guard w.count == training.space.featureNames.count else { return recs }
 
         // Map weights to names
@@ -698,3 +763,5 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
 }
 
 // (Intentionally no underscore-named computed properties to avoid SwiftData macro collisions)
+
+
