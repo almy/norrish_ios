@@ -1,9 +1,13 @@
 /* Navigation and Tab Bar */
+"home.title" = "Home";
 "tab.scan" = "Scan";
 "tab.plate" = "Plate";
 "tab.history" = "History";
 "tab.profile" = "Profile";
 "tab.settings" = "Settings";
+"plate.upload_photo" = "Upload Photo";
+"recent.activity" = "Recent Activity";
+"recent.activity.archive" = "Archive";
 
 /* Filter and Sort */
 "filter.all" = "All";
@@ -24,9 +28,34 @@
 "search.placeholder" = "Search history";
 "empty.no_scans" = "No scans yet";
 "empty.start_scanning" = "Start scanning products to see your history";
+"history.story_label" = "Your Story So Far";
+"history.journal_title" = "Narrative Journal";
+"history.digest_title" = "Daily Digest Dashboard";
+"history.digest_action" = "Insights";
+"history.today" = "Today";
+"history.yesterday" = "Yesterday";
 
 /* Product Details */
 "product.details" = "Product Details";
+"product.analysis" = "Product Analysis";
+"product.insight" = "Product Insight";
+"product.log" = "Log This Product";
+"nutri.score" = "NUTRI-SCORE";
+"product.category.default" = "Product";
+"product.subtitle.default" = "Nutrition Overview";
+"macro.carbs" = "Carbohydrates (%@g)";
+"macro.sugar" = "Sugar (%@g)";
+"macro.protein" = "Protein (%@g)";
+"macro.fat" = "Fat (%@g)";
+"level.minimal" = "Minimal";
+"level.low" = "Low";
+"level.moderate" = "Moderate";
+"level.moderate_high" = "Moderate-High";
+"level.high" = "High";
+"glycemic.high" = "High Glycemic Load";
+"insight.vitc" = "Vitamin C enriched";
+"insight.sugars" = "significant natural and added sugars";
+"insight.generic" = "Balanced ingredients with room for moderation";
 "nutrition.information" = "Nutrition Information";
 "nutrition.calories" = "Calories";
 "nutrition.fat" = "Fat";
@@ -37,6 +66,16 @@
 
 /* Plate Analysis */
 "plate.analysis" = "Plate Analysis";
+"plate.visual_insight" = "Visual Insight";
+"plate.optimized" = "Nutritionally Optimized";
+"plate.optimized.badge" = "Nutritionally Optimized";
+"plate.log_meal" = "Log This Meal";
+"chef.insight" = "Chef's Insight";
+"ingredients.detected" = "Detected Ingredients";
+"macro.profile" = "Macro Profile";
+"macro.good" = "Good";
+"macro.moderate" = "Moderate";
+"macro.minimal" = "Minimal";
 "nutrition.overview" = "Nutrition Overview";
 "macronutrients" = "Macronutrients";
 "micronutrients" = "Micronutrients";
@@ -61,6 +100,17 @@
 
 /* Profile */
 "profile.settings_coming_soon" = "Profile settings coming soon";
+"profile.overview" = "Dietary Overview";
+"profile.primary_goal" = "Primary Goal";
+"profile.daily_streak" = "Daily Streak";
+"profile.health_score" = "Health Score";
+"profile.analyzed_plates" = "Analyzed Plates";
+"profile.avg_grade" = "Avg Grade";
+"profile.preferences" = "Preferences";
+"profile.active" = "Active";
+"profile.download_report" = "Download Nutritional Report";
+"profile.goal.balance" = "Balanced";
+"profile.days" = "Days";
 
 /* Scanning Status */
 "scanning.scanned_on" = "Scanned %@";
@@ -122,12 +172,20 @@
 
 /* Dietary Preferences */
 "preferences.your_preferences" = "Your Preferences";
+"preferences.title" = "Your Dietary Preferences";
 "preferences.profile_complete" = "Profile 75% complete";
 "preferences.allergies" = "Allergies";
 "preferences.allergies_description" = "Select any allergies you have. This will help us recommend safe and healthy options.";
 "preferences.dietary_restrictions" = "Dietary Restrictions";
 "preferences.dietary_description" = "Tell us about your dietary goals or choices.";
 "preferences.add_custom" = "Add custom allergy or restriction";
+"preferences.add_custom_restriction" = "Add Custom Restriction";
+"preferences.search_placeholder" = "Search for other restrictions...";
+"preferences.skip" = "Skip";
+"preferences.step_label" = "Step %@ of 5 • Profile Building";
+"preferences.category.allergy" = "Allergy";
+"preferences.category.restriction" = "Restriction";
+"preferences.category.custom" = "Custom";
 "preferences.save_preferences" = "Save Preferences";
 "preferences.add_custom_allergy" = "Add Custom Allergy";
 "preferences.custom_allergy_description" = "Enter a custom allergy or dietary restriction that's not listed above.";

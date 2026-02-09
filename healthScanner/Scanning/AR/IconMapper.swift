@@ -2,9 +2,14 @@
 // Loads a JSON mapping of detected class names to SF Symbol names, with sensible fallbacks.
 
 import UIKit
+import os.log
 
 final class IconMapper {
     static let shared = IconMapper()
+
+    private let lock = NSLock()
+    private var cache: [String: String?] = [:] // memoize symbolName(for:)
+    private var imageCache: [String: UIImage] = [:]
 
     private var map: [String: String] = [:]
     private struct Rule: Codable { let keywords: [String]; let symbol: String }
@@ -185,6 +190,17 @@ final class IconMapper {
         Rule(keywords: ["segway"], symbol: "scooter")
     ]
 
+    private var keywordIndex: [String: String] = [:]
+
+    private func buildKeywordIndex() {
+        keywordIndex.removeAll(keepingCapacity: true)
+        for rule in rules {
+            for kw in rule.keywords {
+                keywordIndex[kw.lowercased()] = rule.symbol
+            }
+        }
+    }
+
     private init() {
         loadMapping()
         loadRules()
@@ -199,6 +215,7 @@ final class IconMapper {
             var lowered: [String: String] = [:]
             for (k, v) in dict { lowered[k.lowercased()] = v }
             self.map = lowered
+            os_log("[IconMapper] Loaded IconMapping.json with %d entries", type: .info, lowered.count)
             return
         }
         // Fallback defaults (minimal)
@@ -296,28 +313,48 @@ final class IconMapper {
            let data = try? Data(contentsOf: url),
            let decoded = try? JSONDecoder().decode([Rule].self, from: data) {
             self.rules = decoded
+            buildKeywordIndex()
             return
         }
         // Fallback to baked-in rules
         self.rules = Self.fallbackRules
+        buildKeywordIndex()
     }
 
     func symbolName(for label: String) -> String? {
         let key = label.lowercased()
-        if let mapped = map[key] { return mapped }
+        lock.lock(); if let cached = cache[key] { lock.unlock(); return cached }; lock.unlock()
+
+        // Direct mapping first
+        if let mapped = map[key] {
+            lock.lock(); cache[key] = mapped; lock.unlock();
+            return mapped
+        }
+        // Exact keyword match
+        if let sym = keywordIndex[key] {
+            lock.lock(); cache[key] = sym; lock.unlock();
+            return sym
+        }
+        // Substring search (fallback)
         for rule in rules {
             if rule.keywords.contains(where: { key.contains($0) }) {
+                lock.lock(); cache[key] = rule.symbol; lock.unlock();
                 return rule.symbol
             }
         }
-        // No mapping found — return nil so callers can choose to show text-only
+        lock.lock(); cache[key] = nil; lock.unlock()
         return nil
     }
 
     func icon(for label: String) -> UIImage? {
-        if let name = symbolName(for: label) {
-            return UIImage(systemName: name)
+        guard let name = symbolName(for: label) else { return nil }
+        lock.lock()
+        if let img = imageCache[name] { lock.unlock(); return img }
+        lock.unlock()
+        let rendered = UIImage(systemName: name)
+        if let rendered {
+            lock.lock(); imageCache[name] = rendered; lock.unlock()
         }
-        return nil
+        return rendered
     }
 }

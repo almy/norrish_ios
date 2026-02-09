@@ -11,6 +11,7 @@ struct CameraBarcodeScannerView: UIViewControllerRepresentable {
     @Binding var scannedCode: String?
     @Binding var isScanning: Bool
     @Binding var isPresented: Bool
+    var shouldFetchBackend: Bool = false
     
     func makeUIViewController(context: Context) -> BarcodeScannerViewController {
         let controller = BarcodeScannerViewController()
@@ -48,30 +49,40 @@ struct CameraBarcodeScannerView: UIViewControllerRepresentable {
                 // Reflect scanning state and keep the sheet up briefly for a smooth transition
                 self.parent.scannedCode = code
                 self.parent.isScanning = false
-            }
-            Task { [weak self] in
-                guard let self else { return }
-                // Immediately call backend to fetch product; locale can be device locale
-                let locale = Locale.current.language.languageCode?.identifier ?? "en"
-                do {
-                    let response: BackendBarcodeResponse = try await BackendAPIClient.shared.post(
-                        endpoint: BackendAPIClient.shared.endpoints.scanBarcode,
-                        body: BackendBarcodeRequest(barcode: code, locale: locale)
-                    )
-                    // On success, close camera sheet smoothly
-                    await MainActor.run {
-                        // Dismiss the camera sheet with a slight delay to let UI show feedback
-                        self.parent.isPresented = false
-                    }
-                    // Also propagate the scanned code back up; the parent view will present details
-                } catch {
-                    // Even on error, dismiss the camera and let parent handle error UI
-                    await MainActor.run {
-                        self.parent.isPresented = false
-                    }
-                }
+                self.parent.isPresented = false
             }
         }
     }
 }
 
+struct BarcodeCameraOverlayView: View {
+    @Binding var scannedCode: String?
+    @Binding var isScanning: Bool
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        ZStack {
+            Color.white.opacity(0.35)
+                .ignoresSafeArea()
+                .overlay(Color.black.opacity(0.02))
+
+            VStack {
+                Spacer(minLength: 24)
+                CameraBarcodeScannerView(
+                    scannedCode: $scannedCode,
+                    isScanning: $isScanning,
+                    isPresented: $isPresented
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 8)
+                .padding(.horizontal, 20)
+                .frame(height: UIScreen.main.bounds.height * 0.6)
+                Spacer(minLength: 32)
+            }
+        }
+    }
+}

@@ -1,6 +1,7 @@
 import UIKit
 import AVFoundation
 import AudioToolbox
+import Foundation
 
 class BarcodeScannerViewController: UIViewController {
     weak var delegate: BarcodeScannerDelegate?

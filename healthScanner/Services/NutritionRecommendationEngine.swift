@@ -36,13 +36,37 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
         static let plateWindowDays = 14
         static let productWindowDays = 21
 
-        // Nutrient targets (daily averages)
+        /// Legacy static nutrient targets; deprecated in favor of adaptive baselines and trends.
+        /// Kept for backward compatibility with deficiency-based recommendations.
         static let nutritionTargets: [NutrientDeficiency.Nutrient: Double] = [
             .fiber: 25,         // g
             .protein: 60,       // g
             .vitaminC: 75,      // mg
             .iron: 8           // mg
         ]
+
+        struct Adaptive {
+            /// Computes a rolling average over `days` from provided daily values.
+            static func rollingAverage(valuesByDay: [String: Double], days: Int, now: Date = Date()) -> Double {
+                let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+                let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: now) ?? now
+                let filtered = valuesByDay.compactMap { (k, v) -> (Date, Double)? in
+                    guard let d = df.date(from: k) else { return nil }
+                    return d >= cutoff ? (d, v) : nil
+                }
+                let values = filtered.map { $0.1 }.filter { $0.isFinite }
+                guard !values.isEmpty else { return 0 }
+                return values.reduce(0, +) / Double(values.count)
+            }
+
+            /// Returns (recent, baseline, deltaPct) for a given nutrient timeline using recentDays and baselineDays windows.
+            static func trend(valuesByDay: [String: Double], recentDays: Int, baselineDays: Int, now: Date = Date()) -> (recent: Double, baseline: Double, deltaPct: Double) {
+                let recent = rollingAverage(valuesByDay: valuesByDay, days: recentDays, now: now)
+                let baseline = rollingAverage(valuesByDay: valuesByDay, days: baselineDays, now: now)
+                let deltaPct = baseline > 0 ? ((recent - baseline) / baseline) * 100 : 0
+                return (recent, baseline, deltaPct)
+            }
+        }
 
         // Deficiency thresholds
         static let deficiencyThreshold: Double = 0.8 // 20% below target
@@ -146,6 +170,14 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
             ))
         }
 
+        // Add adaptive, non-target-based trend insights
+        let trendRecs = generateAdaptiveTrendInsights(plates: recentPlates, products: recentProducts)
+        recs.append(contentsOf: trendRecs)
+
+        // Also include correlation discoveries mapped to recommendations
+        let correlations = discoverCorrelations(plates: recentPlates, products: recentProducts)
+        recs.append(contentsOf: mapCorrelationsToRecommendations(correlations))
+
         let privatized = applyDifferentialPrivacy(recs)
         let sorted = privatized.sorted { $0.relevanceScore > $1.relevanceScore }
 
@@ -218,6 +250,37 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
             .fiber: values.map { $0.fiber }.reduce(0, +) / Double(dayCount),
             .vitaminC: values.map { $0.vitaminC }.reduce(0, +) / Double(dayCount),
             .iron: values.map { $0.iron }.reduce(0, +) / Double(dayCount)
+        ]
+    }
+
+    private func calculateDailyNutrientTimelines(plates: [PlateAnalysisHistory], products: [Product]) -> [NutrientDeficiency.Nutrient: [String: Double]] {
+        var proteinByDay: [String: Double] = [:]
+        var fiberByDay: [String: Double] = [:]
+        var vitaminCByDay: [String: Double] = [:]
+        var ironByDay: [String: Double] = [:]
+        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+
+        for plate in plates {
+            let day = df.string(from: plate.analyzedDate)
+            proteinByDay[day, default: 0] += Double(plate.protein)
+            if let micro = plate.micronutrients {
+                fiberByDay[day, default: 0] += Double(micro.fiberG ?? 0)
+                vitaminCByDay[day, default: 0] += Double(micro.vitaminCMg ?? 0)
+                ironByDay[day, default: 0] += Double(micro.ironMg ?? 0)
+            }
+        }
+
+        for product in products {
+            let day = df.string(from: product.scannedDate)
+            proteinByDay[day, default: 0] += product.nutritionData.protein
+            fiberByDay[day, default: 0] += product.nutritionData.fiber
+        }
+
+        return [
+            .protein: proteinByDay,
+            .fiber: fiberByDay,
+            .vitaminC: vitaminCByDay,
+            .iron: ironByDay
         ]
     }
 
@@ -760,8 +823,90 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
         let sign = u >= 0 ? 1.0 : -1.0
         return -scale * sign * log(1 - 2 * abs(u))
     }
+
+    // MARK: - New Adaptive Trend Insights
+
+    func generateAdaptiveTrendInsights(plates: [PlateAnalysisHistory], products: [Product]) -> [NutritionRecommendation] {
+        let timelines = calculateDailyNutrientTimelines(plates: plates, products: products)
+        let recentDays = 7
+        let baselineDays = 30
+
+        func build(_ nutrient: NutrientDeficiency.Nutrient, name: String, iconTag: String) -> NutritionRecommendation? {
+            guard let series = timelines[nutrient], !series.isEmpty else { return nil }
+            let t = NutritionConstants.Adaptive.trend(valuesByDay: series, recentDays: recentDays, baselineDays: baselineDays)
+            // If no signal, skip
+            if t.recent == 0 && t.baseline == 0 { return nil }
+            let delta = t.deltaPct
+            let dir = delta >= 0 ? "up" : "down"
+            let absDelta = abs(delta)
+            let title = absDelta >= 5 ? "\(name.capitalized) trend is \(dir) \(String(format: "%.0f%%", absDelta))" : "\(name.capitalized) trend update"
+            let message: String
+            if delta >= 8 {
+                message = "Your \(name) intake is up \(String(format: "%.0f%%", absDelta)) from your usual pattern. Nice momentum!"
+            } else if delta <= -8 {
+                message = "Your \(name) intake is down \(String(format: "%.0f%%", absDelta)) vs your usual. Want ideas to boost it?"
+            } else {
+                message = "Your \(name) is close to your usual pattern."
+            }
+            return NutritionRecommendation(
+                title: title,
+                message: message,
+                reason: "Compared your last \(recentDays)d to your typical \(baselineDays)d",
+                relevanceScore: NutritionConstants.baseRelevanceScore,
+                type: .correlationInsight,
+                tags: [iconTag, "trend"],
+                evidence: [
+                    String(format: "Recent avg: %.1f", t.recent),
+                    String(format: "Baseline avg: %.1f", t.baseline)
+                ]
+            )
+        }
+
+        var recs: [NutritionRecommendation] = []
+        if let r = build(.fiber, name: "fiber", iconTag: "fiber") { recs.append(r) }
+        if let r = build(.protein, name: "protein", iconTag: "protein") { recs.append(r) }
+        if let r = build(.vitaminC, name: "vitamin C", iconTag: "vitaminC") { recs.append(r) }
+        if let r = build(.iron, name: "iron", iconTag: "iron") { recs.append(r) }
+        return recs
+    }
+
+    func qualitativeMealMessage(for plate: PlateAnalysisHistory) -> NutritionRecommendation? {
+        // Derive simple qualitative assessment based on relative macros and fiber
+        let fiber = Double(plate.micronutrients?.fiberG ?? 0)
+        let protein = Double(plate.protein)
+        // Heuristics: treat as light if very low compared to simple thresholds; these are not "targets" but identification of lightness
+        let isProteinLight = protein < 15
+        let isFiberLight = fiber < 6
+
+        let title: String
+        let message: String
+        if isProteinLight && isFiberLight {
+            title = "Could Use More Protein and Fiber"
+            message = "Consider adding beans, lentils, eggs, or greens for more fullness and balance."
+        } else if isProteinLight {
+            title = "This Meal Is Light on Protein"
+            message = "Add eggs, beans, tofu, or Greek yogurt for a more filling plate."
+        } else if isFiberLight {
+            title = "This Meal Is Light on Fiber"
+            message = "Add veggies, legumes, berries, or whole grains to boost fiber."
+        } else {
+            title = "Nice Balance"
+            message = "Looks balanced — keep what works for you."
+        }
+
+        return NutritionRecommendation(
+            title: title,
+            message: message,
+            reason: "Qualitative assessment without numeric targets",
+            relevanceScore: NutritionConstants.baseRelevanceScore,
+            type: .recommendation,
+            tags: ["qualitative"],
+            evidence: []
+        )
+    }
 }
 
 // (Intentionally no underscore-named computed properties to avoid SwiftData macro collisions)
+
 
 

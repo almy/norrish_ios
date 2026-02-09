@@ -13,6 +13,7 @@ struct NutritionRecommendation: Identifiable, Codable {
         case synergyPairing
         case hydration
         case correlationInsight
+        case recommendation
     }
 
     var id: UUID = UUID()

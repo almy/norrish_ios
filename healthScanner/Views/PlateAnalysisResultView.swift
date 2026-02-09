@@ -16,277 +16,239 @@ struct PlateAnalysisResultView: View {
     @State private var feedbackGiven = false
     @State private var showNutriInfo = false
     
+    private let primary = Color(red: 19 / 255, green: 182 / 255, blue: 236 / 255)
+    private let nordicBackground = Color(red: 249 / 255, green: 250 / 255, blue: 251 / 255)
+
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Header with back button
-                    HStack {
-                        Button(action: { onClose(); dismiss() }) {
-                            Image(systemName: "chevron.left")
-                                .font(.title2)
-                                .foregroundColor(.primary)
-                        }
-                        Spacer()
-                        Text("Plate Analysis").font(.title2).fontWeight(.semibold)
-                        Spacer()
-                        Button(action: { onClose(); dismiss() }) {
-                            Image(systemName: "xmark.circle.fill").font(.title2).opacity(0.6)
-                        }
-                    }
-                    .padding(.horizontal, 20)
+        ZStack(alignment: .top) {
+            nordicBackground
+                .ignoresSafeArea()
 
-                    // Main Plate Card with integrated image and details
+            GeometryReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        // Plate Image
-                        Group {
-                            if let image {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(height: 200)
-                                    .clipped()
-                            } else {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.1))
-                                    .frame(height: 200)
-                                    .overlay(
-                                        Image(systemName: "fork.knife.circle.fill")
-                                            .font(.system(size: 60))
-                                            .foregroundColor(.mint)
-                                    )
-                            }
-                        }
-
-                        // Card content overlay
-                        VStack(spacing: 16) {
-                            // Dish name
-                            Text(analysis.description)
-                                .font(.system(size: 24, weight: .bold))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: .infinity)
-
-                            // Nutrition score with grade
-                            HStack(spacing: 20) {
-                                // Large grade letter
-                                Text(nutriScoreForPlate(score0to10: analysis.nutritionScore).rawValue)
-                                    .font(.system(size: 64, weight: .bold))
-                                    .foregroundColor(.green)
-
-                                VStack(alignment: .leading, spacing: 8) {
-                                    // Score rating
-                                    Text("\(Int(analysis.nutritionScore))/10")
-                                        .font(.system(size: 24, weight: .semibold))
-                                        .foregroundColor(.white)
-
-                                    // Macronutrients grid
-                                    HStack(spacing: 16) {
-                                        ResultNutrientDot(label: "Protein", value: "\(analysis.macronutrients.protein)g", color: .green)
-                                        ResultNutrientDot(label: "Carbs", value: "\(analysis.macronutrients.carbs)g", color: .blue)
-                                    }
-
-                                    HStack(spacing: 16) {
-                                        ResultNutrientDot(label: "Fat", value: "\(analysis.macronutrients.fat)g", color: .orange)
-                                        ResultNutrientDot(label: "Calories", value: "\(analysis.macronutrients.calories) kcal", color: .gray)
-                                    }
-                                }
-
-                                Spacer()
-                            }
-                        }
-                        .padding(20)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.black.opacity(0.0), Color.black.opacity(0.8)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        heroHeader
+                        contentCard
                     }
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .padding(.horizontal, 20)
-                    .sheet(isPresented: $showNutriInfo) {
-                        NutriScoreInfoView(productBreakdown: nil, plateScore: analysis.nutritionScore)
-                    }
-
-                    // Micronutrients
-                    if let micros = analysis.micronutrients {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Micronutrients")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 12) {
-                                if let fiber = micros.fiberG {
-                                    MicronutrientCard(name: "Fiber", level: "\(fiber) g", color: .green)
-                                }
-                                if let vc = micros.vitaminCMg {
-                                    MicronutrientCard(name: "Vitamin C", level: "\(vc) mg", color: .orange)
-                                }
-                                if let iron = micros.ironMg {
-                                    MicronutrientCard(name: "Iron", level: "\(iron) mg", color: .red)
-                                }
-                            }
-
-                            if let other = micros.other, !other.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Other")
-                                        .font(.footnote)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.secondary)
-                                    Text(other)
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding()
-                                .background(Color.gray.opacity(0.05))
-                                .cornerRadius(12)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-
-                    // Connections
-                    if let connections = analysis.connections, !connections.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Connections")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                ForEach(connections.indices, id: \.self) { idx in
-                                    HStack(alignment: .top, spacing: 8) {
-                                        Circle().fill(Color.blue).frame(width: 6, height: 6).padding(.top, 6)
-                                        Text(connections[idx])
-                                            .font(.body)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                            .padding()
-                            .background(Color.gray.opacity(0.05))
-                            .cornerRadius(12)
-                        }
-                        .padding(.horizontal, 20)
-                    }
-                    
-                    // Ingredient Breakdown
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Ingredient Breakdown")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-
-                        VStack(spacing: 0) {
-                            ForEach(analysis.ingredients.indices, id: \.self) { index in
-                                let ingredient = analysis.ingredients[index]
-                                ResultIngredientRow(name: ingredient.name, amount: ingredient.amount)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Insights & Suggestions
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Insights & Suggestions")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-
-                        VStack(spacing: 12) {
-                            ForEach(analysis.insights.indices, id: \.self) { index in
-                                let insight = analysis.insights[index]
-                                ResultModernInsightCard(insight: insight)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    // Feedback Section
-                    VStack(spacing: 16) {
-                        Text("Is this analysis correct?")
-                            .font(.body)
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                            .multilineTextAlignment(.center)
-
-                        Text("Your feedback helps us improve our AI.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                feedbackGiven = true
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "hand.thumbsup.fill")
-                                    Text("Yes")
-                                }
-                                .font(.body.weight(.medium))
-                                .foregroundColor(feedbackGiven ? .white : .primary)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 14)
-                                .background(feedbackGiven ? Color.green : Color(.systemGray5))
-                                .clipShape(RoundedRectangle(cornerRadius: 25))
-                            }
-
-                            Button(action: {
-                                feedbackGiven = true
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "hand.thumbsdown.fill")
-                                    Text("No")
-                                }
-                                .font(.body.weight(.medium))
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 14)
-                                .background(Color(.systemGray5))
-                                .clipShape(RoundedRectangle(cornerRadius: 25))
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 20)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color(.systemGray4), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 20)
-                    
-                    Button(action: {
-                        onStartNewScan()
-                        dismiss()
-                    }) {
-                        HStack {
-                            Image(systemName: "camera.fill")
-                            Text("Start New Scan")
-                        }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.green)
-                        .cornerRadius(25)
-                    }
-                    .padding(.horizontal, 20)
-                    
-                    Spacer(minLength: 100)
+                    .frame(width: proxy.size.width, alignment: .top)
+                    .padding(.bottom, 150)
                 }
+                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationBarHidden(true)
+
+            headerBar
+
+            bottomCTA
         }
     }
+
+    private var heroHeader: some View {
+        ZStack {
+            Group {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.15))
+                        .overlay(
+                            Image(systemName: "fork.knife.circle.fill")
+                                .font(.system(size: 56))
+                                .foregroundColor(primary)
+                        )
+                }
+            }
+            .frame(height: UIScreen.main.bounds.height * 0.5)
+            .clipped()
+
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.7), Color.black.opacity(0.0)]),
+                startPoint: .bottom,
+                endPoint: .top
+            )
+            .frame(height: UIScreen.main.bounds.height * 0.5)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Rectangle()
+                        .fill(primary)
+                        .frame(width: 32, height: 1)
+                    Text(NSLocalizedString("plate.optimized", comment: "Nutritionally Optimized label"))
+                        .font(.system(size: 10, weight: .bold))
+                        .kerning(3)
+                        .foregroundColor(primary)
+                        .textCase(.uppercase)
+                }
+                Text(analysis.description)
+                    .font(.system(size: 34, weight: .semibold, design: .serif))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                let m = analysis.macronutrients
+                Text("\(m.calories) kcal • \(Int(analysis.nutritionScore))/10")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.7))
+                    .kerning(1.4)
+                    .textCase(.uppercase)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 48)
+            .frame(height: UIScreen.main.bounds.height * 0.5, alignment: .bottom)
+        }
+    }
+
+    private var headerBar: some View {
+        HStack {
+            Button(action: { onClose(); dismiss() }) {
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                    )
+            }
+            Spacer()
+            Text(NSLocalizedString("plate.visual_insight", comment: "Visual Insight title"))
+                .font(.system(size: 10, weight: .bold))
+                .kerning(3)
+                .foregroundColor(.white.opacity(0.9))
+                .textCase(.uppercase)
+            Spacer()
+            Button(action: { onClose(); dismiss() }) {
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Image(systemName: "xmark")
+                            .foregroundColor(.white)
+                    )
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+    }
+
+    private var contentCard: some View {
+        VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "menucard")
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary.opacity(0.4))
+                    Text(NSLocalizedString("chef.insight", comment: "Chef's Insight"))
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.primary.opacity(0.4))
+                        .kerning(2)
+                        .textCase(.uppercase)
+                }
+                Text("“\(overviewText)”")
+                    .font(.system(size: 24, weight: .regular, design: .serif))
+                    .italic()
+                    .foregroundColor(Color(.label))
+                    .lineSpacing(6)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal")
+                        .font(.system(size: 16))
+                        .foregroundColor(.primary.opacity(0.4))
+                    Text(NSLocalizedString("ingredients.detected", comment: "Detected Ingredients"))
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.primary.opacity(0.4))
+                        .kerning(2)
+                        .textCase(.uppercase)
+                }
+                ChipFlow(alignment: .leading, spacing: 8) {
+                    ForEach(analysis.ingredients.indices, id: \.self) { idx in
+                        let ing = analysis.ingredients[idx]
+                        Text(ing.name)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Color(.systemGray))
+                            .textCase(.uppercase)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 999)
+                                    .fill(Color.white)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 999)
+                                            .stroke(Color(.systemGray4), lineWidth: 1)
+                                    )
+                            )
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text(NSLocalizedString("macro.profile", comment: "Macro Profile"))
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .kerning(3)
+                        .textCase(.uppercase)
+                    Spacer()
+                    Text(NSLocalizedString("plate.optimized.badge", comment: "Optimized badge"))
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(primary)
+                        .textCase(.uppercase)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(primary.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+ 
+                MacroBarRow(title: NSLocalizedString("nutrition.protein", comment: "Protein"), label: NSLocalizedString("macro.good", comment: "Good"), fill: 0.7, accent: primary)
+                MacroBarRow(title: NSLocalizedString("nutrition.carbs", comment: "Carbohydrates"), label: NSLocalizedString("macro.moderate", comment: "Moderate"), fill: 0.5, accent: primary)
+                MacroBarRow(title: NSLocalizedString("nutrition.fat", comment: "Dietary Fats"), label: NSLocalizedString("macro.minimal", comment: "Minimal"), fill: 0.25, accent: primary)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 28)
+        .padding(.bottom, 40)
+        .background(
+            nordicBackground
+                .clipShape(RoundedRectangle(cornerRadius: 40, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 40, style: .continuous)
+                        .stroke(Color.clear, lineWidth: 0)
+                )
+        )
+        .offset(y: -28)
+    }
+
+    private var bottomCTA: some View {
+        VStack {
+            Spacer()
+            Button(action: {
+                onStartNewScan()
+                dismiss()
+            }) {
+                HStack(spacing: 10) {
+                    Text(NSLocalizedString("plate.log_meal", comment: "Log This Meal"))
+                        .font(.system(size: 13, weight: .bold))
+                        .kerning(2)
+                        .textCase(.uppercase)
+                    Image(systemName: "checkmark.circle")
+                        .font(.system(size: 18, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: 360)
+                .frame(height: 64)
+                .background(Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255))
+                .clipShape(Capsule())
+                .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 10)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 90)
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+
 }
 
 struct InsightCard: View {
@@ -389,7 +351,7 @@ struct ScoreRingView: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 16)
                 .frame(width: 200, height: 200)
             Circle()
-                .trim(from: 0, to: min(max(score/10.0, 0), 1))
+                .trim(from: 0, to: Swift.min(Swift.max(score/10.0, 0.0), 1.0))
                 .stroke(color, style: StrokeStyle(lineWidth: 16, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .frame(width: 200, height: 200)
@@ -502,26 +464,30 @@ struct ResultModernInsightCard: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 10) {
             Image(systemName: iconName)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(iconColor)
-
+                .frame(width: 22)
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
-                    .font(.headline)
-                    .foregroundColor(textColor)
-
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.primary)
                 Text(insight.description)
-                    .font(.body)
-                    .foregroundColor(descriptionColor)
+                    .font(.system(size: 13))
+                    .foregroundColor(.primary.opacity(0.6))
             }
-
             Spacer()
         }
-        .padding(16)
-        .background(backgroundColor)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(UIColor.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+                )
+        )
     }
 
     private var iconName: String {
@@ -537,44 +503,36 @@ struct ResultModernInsightCard: View {
 
     private var iconColor: Color {
         switch insight.type {
-        case .positive:
-            return colorScheme == .dark ? .green : .white
-        case .suggestion:
-            return colorScheme == .dark ? .orange : .white
-        case .warning:
-            return colorScheme == .dark ? .red : .white
+        case .positive: return .green
+        case .suggestion: return .orange
+        case .warning: return .red
         }
     }
+}
 
-    private var backgroundColor: Color {
-        switch insight.type {
-        case .positive:
-            return colorScheme == .dark
-                ? Color.green.opacity(0.2)
-                : Color.green.opacity(0.8)
-        case .suggestion:
-            return colorScheme == .dark
-                ? Color.orange.opacity(0.2)
-                : Color.orange.opacity(0.8)
-        case .warning:
-            return colorScheme == .dark
-                ? Color.red.opacity(0.2)
-                : Color.red.opacity(0.8)
-        }
-    }
+struct PlateMicronutrientCard: View {
+    let name: String
+    let level: String
+    let color: Color
 
-    private var textColor: Color {
-        switch insight.type {
-        case .positive, .suggestion, .warning:
-            return colorScheme == .dark ? .primary : .white
+    var body: some View {
+        VStack(spacing: 6) {
+            Text(name)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.primary)
+            Text(level)
+                .font(.system(size: 11))
+                .foregroundColor(.primary.opacity(0.6))
         }
-    }
-
-    private var descriptionColor: Color {
-        switch insight.type {
-        case .positive, .suggestion, .warning:
-            return colorScheme == .dark ? .secondary : Color.white.opacity(0.9)
-        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(UIColor.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(color.opacity(0.25), lineWidth: 1)
+                )
+        )
     }
 }
 
@@ -585,6 +543,97 @@ private extension PlateAnalysisResultView {
         }
         let m = analysis.macronutrients
         return "Approx. P \(m.protein)g • C \(m.carbs)g • F \(m.fat)g • \(m.calories) kcal"
+    }
+}
+
+struct MacroBarRow: View {
+    let title: String
+    let label: String
+    let fill: CGFloat // 0..1 visual fill to mirror mock
+    let accent: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.secondary)
+                    .kerning(2)
+                Spacer()
+                Text(label)
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundColor(Color(.label))
+            }
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color(.systemGray6))
+                        .frame(height: 2)
+                    Capsule()
+                        .fill(accent.opacity(0.3))
+                        .frame(width: proxy.size.width * fill, height: 2)
+                }
+            }
+            .frame(height: 2)
+        }
+    }
+}
+
+// Minimal flow layout for wrapping chips
+struct ChipFlow<Content: View>: View {
+    let alignment: HorizontalAlignment
+    let spacing: CGFloat
+    @ViewBuilder var content: () -> Content
+
+    init(alignment: HorizontalAlignment = .leading, spacing: CGFloat = 8, @ViewBuilder content: @escaping () -> Content) {
+        self.alignment = alignment
+        self.spacing = spacing
+        self.content = content
+    }
+
+    var body: some View {
+        FlowLayoutContainer(spacing: spacing) {
+            content()
+        }
+    }
+}
+
+private struct FlowLayoutContainer: Layout {
+    let spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? CGFloat.infinity
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > maxWidth {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            x += size.width + spacing
+            rowHeight = Swift.max(rowHeight, size.height)
+        }
+        return CGSize(width: maxWidth, height: y + rowHeight)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > bounds.width {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            subview.place(at: CGPoint(x: bounds.minX + x, y: bounds.minY + y), proposal: ProposedViewSize(width: size.width, height: size.height))
+            x += size.width + spacing
+            rowHeight = Swift.max(rowHeight, size.height)
+        }
     }
 }
 

@@ -61,6 +61,9 @@
 		CEA6620F2F2624FE002A7EA2 /* TODO.md in Resources */ = {isa = PBXBuildFile; fileRef = CEA6620E2F2624FE002A7EA2 /* TODO.md */; };
 		CEA662112F2624FE002A7EA2 /* PlateAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */; };
 		CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */; };
+		CEDDA7752F39D26300F80CA6 /* EnhancedCameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */; };
+		CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */; };
+		CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */; };
 		CEF23E552E6C5F67002B903F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E542E6C5F67002B903F /* Assets.xcassets */; };
 		CEF23E582E6C5F67002B903F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */; };
 		CEF23E622E6C5F67002B903F /* healthScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E612E6C5F67002B903F /* healthScannerTests.swift */; };
@@ -72,6 +75,13 @@
 		CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */; };
 		CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */; };
 		CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */ = {isa = PBXBuildFile; fileRef = CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */; };
+		CEF4FE612F30F1AF009FAA35 /* NotificationNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE602F30F1AF009FAA35 /* NotificationNames.swift */; };
+		CEF4FE632F3102D7009FAA35 /* DailyNutritionAggregateEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE622F3102D7009FAA35 /* DailyNutritionAggregateEntity.swift */; };
+		CEF4FE652F3102D8009FAA35 /* ScanEventEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE642F3102D8009FAA35 /* ScanEventEntity.swift */; };
+		CEF4FE672F3103E8009FAA35 /* AggregatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */; };
+		CEF4FE692F3103E8009FAA35 /* ScanEventEntity 2.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE682F3103E8009FAA35 /* ScanEventEntity 2.swift */; };
+		CEF4FE6B2F310465009FAA35 /* PromptOverlayHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */; };
+		CEF4FE6D2F32784B009FAA35 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE6C2F32784B009FAA35 /* HomeView.swift */; };
 		D2E3F405162738495A6B7C8D /* RecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F3A405162738495A6B7C8D /* RecommendationService.swift */; };
 		D4E5F61728394A5B6C7D8E9F /* Resources/AppConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */; };
 		D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93339F43356641779417CA4A /* BarcodeScannerView.swift */; };
@@ -157,6 +167,9 @@
 		CEA6620E2F2624FE002A7EA2 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisService.swift; sourceTree = "<group>"; };
 		CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
+		CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCameraPreviewView.swift; sourceTree = "<group>"; };
+		CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationEnhancer.swift; sourceTree = "<group>"; };
+		CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateScanView.swift; sourceTree = "<group>"; };
 		CEF23E4B2E6C5F66002B903F /* healthScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = healthScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEF23E542E6C5F67002B903F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -171,6 +184,13 @@
 		CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8x-oiv7.mlpackage"; sourceTree = "<group>"; };
 		CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconMapper.swift; sourceTree = "<group>"; };
 		CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = IconMapping.json; sourceTree = "<group>"; };
+		CEF4FE602F30F1AF009FAA35 /* NotificationNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationNames.swift; sourceTree = "<group>"; };
+		CEF4FE622F3102D7009FAA35 /* DailyNutritionAggregateEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyNutritionAggregateEntity.swift; sourceTree = "<group>"; };
+		CEF4FE642F3102D8009FAA35 /* ScanEventEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanEventEntity.swift; sourceTree = "<group>"; };
+		CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregatorService.swift; sourceTree = "<group>"; };
+		CEF4FE682F3103E8009FAA35 /* ScanEventEntity 2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ScanEventEntity 2.swift"; sourceTree = "<group>"; };
+		CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptOverlayHost.swift; sourceTree = "<group>"; };
+		CEF4FE6C2F32784B009FAA35 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D1E2F3A405162738495A6B7C /* RecommendationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsViewModel.swift; sourceTree = "<group>"; };
 		D636EC943F04417B920D1E0E /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
 		D8FEDCE15996435F8F129E09 /* LocalizationDebug.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
@@ -233,6 +253,11 @@
 				29A1F3A12E7D00210086689E /* DualCameraPlateScannerViewController.swift */,
 				CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */,
 				CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */,
+				CEF4FE602F30F1AF009FAA35 /* NotificationNames.swift */,
+				CEF4FE622F3102D7009FAA35 /* DailyNutritionAggregateEntity.swift */,
+				CEF4FE642F3102D8009FAA35 /* ScanEventEntity.swift */,
+				CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */,
+				CEF4FE682F3103E8009FAA35 /* ScanEventEntity 2.swift */,
 			);
 			path = AR;
 			sourceTree = "<group>";
@@ -389,6 +414,7 @@
 			children = (
 				CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */,
 				CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */,
+				CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */,
 			);
 			path = CoreML;
 			sourceTree = "<group>";
@@ -495,6 +521,10 @@
 				59FF2D5BB40F44EA9634238C /* PlateHistoryDetailView.swift */,
 				BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */,
 				CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */,
+				CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */,
+				CEF4FE6C2F32784B009FAA35 /* HomeView.swift */,
+				CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */,
+				CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -664,8 +694,13 @@
 				29A1F3A42E7D001F0086689E /* ARPlateScanNutrition.swift in Sources */,
 				29A1F3A52E7D00200086689E /* ARPlateScannerViewController.swift in Sources */,
 				29A1F3A62E7D00210086689E /* DualCameraPlateScannerViewController.swift in Sources */,
+				CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */,
 				CE5335F32E7AB1A00086689E /* CameraPreviewView.swift in Sources */,
+				CEF4FE692F3103E8009FAA35 /* ScanEventEntity 2.swift in Sources */,
+				CEF4FE6D2F32784B009FAA35 /* HomeView.swift in Sources */,
+				CEF4FE672F3103E8009FAA35 /* AggregatorService.swift in Sources */,
 				CE5335D82E79D2350086689E /* AppStyles.swift in Sources */,
+				CEF4FE612F30F1AF009FAA35 /* NotificationNames.swift in Sources */,
 				CE5336042E7AEC390086689E /* RecommendationListView.swift in Sources */,
 				BE202E34E36B4A9C878BE655 /* NutriScoreUtilities.swift in Sources */,
 				CE5336012E7AEC1C0086689E /* Recommendation+Insight.swift in Sources */,
@@ -673,6 +708,7 @@
 				AA4E74354E3F4D09AEB43BCC /* PlateAnalysisHistory.swift in Sources */,
 				CE5335DC2E79D4230086689E /* ProfileView.swift in Sources */,
 				FD4AF8AB5ED2421B8442279A /* RecentScan.swift in Sources */,
+				CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */,
 				CEF4FE552F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage in Sources */,
 				CE5335D42E79D1E00086689E /* SettingsView.swift in Sources */,
 				A5F1B41B55D944F6BD142399 /* BarcodeScannerViewController.swift in Sources */,
@@ -694,15 +730,18 @@
 				A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */,
 				CEA6620B2F2620A8002A7EA2 /* ImagePreprocessor.swift in Sources */,
 				CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */,
+				CEF4FE632F3102D7009FAA35 /* DailyNutritionAggregateEntity.swift in Sources */,
 				03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */,
 				CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */,
 				CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */,
 				B8095E02957F4171B841C804 /* NutritionCard.swift in Sources */,
 				CE5335E02E79DD5B0086689E /* DietaryPreferences.swift in Sources */,
 				F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */,
+				CEDDA7752F39D26300F80CA6 /* EnhancedCameraPreviewView.swift in Sources */,
 				CE5335DE2E79D6C30086689E /* LocalizationManager.swift in Sources */,
 				CE5336082E7AF1FE0086689E /* LocalRecommendationML.swift in Sources */,
 				3A248FE00C6F46A99D51CEC2 /* NutriScoreInfoView.swift in Sources */,
+				CEF4FE6B2F310465009FAA35 /* PromptOverlayHost.swift in Sources */,
 				32E8B7B641224A8C9040BE0B /* PersonalizedInsightCarousel.swift in Sources */,
 				413BC6B4A94B42A8B165E381 /* PlateAnalysisResultView.swift in Sources */,
 				A98444C891C84C63914AF615 /* PlateAnalysisView.swift in Sources */,
@@ -711,6 +750,7 @@
 				CEA662112F2624FE002A7EA2 /* PlateAnalysisService.swift in Sources */,
 				CE5335E22E79DD800086689E /* DietaryPreferencesView.swift in Sources */,
 				30F0AD1B8C354DABA92020EB /* Item.swift in Sources */,
+				CEF4FE652F3102D8009FAA35 /* ScanEventEntity.swift in Sources */,
 				CBB558377628423593EC12D3 /* Product.swift in Sources */,
 				CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */,
 				D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */,

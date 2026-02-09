@@ -29,6 +29,7 @@ struct ContentView: View {
     @Query private var products: [Product]
     @Query private var plateAnalyses: [PlateAnalysisHistory]
     @StateObject private var productService = ProductService()
+    @StateObject private var barcodeScanVM = BarcodeScannerViewModel()
     @StateObject private var insightService = InsightDataService.shared
     
     @State private var showingScanner = false
@@ -37,6 +38,9 @@ struct ContentView: View {
     @State private var selectedProduct: Product?
     @State private var selectedPlateAnalysis: PlateAnalysisHistory?
     @State private var showingProductDetail = false
+    @State private var showingQuickAdd = false
+    @State private var showingPlateScan = false
+    @State private var showingPlateUpload = false
     @State private var selectedTab = 0
     
     // New state properties for history tab
@@ -44,6 +48,7 @@ struct ContentView: View {
     @State private var selectedFilter: ProductFilter = .all
     @State private var selectedHistoryType: HistoryType = .all
     @State private var selectedSort: SortOption = .date
+    @State private var historyDigestIndex = 0
     
     enum HistoryType: CaseIterable {
         case all, products, plates
@@ -65,6 +70,25 @@ struct ContentView: View {
             case .date: return NSLocalizedString("sort.date", comment: "Sort option by date")
             case .nutri: return NSLocalizedString("sort.nutri_score", comment: "Sort option by Nutri-Score")
             }
+        }
+    }
+    
+    // Adaptive insights banner for History tab
+    private var historyTrendInsights: [PersonalizedInsight] {
+        let engine = OnDeviceNutritionRecommendationEngine()
+        // Use SwiftData queries already present: products, plateAnalyses
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date.distantPast
+        let recentPlates = plateAnalyses.filter { $0.analyzedDate >= cutoff }
+        let recentProducts = products.filter { $0.scannedDate >= cutoff }
+        let recs = engine.generateAdaptiveTrendInsights(plates: recentPlates, products: recentProducts)
+
+        return recs.prefix(3).map { r in
+            let icon: String
+            let color: Color
+            if r.tags.contains("fiber") { icon = "leaf.fill"; color = .green }
+            else if r.tags.contains("protein") { icon = "bolt.heart.fill"; color = .pink }
+            else { icon = "lightbulb.fill"; color = .yellow }
+            return PersonalizedInsight(icon: icon, iconColor: color, title: r.title, message: r.message, category: .health, reason: r.reason, evidence: r.evidence, tags: r.tags)
         }
     }
     
@@ -139,184 +163,224 @@ struct ContentView: View {
         case .E: return 1
         }
     }
+
+    private var historyJournalView: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 16) {
+                historyHeader
+
+                if !historyTrendInsights.isEmpty {
+                    digestSection
+                }
+
+                historyTimeline
+            }
+            .padding(.bottom, 120)
+        }
+        .background(Color(red: 252 / 255, green: 252 / 255, blue: 252 / 255))
+    }
+
+    private var historyHeader: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(NSLocalizedString("history.story_label", comment: "History header label"))
+                    .font(.system(size: 10, weight: .bold))
+                    .kerning(3)
+                    .foregroundColor(Color.gray.opacity(0.6))
+                    .textCase(.uppercase)
+                Text(NSLocalizedString("history.journal_title", comment: "History journal title"))
+                    .font(.system(size: 30, weight: .black, design: .serif))
+                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+            }
+            Spacer()
+            Image(systemName: "book")
+                .font(.system(size: 20))
+                .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                .padding(8)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+    }
+
+    private var digestSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text(NSLocalizedString("history.digest_title", comment: "Digest title"))
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                Spacer()
+                Button(action: {}) {
+                    HStack(spacing: 4) {
+                        Text(NSLocalizedString("history.digest_action", comment: "Digest action"))
+                            .font(.system(size: 11, weight: .bold))
+                            .kerning(1.5)
+                            .textCase(.uppercase)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                    }
+                    .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                }
+            }
+            .padding(.horizontal, 20)
+
+            VStack(spacing: 10) {
+                TabView(selection: $historyDigestIndex) {
+                    ForEach(Array(historyTrendInsights.enumerated()), id: \.offset) { idx, insight in
+                        HistoryDigestCard(insight: insight)
+                            .tag(idx)
+                            .padding(.horizontal, 4)
+                    }
+                }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .frame(height: 150)
+
+                HStack(spacing: 6) {
+                    ForEach(0..<historyTrendInsights.count, id: \.self) { idx in
+                        Circle()
+                            .fill(idx == historyDigestIndex ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color.gray.opacity(0.3))
+                            .frame(width: 6, height: 6)
+                    }
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .padding(.top, 8)
+    }
+
+    private var historyTimeline: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.15))
+                    .frame(width: 1)
+                    .padding(.leading, 14)
+
+                VStack(alignment: .leading, spacing: 24) {
+                    ForEach(historySections) { section in
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text(sectionTitle(for: section.date))
+                                .font(.system(size: 10, weight: .black))
+                                .kerning(3)
+                                .foregroundColor(Color.gray.opacity(0.6))
+                                .textCase(.uppercase)
+                                .padding(.leading, 4)
+
+                            VStack(spacing: 16) {
+                                ForEach(section.items) { item in
+                                    HistoryTimelineCard(item: item) {
+                                        switch item {
+                                        case .product(let product):
+                                            selectedProduct = product
+                                        case .plate(let plate):
+                                            selectedPlateAnalysis = plate
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+    }
+
+    private var historySections: [HistorySection] {
+        let grouped = Dictionary(grouping: filteredHistoryItems) { item in
+            Calendar.current.startOfDay(for: item.date)
+        }
+        return grouped.keys.sorted(by: >).map { key in
+            let items = grouped[key]?.sorted { $0.date > $1.date } ?? []
+            return HistorySection(date: key, items: items)
+        }
+    }
+
+    private func sectionTitle(for date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            let label = NSLocalizedString("history.today", comment: "Today label")
+            return "\(label) • \(date.formatted(date: .abbreviated, time: .omitted))"
+        }
+        if calendar.isDateInYesterday(date) {
+            let label = NSLocalizedString("history.yesterday", comment: "Yesterday label")
+            return "\(label) • \(date.formatted(date: .abbreviated, time: .omitted))"
+        }
+        return date.formatted(date: .abbreviated, time: .omitted)
+    }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            // Scan Tab - Replace with BarcodeScannerView
-            BarcodeScannerView(
-                scannedCode: $scannedCode,
-                isScanning: $isScanning
-            )
-            .tabItem {
-                VStack {
-                    Image(systemName: "barcode.viewfinder")
-                    Text("tab.scan".localized())
+        PromptOverlayHost {
+            TabView(selection: $selectedTab) {
+                // Home Tab
+                ZStack {
+                    HomeView()
+                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.white).padding() }.background(Color.green).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
                 }
-            }
-            .tag(0)
-            
-            // Plate Tab - Now using photo-based analysis (AR disabled)
-            NavigationView {
-                PlateAnalysisView()
-                    .navigationBarHidden(true)
-            }
-            .tabItem {
-                VStack {
-                    Image(systemName: "fork.knife")
-                    Text("tab.plate".localized())
-                }
-            }
-            .tag(1)
-            
-            // History Tab
-            NavigationView {
-                VStack(spacing: 0) {
-                    // Custom Header
-                    HStack {
-                        Text("tab.history".localized())
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        Spacer()
-                        
-                        // Invisible spacer to center the title
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .opacity(0)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                    
-                    VStack(spacing: 20) {
-                        // Search Bar
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.secondary)
-                            
-                            TextField(NSLocalizedString("search.placeholder", comment: "Search placeholder text"), text: $searchText)
-                                .textFieldStyle(PlainTextFieldStyle())
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(25)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                        
-                        // Filter Buttons
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(ProductFilter.allCases, id: \.self) { filter in
-                                    FilterButton(title: filter.title, isSelected: selectedFilter == filter) {
-                                        selectedFilter = filter
-                                    }
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                        
-                        // History Type Picker
-                        Picker(NSLocalizedString("picker.history_type", comment: "History type picker label"), selection: $selectedHistoryType) {
-                            ForEach(HistoryType.allCases, id: \.self) { type in
-                                Text(type.title).tag(type)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
+                .tabItem { VStack { Image(systemName: "house"); Text(NSLocalizedString("home.title", comment: "Home tab title")) } }
+                .tag(0)
 
-                        // Sort Picker
-                        Picker(NSLocalizedString("picker.sort", comment: "Sort picker label"), selection: $selectedSort) {
-                            ForEach(SortOption.allCases, id: \.self) { opt in
-                                Text(opt.rawValue).tag(opt)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .padding(.horizontal, 20)
+                // History Tab
+                ZStack {
+                    historyJournalView
+
+                    // Floating + button
+                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.white).padding() }.background(Color.green).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
+                }
+                .tabItem { VStack { Image(systemName: "clock"); Text("tab.history".localized()) } }
+                .tag(1)
+
+                // Profile Tab
+                ProfileView()
+                    .tabItem { VStack { Image(systemName: "person"); Text("tab.profile".localized()) } }
+                    .tag(2)
+            }
+            .accentColor(.green)
+            .fullScreenCover(isPresented: $showingScanner) {
+                QuickBarcodeScanView(
+                    scannedCode: $scannedCode,
+                    isScanning: $isScanning,
+                    isPresented: $showingScanner
+                )
+            }
+            .fullScreenCover(isPresented: $showingPlateScan) {
+                PlateAnalysisView()
+            }
+            .fullScreenCover(isPresented: $showingPlateUpload) {
+                PlateAnalysisView()
+            }
+            .sheet(item: $selectedProduct) { product in
+                ProductDetailView(product: product)
+            }
+            .sheet(item: $selectedPlateAnalysis) { plateAnalysis in
+                PlateDetailView(plateAnalysis: plateAnalysis) {
+                    selectedPlateAnalysis = nil
+                }
+            }
+            .sheet(isPresented: $showingQuickAdd) {
+                VStack(spacing: 12) {
+                    Text(NSLocalizedString("home.section.suggestions", comment: "Quick actions title")).font(.headline).padding(.top, 16)
+                    Button { showingScanner = true ; showingQuickAdd = false } label: {
+                        HStack { Image(systemName: "barcode.viewfinder"); Text("tab.scan".localized()) }.frame(maxWidth: .infinity).padding().background(Color.indigo).foregroundColor(.white).cornerRadius(12)
                     }
-                    
-                    // Products List
-                    if filteredHistoryItems.isEmpty {
-                        VStack(spacing: 20) {
-                            Spacer()
-                            Image(systemName: "clock")
-                                .font(.system(size: 50))
-                                .foregroundColor(.secondary)
-                            Text(NSLocalizedString("empty.no_scans", comment: "Empty state title"))
-                                .font(.title3)
-                                .foregroundColor(.secondary)
-                            Text(NSLocalizedString("empty.start_scanning", comment: "Empty state description"))
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                            Spacer()
-                        }
-                        .padding(.top, 60)
-                    } else {
-                        List {
-                            ForEach(filteredHistoryItems) { item in
-                                switch item {
-                                case .product(let product):
-                                    HistoryProductRowView(product: product) {
-                                        print("[History] Row tapped for product barcode=\(product.barcode) name=\(product.name) imageURL=\(product.imageURL ?? "nil")")
-                                        // Use only selectedProduct; sheet(item:) will present when non-nil
-                                        selectedProduct = product
-                                    }
-                                case .plate(let plateAnalysis):
-                                    HistoryPlateRowView(plateAnalysis: plateAnalysis) {
-                                        print("[History] Row tapped for plate id=\(plateAnalysis.id) name=\(plateAnalysis.name)")
-                                        selectedPlateAnalysis = plateAnalysis
-                                    }
-                                }
-                            }
-                            .onDelete { indexSet in
-                                for index in indexSet {
-                                    let item = filteredHistoryItems[index]
-                                    switch item {
-                                    case .product(let product):
-                                        modelContext.delete(product)
-                                    case .plate(let plateAnalysis):
-                                        modelContext.delete(plateAnalysis)
-                                    }
-                                }
-                            }
-                        }
-                        .listStyle(PlainListStyle())
+                    Button { showingPlateScan = true ; showingQuickAdd = false } label: {
+                        HStack { Image(systemName: "fork.knife"); Text("tab.plate".localized()) }.frame(maxWidth: .infinity).padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
+                    }
+                    Button { showingPlateUpload = true ; showingQuickAdd = false } label: {
+                        HStack { Image(systemName: "photo"); Text(NSLocalizedString("plate.upload_photo", comment: "Upload photo")) }.frame(maxWidth: .infinity).padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
+                    }
+                    Spacer()
+                }
+                .padding(20)
+                .presentationDetents([.height(220)])
+            }
+            .onChange(of: scannedCode) { _, newValue in
+                guard let code = newValue else { return }
+                Task {
+                    if let product = try? await barcodeScanVM.fetchProduct(barcode: code, existing: products, modelContext: modelContext) {
+                        selectedProduct = product
                     }
                 }
-                .navigationBarHidden(true)
-            }
-            .tabItem {
-                VStack {
-                    Image(systemName: "clock")
-                    Text("tab.history".localized())
-                }
-            }
-            .tag(2)
-            
-            // Profile Tab
-            ProfileView()
-            .tabItem {
-                VStack {
-                    Image(systemName: "person")
-                    Text("tab.profile".localized())
-                }
-            }
-            .tag(3)
-        }
-        .accentColor(.green)
-        .sheet(isPresented: $showingScanner) {
-            BarcodeScannerView(
-                scannedCode: $scannedCode,
-                isScanning: $isScanning
-            )
-        }
-        .sheet(item: $selectedProduct) { product in
-            ProductDetailView(product: product)
-        }
-        .sheet(item: $selectedPlateAnalysis) { plateAnalysis in
-            PlateHistoryDetailView(plateAnalysis: plateAnalysis) {
-                selectedPlateAnalysis = nil
             }
         }
     }
@@ -342,128 +406,205 @@ struct FilterButton: View {
     }
 }
 
-// History Row Views
-struct HistoryProductRowView: View {
-    let product: Product
-    let onTap: () -> Void
-    
+private struct QuickBarcodeScanView: View {
+    @Binding var scannedCode: String?
+    @Binding var isScanning: Bool
+    @Binding var isPresented: Bool
+
     var body: some View {
-        HStack(spacing: 15) {
-            // Product image or placeholder
-            Group {
-                if let productImageURL = product.imageURL, !productImageURL.isEmpty {
-                    CachedAsyncImage(urlString: productImageURL, cacheKey: product.barcode)
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.1))
-                        .overlay(
-                            Image(systemName: "cart")
-                                .font(.title2)
-                                .foregroundColor(.gray)
-                        )
-                }
-            }
-            .frame(width: 70, height: 70)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                
-                HStack(spacing: 8) {
-                    NutriScoreBadge(letter: product.nutriScoreLetter, compact: true)
-                }
-                
-                Text(String(format: NSLocalizedString("scanning.scanned_on", comment: "Scanned date format"), product.scannedDate.formatted(date: .abbreviated, time: .shortened)))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(product.scannedDate.formatted(date: .omitted, time: .shortened))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+        BarcodeCameraOverlayView(
+            scannedCode: $scannedCode,
+            isScanning: $isScanning,
+            isPresented: $isPresented
+        )
+        .onAppear {
+            isScanning = true
         }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
+        .ignoresSafeArea()
     }
 }
 
-struct HistoryPlateRowView: View {
-    let plateAnalysis: PlateAnalysisHistory
-    let onTap: () -> Void
-    
+private struct HistorySection: Identifiable {
+    let date: Date
+    let items: [HistoryItemType]
+    var id: Date { date }
+}
+
+private struct HistoryDigestCard: View {
+    let insight: PersonalizedInsight
+
+    private var accent: Color {
+        switch insight.category {
+        case .health: return Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+        case .habit: return Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
+        case .preference: return Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
+        case .recommendation: return Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+        }
+    }
+
     var body: some View {
-        HStack(spacing: 15) {
-            // Plate image with health indicator overlay
-            ZStack(alignment: .bottomTrailing) {
-                // Use cached image first, fallback to stored imageData
-                Group {
-                    if let cachedImage = ImageCacheService.shared.loadImage(forKey: plateAnalysis.cacheKey) {
-                        Image(uiImage: cachedImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else if let image = plateAnalysis.image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.gray.opacity(0.1))
-                            .overlay(
-                                Image(systemName: "fork.knife")
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                            )
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Circle()
+                    .fill(accent.opacity(0.12))
+                    .frame(width: 44, height: 44)
+                    .overlay(
+                        Image(systemName: insight.icon)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(accent)
+                    )
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(insight.title)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    Text(insight.message)
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.gray.opacity(0.7))
+                }
+                Spacer()
+            }
+        }
+        .padding(16)
+        .background(Color.white)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+    }
+}
+
+private struct HistoryTimelineCard: View {
+    let item: HistoryItemType
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                imageView
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(item.name)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                            .lineLimit(1)
+                        Spacer()
+                        nutriBadge
+                    }
+                    HStack(spacing: 8) {
+                        let kcal = NSLocalizedString("unit.kilocalories", comment: "Kilocalories unit")
+                        Text("\(caloriesText) \(kcal)")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color.gray.opacity(0.8))
+                        Text(macroText)
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .foregroundColor(Color.gray.opacity(0.6))
+                    }
+                    if let note = noteText {
+                        Text("“\(note)”")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.gray.opacity(0.5))
+                            .italic()
+                            .lineLimit(2)
                     }
                 }
-                .frame(width: 70, height: 70)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                
-                // Nutri-Score badge overlay
-                NutriScoreBadge(letter: plateAnalysis.nutriScoreLetter, compact: true)
-                    .offset(x: 5, y: 5)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(plateAnalysis.name)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
-                
-                
-                Text(String(format: NSLocalizedString("scanning.analyzed_on", comment: "Analyzed date format"), plateAnalysis.analyzedDate.formatted(date: .abbreviated, time: .shortened)))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(plateAnalysis.analyzedDate.formatted(date: .omitted, time: .shortened))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            .padding(12)
+            .background(Color.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
         }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onTap()
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var imageView: some View {
+        switch item {
+        case .plate(let plate):
+            if let cached = ImageCacheService.shared.loadImage(forKey: plate.cacheKey) {
+                Image(uiImage: cached).resizable().scaledToFill()
+            } else if let image = plate.image {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                Color.gray.opacity(0.08)
+                    .overlay(
+                        Image(systemName: "fork.knife")
+                            .font(.system(size: 18))
+                            .foregroundColor(.gray)
+                    )
+            }
+        case .product(let product):
+            if let localPath = product.localImagePath,
+               FileManager.default.fileExists(atPath: localPath),
+               let uiImage = UIImage(contentsOfFile: localPath) {
+                Image(uiImage: uiImage).resizable().scaledToFill()
+            } else if let url = product.imageURL, !url.isEmpty {
+                CachedAsyncImage(urlString: url, cacheKey: product.barcode)
+                    .scaledToFill()
+            } else {
+                Color.gray.opacity(0.08)
+                    .overlay(
+                        Image(systemName: "cart")
+                            .font(.system(size: 18))
+                            .foregroundColor(.gray)
+                    )
+            }
+        }
+    }
+
+    private var nutriBadge: some View {
+        let rgb = item.nutriScoreLetter.color
+        let color = Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
+        return Text(item.nutriScoreLetter.rawValue)
+            .font(.system(size: 10, weight: .black))
+            .foregroundColor(color)
+            .frame(width: 22, height: 22)
+            .background(color.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private var caloriesText: String {
+        switch item {
+        case .plate(let plate):
+            return "\(plate.calories)"
+        case .product(let product):
+            return String(format: "%.0f", product.nutritionData.calories)
+        }
+    }
+
+    private var macroText: String {
+        switch item {
+        case .plate(let plate):
+            return "\(plate.protein)g P • \(plate.carbs)g C • \(plate.fat)g F"
+        case .product(let product):
+            let protein = String(format: "%.0f", product.nutritionData.protein)
+            let carbs = String(format: "%.0f", product.nutritionData.carbohydrates)
+            let fat = String(format: "%.0f", product.nutritionData.fat)
+            return "\(protein)g P • \(carbs)g C • \(fat)g F"
+        }
+    }
+
+    private var noteText: String? {
+        switch item {
+        case .plate(let plate):
+            return plate.insights.first?.description ?? plate.analysisDescription
+        case .product(let product):
+            if let ingredients = product.ingredients?.trimmingCharacters(in: .whitespacesAndNewlines), !ingredients.isEmpty {
+                return ingredients.components(separatedBy: CharacterSet(charactersIn: ",;•|/")).first
+            }
+            if !product.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return product.brand
+            }
+            return nil
         }
     }
 }

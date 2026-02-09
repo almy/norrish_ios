@@ -12,175 +12,24 @@ struct DietaryPreferencesView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingCustomAllergySheet = false
     @State private var showingCustomRestrictionSheet = false
+    @State private var showingAddActionSheet = false
     @State private var customAllergyText = ""
     @State private var customRestrictionText = ""
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 32) {
-                    // Header with progress bar
-                    VStack(spacing: 16) {
-                        // Progress bar
-                        VStack(spacing: 8) {
-                            HStack {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.mint)
-                                    .frame(height: 8)
-                                    .frame(width: progressBarWidth)
-
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.secondary.opacity(0.3))
-                                    .frame(height: 8)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                            Text("preferences.profile_complete".localized(comment: "\(Int(preferencesManager.profileCompletionPercentage))%"))
-                                .font(.subheadline)
-                                .foregroundColor(.mint)
-                                .fontWeight(.medium)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                    }
-
-                    // Allergies Section
-                    VStack(alignment: .leading, spacing: 20) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("preferences.allergies".localized())
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-
-                            Text("preferences.allergies_description".localized())
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.horizontal, 20)
-
-                        // Allergy pills
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 12),
-                            GridItem(.flexible(), spacing: 12)
-                        ], spacing: 12) {
-                            ForEach(Allergy.allCases) { allergy in
-                                AllergyPill(
-                                    title: allergy.displayName,
-                                    isSelected: preferencesManager.selectedAllergies.contains(allergy)
-                                ) {
-                                    preferencesManager.toggleAllergy(allergy)
-                                }
-                            }
-
-                            // Custom allergies
-                            ForEach(preferencesManager.customAllergies, id: \.self) { customAllergy in
-                                AllergyPill(
-                                    title: customAllergy,
-                                    isSelected: true,
-                                    isCustom: true
-                                ) {
-                                    preferencesManager.removeCustomAllergy(customAllergy)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-
-                    // Dietary Restrictions Section
-                    VStack(alignment: .leading, spacing: 20) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("preferences.dietary_restrictions".localized())
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.primary)
-
-                            Text("preferences.dietary_description".localized())
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.horizontal, 20)
-
-                        // Dietary restriction pills
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 12),
-                            GridItem(.flexible(), spacing: 12)
-                        ], spacing: 12) {
-                            ForEach(DietaryRestriction.allCases) { restriction in
-                                AllergyPill(
-                                    title: restriction.displayName,
-                                    isSelected: preferencesManager.selectedDietaryRestrictions.contains(restriction)
-                                ) {
-                                    preferencesManager.toggleDietaryRestriction(restriction)
-                                }
-                            }
-
-                            // Custom restrictions
-                            ForEach(preferencesManager.customRestrictions, id: \.self) { customRestriction in
-                                AllergyPill(
-                                    title: customRestriction,
-                                    isSelected: true,
-                                    isCustom: true
-                                ) {
-                                    preferencesManager.removeCustomRestriction(customRestriction)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                    }
-
-                    // Add custom option
-                    Button {
-                        showingCustomAllergySheet = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            Text("preferences.add_custom".localized())
-                                .font(.body)
-                                .foregroundColor(.mint)
-
-                            Spacer()
-
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.mint)
-                                .font(.title2)
-                        }
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 16)
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(25)
-                    }
-                    .padding(.horizontal, 20)
-
-                    // Save button
-                    Button {
-                        dismiss()
-                    } label: {
-                        Text("preferences.save_preferences".localized())
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.mint)
-                            .cornerRadius(25)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 20) {
+                    topBar
+                    header
+                    preferenceGrid
+                    searchButton
+                    footer
                 }
+                .padding(.bottom, 32)
             }
-            .navigationTitle("preferences.your_preferences".localized())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
+            .background(Color(red: 252 / 255, green: 252 / 255, blue: 252 / 255))
+            .navigationBarHidden(true)
         }
         .sheet(isPresented: $showingCustomAllergySheet) {
             CustomAllergySheet(
@@ -191,58 +40,321 @@ struct DietaryPreferencesView: View {
                 }
             )
         }
+        .sheet(isPresented: $showingCustomRestrictionSheet) {
+            CustomRestrictionSheet(
+                text: $customRestrictionText,
+                onSave: { text in
+                    preferencesManager.addCustomRestriction(text)
+                    customRestrictionText = ""
+                }
+            )
+        }
+        .confirmationDialog(
+            "preferences.add_custom".localized(),
+            isPresented: $showingAddActionSheet,
+            titleVisibility: .visible
+        ) {
+            Button("preferences.add_custom_allergy".localized()) {
+                showingCustomAllergySheet = true
+            }
+            Button("preferences.add_custom_restriction".localized()) {
+                showingCustomRestrictionSheet = true
+            }
+            Button("preferences.cancel".localized(), role: .cancel) {}
+        }
     }
 
     private var progressBarWidth: CGFloat {
-        let screenWidth = UIScreen.main.bounds.width - 40 // Account for padding
+        let screenWidth = UIScreen.main.bounds.width - 120
         let percentage = preferencesManager.profileCompletionPercentage / 100
         return screenWidth * CGFloat(percentage)
     }
+
+    private var topBar: some View {
+        HStack {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20, weight: .light))
+                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .frame(width: 40, height: 40)
+            }
+            Spacer()
+            VStack(alignment: .leading, spacing: 0) {
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.gray.opacity(0.12))
+                        .frame(height: 2)
+                    Capsule()
+                        .fill(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                        .frame(width: progressBarWidth, height: 2)
+                }
+                .frame(width: UIScreen.main.bounds.width - 140)
+            }
+            Spacer()
+            Button(action: { dismiss() }) {
+                Text("preferences.skip".localized())
+                    .font(.system(size: 12, weight: .medium))
+                    .kerning(2)
+                    .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+            }
+            .frame(width: 60, alignment: .trailing)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("preferences.title".localized())
+                .font(.system(size: 34, weight: .medium, design: .serif))
+                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+            Text("preferences.dietary_description".localized())
+                .font(.system(size: 15))
+                .foregroundColor(Color.gray.opacity(0.7))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+    }
+
+    private var preferenceGrid: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            PreferenceSection(
+                title: "preferences.category.allergy".localized(),
+                items: allergyItems,
+                onToggle: toggle
+            )
+
+            PreferenceSection(
+                title: "preferences.category.restriction".localized(),
+                items: restrictionItems,
+                onToggle: toggle
+            )
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 6)
+    }
+
+    private var searchButton: some View {
+        Button(action: { showingAddActionSheet = true }) {
+            HStack {
+                Text("preferences.search_placeholder".localized())
+                    .font(.system(size: 13))
+                    .foregroundColor(Color.gray.opacity(0.7))
+                Spacer()
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(Color.gray.opacity(0.6))
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .background(Color.white)
+            .overlay(
+                RoundedRectangle(cornerRadius: 999)
+                    .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+            )
+            .clipShape(Capsule())
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+
+    private var footer: some View {
+        VStack(spacing: 12) {
+            Button(action: { dismiss() }) {
+                HStack(spacing: 8) {
+                    Text("preferences.save_preferences".localized())
+                        .font(.system(size: 16, weight: .medium, design: .serif))
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .clipShape(Capsule())
+            }
+
+            Text(String(format: NSLocalizedString("preferences.step_label", comment: "Step label"), "\(Int(preferencesManager.profileCompletionPercentage))%"))
+                .font(.system(size: 11, weight: .medium))
+                .kerning(2)
+                .foregroundColor(Color.gray.opacity(0.6))
+                .textCase(.uppercase)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+
+    private var allergyItems: [PreferenceItem] {
+        var items: [PreferenceItem] = []
+        items.append(contentsOf: Allergy.allCases.map { allergy in
+            PreferenceItem(
+                id: "allergy-\(allergy.rawValue)",
+                title: allergy.displayName,
+                category: "preferences.category.allergy".localized(),
+                icon: iconForAllergy(allergy),
+                isSelected: preferencesManager.selectedAllergies.contains(allergy),
+                kind: .allergy(allergy)
+            )
+        })
+        items.append(contentsOf: preferencesManager.customAllergies.map { custom in
+            PreferenceItem(
+                id: "custom-allergy-\(custom)",
+                title: custom,
+                category: "preferences.category.custom".localized(),
+                icon: "exclamationmark.triangle",
+                isSelected: true,
+                kind: .customAllergy(custom)
+            )
+        })
+        return items
+    }
+
+    private var restrictionItems: [PreferenceItem] {
+        var items: [PreferenceItem] = []
+        items.append(contentsOf: DietaryRestriction.allCases.map { restriction in
+            PreferenceItem(
+                id: "restriction-\(restriction.rawValue)",
+                title: restriction.displayName,
+                category: "preferences.category.restriction".localized(),
+                icon: iconForRestriction(restriction),
+                isSelected: preferencesManager.selectedDietaryRestrictions.contains(restriction),
+                kind: .restriction(restriction)
+            )
+        })
+        items.append(contentsOf: preferencesManager.customRestrictions.map { custom in
+            PreferenceItem(
+                id: "custom-restriction-\(custom)",
+                title: custom,
+                category: "preferences.category.custom".localized(),
+                icon: "leaf",
+                isSelected: true,
+                kind: .customRestriction(custom)
+            )
+        })
+        return items
+    }
+
+    private func toggle(_ item: PreferenceItem) {
+        switch item.kind {
+        case .allergy(let allergy):
+            preferencesManager.toggleAllergy(allergy)
+        case .restriction(let restriction):
+            preferencesManager.toggleDietaryRestriction(restriction)
+        case .customAllergy(let value):
+            preferencesManager.removeCustomAllergy(value)
+        case .customRestriction(let value):
+            preferencesManager.removeCustomRestriction(value)
+        }
+    }
+
+    private func iconForAllergy(_ allergy: Allergy) -> String {
+        switch allergy {
+        case .peanuts, .treeNuts: return "leaf"
+        case .shellfish, .fish: return "fish"
+        case .dairy: return "drop"
+        case .gluten: return "leaf"
+        case .eggs: return "egg"
+        case .soy: return "leaf"
+        case .sesame: return "leaf"
+        }
+    }
+
+    private func iconForRestriction(_ restriction: DietaryRestriction) -> String {
+        switch restriction {
+        case .vegan, .vegetarian: return "leaf"
+        case .pescatarian: return "fish"
+        case .paleo: return "flame"
+        case .keto: return "bolt"
+        case .lowSodium: return "drop"
+        case .lowCarb: return "bolt"
+        case .dairyfree, .glutenFree: return "leaf"
+        case .halal, .kosher: return "star"
+        }
+    }
 }
 
-struct AllergyPill: View {
-    let title: String
-    let isSelected: Bool
-    let isCustom: Bool
-    let action: () -> Void
+private enum PreferenceKind {
+    case allergy(Allergy)
+    case restriction(DietaryRestriction)
+    case customAllergy(String)
+    case customRestriction(String)
+}
 
-    init(title: String, isSelected: Bool, isCustom: Bool = false, action: @escaping () -> Void) {
-        self.title = title
-        self.isSelected = isSelected
-        self.isCustom = isCustom
-        self.action = action
-    }
+private struct PreferenceItem: Identifiable {
+    let id: String
+    let title: String
+    let category: String
+    let icon: String
+    let isSelected: Bool
+    let kind: PreferenceKind
+}
+
+private struct PreferenceListRow: View {
+    let item: PreferenceItem
+    let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
-                Text(title)
-                    .font(.body)
-                    .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
-
-                if isSelected {
-                    Image(systemName: isCustom ? "minus" : "xmark")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                } else {
-                    Image(systemName: "plus")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+            HStack(spacing: 12) {
+                Image(systemName: item.icon)
+                    .font(.system(size: 18, weight: .light))
+                    .foregroundColor(item.isSelected ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color.gray.opacity(0.6))
+                    .frame(width: 24)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    Text(item.category.uppercased())
+                        .font(.system(size: 10, weight: .semibold))
+                        .kerning(1)
+                        .foregroundColor(item.isSelected ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255).opacity(0.7) : Color.gray.opacity(0.5))
                 }
+                Spacer()
+                Image(systemName: item.isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 16))
+                    .foregroundColor(item.isSelected ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color.gray.opacity(0.35))
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(isSelected ? Color.mint : Color(.secondarySystemBackground))
-            .cornerRadius(25)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 12)
+            .background(Color.white)
             .overlay(
-                RoundedRectangle(cornerRadius: 25)
-                    .stroke(Color(.separator), lineWidth: isSelected ? 0 : 1)
+                Rectangle()
+                    .fill(Color.gray.opacity(0.12))
+                    .frame(height: 1),
+                alignment: .bottom
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
+    }
+}
+
+private struct PreferenceSection: View {
+    let title: String
+    let items: [PreferenceItem]
+    let onToggle: (PreferenceItem) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .kerning(2)
+                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .textCase(.uppercase)
+
+            VStack(spacing: 0) {
+                ForEach(items) { item in
+                    PreferenceListRow(item: item) {
+                        onToggle(item)
+                    }
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+            )
+            .background(Color.white)
+        }
     }
 }
 
@@ -290,6 +402,70 @@ struct CustomAllergySheet: View {
             }
             .padding()
             .navigationTitle("preferences.custom_allergy".localized())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("preferences.cancel".localized()) {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func saveAndDismiss() {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            onSave(trimmed)
+            dismiss()
+        }
+    }
+}
+
+struct CustomRestrictionSheet: View {
+    @Binding var text: String
+    let onSave: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("preferences.add_custom_restriction".localized())
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    Text("preferences.custom_allergy_description".localized())
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                TextField("preferences.allergy_name".localized(), text: $text)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .submitLabel(.done)
+                    .onSubmit {
+                        saveAndDismiss()
+                    }
+
+                Spacer()
+
+                Button {
+                    saveAndDismiss()
+                } label: {
+                    Text("preferences.add".localized())
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.mint)
+                        .cornerRadius(25)
+                }
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding()
+            .navigationTitle("preferences.add_custom_restriction".localized())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

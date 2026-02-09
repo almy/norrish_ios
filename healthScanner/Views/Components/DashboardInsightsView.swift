@@ -13,6 +13,8 @@ struct DashboardInsightsView: View {
     var body: some View {
         PersonalizedInsightCarousel(insights: insights)
             .task(id: refreshKey) {
+                // Foreground catch-up for aggregates
+                await AggregatorService.shared.upsertMissingDays(limit: 30, modelContext: modelContext)
                 await viewModel.refresh(
                     plates: Array(plateHistory.prefix(60)),
                     products: Array(products.prefix(120))

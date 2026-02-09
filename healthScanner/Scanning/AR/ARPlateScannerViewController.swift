@@ -13,6 +13,7 @@ import UIKit
 import ARKit
 import Vision
 import CoreML
+import Foundation
 
 public final class ARPlateScannerViewController: UIViewController, ARSessionDelegate {
     // Public callbacks bridged by ARPlateScannerView
@@ -458,6 +459,11 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.onResult?(result, cropped)
+            // Post a notification so the prompt system can react globally
+            NotificationCenter.default.post(name: .plateScanCompleted, object: nil, userInfo: [
+                "result": result,
+                "image": cropped
+            ])
             self.dismiss(animated: true)
         }
     }
@@ -468,6 +474,10 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.onResult?(result, cropped)
+            NotificationCenter.default.post(name: .plateScanCompleted, object: nil, userInfo: [
+                "result": result,
+                "image": cropped
+            ])
             self.dismiss(animated: true)
         }
     }

@@ -1,9 +1,13 @@
 /* Navigation and Tab Bar */
+"home.title" = "Hem";
 "tab.scan" = "Skanna";
 "tab.plate" = "Tallrik";
 "tab.history" = "Historik";
 "tab.profile" = "Profil";
 "tab.settings" = "Inställningar";
+"plate.upload_photo" = "Ladda Upp Foto";
+"recent.activity" = "Senaste Aktivitet";
+"recent.activity.archive" = "Arkiv";
 
 /* Filter and Sort */
 "filter.all" = "Alla";
@@ -24,9 +28,34 @@
 "search.placeholder" = "Sök i historik";
 "empty.no_scans" = "Inga skanningar än";
 "empty.start_scanning" = "Börja skanna produkter för att se din historik";
+"history.story_label" = "Din Historia Hittills";
+"history.journal_title" = "Berättelsejournal";
+"history.digest_title" = "Daglig Översikt";
+"history.digest_action" = "Insikter";
+"history.today" = "Idag";
+"history.yesterday" = "Igår";
 
 /* Product Details */
 "product.details" = "Produktdetaljer";
+"product.analysis" = "Produktanalys";
+"product.insight" = "Produktinsikt";
+"product.log" = "Logga Produkten";
+"nutri.score" = "NUTRI-SCORE";
+"product.category.default" = "Produkt";
+"product.subtitle.default" = "Näringsöversikt";
+"macro.carbs" = "Kolhydrater (%@g)";
+"macro.sugar" = "Socker (%@g)";
+"macro.protein" = "Protein (%@g)";
+"macro.fat" = "Fett (%@g)";
+"level.minimal" = "Minimal";
+"level.low" = "Låg";
+"level.moderate" = "Måttlig";
+"level.moderate_high" = "Måttligt Hög";
+"level.high" = "Hög";
+"glycemic.high" = "Hög Glykemisk Belastning";
+"insight.vitc" = "Vitamin C-berikad";
+"insight.sugars" = "betydande naturliga och tillsatta sockerarter";
+"insight.generic" = "Balanserade ingredienser med utrymme för måttlighet";
 "nutrition.information" = "Näringsinformation";
 "nutrition.calories" = "Kalorier";
 "nutrition.fat" = "Fett";
@@ -37,6 +66,16 @@
 
 /* Plate Analysis */
 "plate.analysis" = "Tallriksanalys";
+"plate.visual_insight" = "Visuell Insikt";
+"plate.optimized" = "Näringsoptimerad";
+"plate.optimized.badge" = "Näringsoptimerad";
+"plate.log_meal" = "Logga Måltiden";
+"chef.insight" = "Kockens Insikt";
+"ingredients.detected" = "Upptäckta Ingredienser";
+"macro.profile" = "Makroprofil";
+"macro.good" = "Bra";
+"macro.moderate" = "Måttlig";
+"macro.minimal" = "Minimal";
 "nutrition.overview" = "Näringsöversikt";
 "macronutrients" = "Makronäringsämnen";
 "micronutrients" = "Mikronäringsämnen";
@@ -61,6 +100,17 @@
 
 /* Profile */
 "profile.settings_coming_soon" = "Profilinställningar kommer snart";
+"profile.overview" = "Kostöversikt";
+"profile.primary_goal" = "Primärt Mål";
+"profile.daily_streak" = "Daglig Streak";
+"profile.health_score" = "Hälsopoäng";
+"profile.analyzed_plates" = "Analyserade Tallrikar";
+"profile.avg_grade" = "Snittbetyg";
+"profile.preferences" = "Preferenser";
+"profile.active" = "Aktiva";
+"profile.download_report" = "Ladda Ned Näringsrapport";
+"profile.goal.balance" = "Balanserad";
+"profile.days" = "Dagar";
 "profile.tagline" = "Gör hälsosamma val enklare";
 "profile.membership" = "Premium Medlem • Gick med 2021";
 "profile.dietary_preferences" = "Dietpreferenser";
@@ -102,12 +152,20 @@
 
 /* Dietary Preferences */
 "preferences.your_preferences" = "Dina Preferenser";
+"preferences.title" = "Dina Kostpreferenser";
 "preferences.profile_complete" = "Profil 75% klar";
 "preferences.allergies" = "Allergier";
 "preferences.allergies_description" = "Välj eventuella allergier du har. Detta hjälper oss att rekommendera säkra och hälsosamma alternativ.";
 "preferences.dietary_restrictions" = "Dietrestriktioner";
 "preferences.dietary_description" = "Berätta om dina dietmål eller val.";
 "preferences.add_custom" = "Lägg till anpassad allergi eller restriktion";
+"preferences.add_custom_restriction" = "Lägg Till Anpassad Restriktion";
+"preferences.search_placeholder" = "Sök efter andra restriktioner...";
+"preferences.skip" = "Hoppa över";
+"preferences.step_label" = "Steg %@ av 5 • Profilbyggnad";
+"preferences.category.allergy" = "Allergi";
+"preferences.category.restriction" = "Restriktion";
+"preferences.category.custom" = "Anpassad";
 "preferences.save_preferences" = "Spara Preferenser";
 "preferences.add_custom_allergy" = "Lägg till Anpassad Allergi";
 "preferences.custom_allergy_description" = "Ange en anpassad allergi eller dietrestriktion som inte finns listad ovan.";

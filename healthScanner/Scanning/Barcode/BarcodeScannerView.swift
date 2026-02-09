@@ -180,7 +180,7 @@ struct BarcodeScannerView: View {
                 .navigationBarHidden(true)
             }
             .sheet(isPresented: $showingCamera) {
-                CameraBarcodeScannerView(
+                BarcodeCameraOverlayView(
                     scannedCode: $scannedCode,
                     isScanning: $isScanning,
                     isPresented: $showingCamera
@@ -214,4 +214,3 @@ struct BarcodeScannerView: View {
 
 // MARK: - Original Scanner Logic (kept for camera functionality)
 // Camera barcode UIKit controller moved to Scanning/Barcode/BarcodeScannerViewController.swift
-

@@ -237,6 +237,29 @@ struct PersonalizedInsightCard: View {
                 }
             }
             
+            VStack(alignment: .trailing, spacing: 6) {
+                // Arrow indicator based on message direction
+                if insight.message.localizedCaseInsensitiveContains("up") {
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                } else if insight.message.localizedCaseInsensitiveContains("down") {
+                    Image(systemName: "arrow.down.right")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
+
+                // Minimal sparkline using mock normalization if we can parse numbers
+                if let recentLine = insight.evidence.first(where: { $0.lowercased().contains("recent avg") }),
+                   let baselineLine = insight.evidence.first(where: { $0.lowercased().contains("baseline avg") }) {
+                    let recent = Double(recentLine.components(separatedBy: CharacterSet(charactersIn: "0123456789.-").inverted).joined()) ?? 0
+                    let base = Double(baselineLine.components(separatedBy: CharacterSet(charactersIn: "0123456789.-").inverted).joined()) ?? 0
+                    let series = [base * 0.9, base, (base + recent) / 2, recent]
+                    SparklineView(values: series, lineColor: recent >= base ? Color.green : Color.orange)
+                        .frame(width: 60, height: 22)
+                }
+            }
+            
             Spacer()
             
             // Category badge
@@ -305,6 +328,33 @@ struct AutoRotatingCarousel: View {
     }
 }
 
+// Fallback Sparkline in case the component isn't linked in this target
+struct SparklineView: View {
+    let values: [Double]
+    var lineColor: Color = .green
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let vals = values.filter { $0.isFinite }
+            let minV = vals.min() ?? 0
+            let maxV = vals.max() ?? 1
+            let range = max(maxV - minV, 0.0001)
+            let points: [CGPoint] = vals.enumerated().map { (i, v) in
+                let x = CGFloat(i) / CGFloat(max(vals.count - 1, 1)) * w
+                let y = h - CGFloat((v - minV) / range) * h
+                return CGPoint(x: x, y: y)
+            }
+            Path { path in
+                guard let first = points.first else { return }
+                path.move(to: first)
+                for p in points.dropFirst() { path.addLine(to: p) }
+            }
+            .stroke(lineColor, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+        }
+    }
+}
+
 #Preview {
     VStack {
         PersonalizedInsightCarousel(insights: InsightDataService.shared.plateInsights)
@@ -316,3 +366,4 @@ struct AutoRotatingCarousel: View {
             .padding()
     }
 }
+

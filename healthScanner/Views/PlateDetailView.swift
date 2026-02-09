@@ -29,278 +29,13 @@ struct PlateDetailView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Main Plate Card with integrated image and details
-                VStack(spacing: 0) {
-                    // Plate Image
-                    Group {
-                        if let headerImage {
-                            Image(uiImage: headerImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(height: 200)
-                                .clipped()
-                        } else if isLoadingHeaderImage {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(height: 200)
-                                .overlay(ProgressView())
-                        } else {
-                            Rectangle()
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(height: 200)
-                                .overlay(
-                                    Image(systemName: "fork.knife.circle.fill")
-                                        .font(.system(size: 60))
-                                        .foregroundColor(.mint)
-                                )
-                        }
-                    }
-
-                    // Card content overlay
-                    VStack(spacing: 16) {
-                        // Dish name
-                        Text(displayTitle)
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-
-                        // Nutrition score with grade
-                        HStack(spacing: 20) {
-                            // Large grade letter
-                            Text(plateAnalysis.nutriScoreLetter.rawValue)
-                                .font(.system(size: 64, weight: .bold))
-                                .foregroundColor(.green)
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                // Score rating
-                                Text("\(Int(plateAnalysis.nutritionScore))/10")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundColor(.white)
-
-                                // Macronutrients grid
-                                HStack(spacing: 16) {
-                                    NutrientDot(label: "Protein", value: "\(plateAnalysis.protein)g", color: .green)
-                                    NutrientDot(label: "Carbs", value: "\(plateAnalysis.carbs)g", color: .blue)
-                                }
-
-                                HStack(spacing: 16) {
-                                    NutrientDot(label: "Fat", value: "\(plateAnalysis.fat)g", color: .orange)
-                                    NutrientDot(label: "Calories", value: "\(plateAnalysis.calories) kcal", color: .gray)
-                                }
-                            }
-
-                            Spacer()
-                        }
-                    }
-                    .padding(20)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.black.opacity(0.0), Color.black.opacity(0.8)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                }
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .padding(.horizontal, 20)
-                .task { await loadHeaderImageIfNeeded() }
-                
-                // Micronutrients
-                if let micros = plateAnalysis.micronutrients {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(NSLocalizedString("micronutrients", comment: "Micronutrients section title"))
-                            .font(.title3)
-                            .fontWeight(.semibold)
-
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 12) {
-                            if let fiber = micros.fiberG { MicronutrientCard(name: NSLocalizedString("micronutrient.fiber", comment: "Fiber micronutrient label"), level: "\(fiber) \(NSLocalizedString("unit.grams", comment: "Grams unit"))", color: .green) }
-                            if let vc = micros.vitaminCMg { MicronutrientCard(name: NSLocalizedString("micronutrient.vitamin_c", comment: "Vitamin C micronutrient label"), level: "\(vc) \(NSLocalizedString("unit.milligrams", comment: "Milligrams unit"))", color: .orange) }
-                            if let iron = micros.ironMg { MicronutrientCard(name: NSLocalizedString("micronutrient.iron", comment: "Iron micronutrient label"), level: "\(iron) \(NSLocalizedString("unit.milligrams", comment: "Milligrams unit"))", color: .red) }
-                        }
-
-                        if let other = micros.other, !other.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(NSLocalizedString("micronutrient.other", comment: "Other micronutrients label"))
-                                    .font(.footnote)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.secondary)
-                                Text(other)
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding()
-                            .background(Color.gray.opacity(0.05))
-                            .cornerRadius(12)
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                } else if let aiInsight = plateAnalysis.insights.first(where: { $0.title.contains("AI") || $0.title.contains("Nutrition Coach") }) {
-                    // Fallback: parse micronutrients from AI analysis text if structured data missing
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(NSLocalizedString("micronutrients", comment: "Micronutrients section title"))
-                            .font(.title3)
-                            .fontWeight(.semibold)
-
-                        let micronutrients = extractMicronutrients(from: aiInsight.description)
-                        if !micronutrients.isEmpty {
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 12) {
-                                ForEach(micronutrients, id: \.name) { nutrient in
-                                    MicronutrientCard(name: nutrient.name, level: nutrient.level, color: nutrient.color)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                }
-
-                // Connections
-                let conns = plateAnalysis.connections
-                if !conns.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(NSLocalizedString("connections", comment: "Connections section title"))
-                            .font(.title3)
-                            .fontWeight(.semibold)
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(conns.indices, id: \.self) { idx in
-                                HStack(alignment: .top, spacing: 8) {
-                                    Circle().fill(Color.blue).frame(width: 6, height: 6).padding(.top, 6)
-                                    Text(conns[idx])
-                                        .font(.body)
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.gray.opacity(0.05))
-                        .cornerRadius(12)
-                    }
-                    .padding(.horizontal, 20)
-                }
-                
-                // Ingredient Breakdown
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(NSLocalizedString("ingredient.breakdown", comment: "Ingredient breakdown section title"))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-
-                    VStack(spacing: 0) {
-                        ForEach(plateAnalysis.ingredients.indices, id: \.self) { index in
-                            let ingredient = plateAnalysis.ingredients[index]
-                            IngredientRow(name: ingredient.name, amount: ingredient.amount)
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                
-                // Insights & Suggestions
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(NSLocalizedString("insights.suggestions", comment: "Insights and suggestions section title"))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-
-                    VStack(spacing: 12) {
-                        ForEach(plateAnalysis.insights.indices, id: \.self) { index in
-                            let insight = plateAnalysis.insights[index]
-                            ModernInsightCard(insight: insight)
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                
-                // Feedback Section
-                VStack(spacing: 16) {
-                    Text(NSLocalizedString("feedback.question", comment: "Feedback question"))
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.center)
-
-                    Text(NSLocalizedString("feedback.help_text", comment: "Feedback help text"))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            feedbackGiven = true
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "hand.thumbsup.fill")
-                                Text(NSLocalizedString("feedback.yes", comment: "Yes feedback button"))
-                            }
-                            .font(.body.weight(.medium))
-                            .foregroundColor(feedbackGiven ? .white : .primary)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 14)
-                            .background(feedbackGiven ? Color.green : Color(.systemGray5))
-                            .clipShape(RoundedRectangle(cornerRadius: 25))
-                        }
-
-                        Button(action: {
-                            feedbackGiven = true
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "hand.thumbsdown.fill")
-                                Text(NSLocalizedString("feedback.no", comment: "No feedback button"))
-                            }
-                            .font(.body.weight(.medium))
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 14)
-                            .background(Color(.systemGray5))
-                            .clipShape(RoundedRectangle(cornerRadius: 25))
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 20)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
-                )
-                .padding(.horizontal, 20)
-                
-                Spacer(minLength: 100)
-            }
-        }
-        .background(Color(.systemGroupedBackground))
-        .navigationTitle(NSLocalizedString("plate.analysis", comment: "Plate analysis navigation title"))
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: handleClose) {
-                    Image(systemName: "chevron.backward")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: handleClose) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-        .sheet(isPresented: $showNutriInfo) {
-            NutriScoreInfoView(productBreakdown: nil, plateScore: plateAnalysis.nutritionScore)
-        }
+        PlateAnalysisResultView(
+            analysis: asPlateAnalysis,
+            image: headerImage,
+            onStartNewScan: {},
+            onClose: { handleClose() }
+        )
+        .task { await loadHeaderImageIfNeeded() }
     }
 }
 
@@ -317,6 +52,41 @@ private extension PlateDetailView {
             return pos.description
         }
         return plateAnalysis.analysisDescription
+    }
+    
+    var asPlateAnalysis: PlateAnalysis {
+        let micros = plateAnalysis.micronutrients
+        let micronutrients = Micronutrients(
+            fiberG: micros?.fiberG,
+            vitaminCMg: micros?.vitaminCMg,
+            ironMg: micros?.ironMg,
+            other: micros?.other
+        )
+        let ingredients: [Ingredient] = plateAnalysis.ingredients.map { Ingredient(name: $0.name, amount: $0.amount) }
+        let insights: [Insight] = plateAnalysis.insights.map { p in
+            let t: Insight.InsightType
+            switch p.type {
+            case .positive: t = .positive
+            case .suggestion: t = .suggestion
+            case .warning: t = .warning
+            }
+            return Insight(type: t, title: p.title, description: p.description)
+        }
+        let desc = displayTitle
+        return PlateAnalysis(
+            nutritionScore: plateAnalysis.nutritionScore,
+            description: desc,
+            macronutrients: Macronutrients(
+                protein: plateAnalysis.protein,
+                carbs: plateAnalysis.carbs,
+                fat: plateAnalysis.fat,
+                calories: plateAnalysis.calories
+            ),
+            ingredients: ingredients,
+            insights: insights,
+            micronutrients: micronutrients,
+            connections: plateAnalysis.connections
+        )
     }
 
     @MainActor

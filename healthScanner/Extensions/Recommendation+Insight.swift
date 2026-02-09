@@ -14,6 +14,7 @@ extension NutritionRecommendation {
             case .hydration: return ("drop.fill", .cyan)
             case .categoryExploration: return ("sparkles", .yellow)
             case .correlationInsight: return ("chart.line.uptrend.xyaxis", .indigo)
+            case .recommendation: return ("lightbulb.fill", .yellow)
             }
         }()
 

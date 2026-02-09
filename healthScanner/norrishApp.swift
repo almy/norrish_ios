@@ -27,7 +27,7 @@ struct norrishApp: App {
     var sharedModelContainer: ModelContainer = {
         do {
             // Explicitly list models to build the container schema
-            return try ModelContainer(for: Product.self, PlateAnalysisHistory.self, Item.self)
+            return try ModelContainer(for: Product.self, PlateAnalysisHistory.self, Item.self, DailyNutritionAggregateEntity.self, ScanEventEntity.self)
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }

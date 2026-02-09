@@ -12,6 +12,13 @@ final class PlateAnalysisViewModel: ObservableObject {
     @Published var lastAnalysisResult: PlateAnalysis?
     @Published var lastAnalyzedImage: UIImage?
 
+    @Published var transientCategories: [String] = []
+
+    // Allows UI to pass lightweight, non-persistent category hints from on-device classification
+    func setTransientCategories(_ categories: [String]) {
+        self.transientCategories = categories
+    }
+
     private var currentHistory: PlateAnalysisHistory?
     private let lastAnalysisKey = "lastPlateAnalysis"
 
@@ -67,6 +74,12 @@ final class PlateAnalysisViewModel: ObservableObject {
             connections: analysis.connections
         )
         modelContext.insert(history)
+        
+        // Event-driven aggregate update for the plate's analysis day
+        Task {
+            await AggregatorService.shared.upsertDaily(for: history.analyzedDate, modelContext: modelContext)
+        }
+        
         if let img = image {
             ImageCacheService.shared.saveImage(img, forKey: history.cacheKey)
         }

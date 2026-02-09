@@ -11,6 +11,7 @@ struct FoodRegionSelectionView: View {
     @State private var editableRegions: [EditableRegion] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var dragStartRects: [UUID: CGRect] = [:]
 
     struct EditableRegion: Identifiable {
         let id = UUID()
@@ -112,13 +113,26 @@ struct FoodRegionSelectionView: View {
     }
 
     private func dragGesture(for region: Binding<EditableRegion>, fittedSize: CGSize, origin: CGPoint) -> some Gesture {
-        DragGesture()
+        let regionID = region.wrappedValue.id
+        return DragGesture()
             .onChanged { value in
-                var rect = region.wrappedValue.rect
+                // Record the starting rect on first change for this drag
+                if dragStartRects[regionID] == nil {
+                    dragStartRects[regionID] = region.wrappedValue.rect
+                }
+                guard let startRect = dragStartRects[regionID] else { return }
+                // Convert view-space translation to image-space delta
                 let delta = viewDeltaToImageDelta(value.translation, imageSize: image.size, fittedSize: fittedSize)
-                rect.origin.x = max(0, min(image.size.width - rect.width, rect.origin.x + delta.width))
-                rect.origin.y = max(0, min(image.size.height - rect.height, rect.origin.y + delta.height))
-                region.wrappedValue.rect = rect
+                var newOrigin = CGPoint(x: startRect.origin.x + delta.width,
+                                        y: startRect.origin.y + delta.height)
+                // Clamp within image bounds
+                newOrigin.x = max(0, min(image.size.width - startRect.size.width, newOrigin.x))
+                newOrigin.y = max(0, min(image.size.height - startRect.size.height, newOrigin.y))
+                region.wrappedValue.rect = CGRect(origin: newOrigin, size: startRect.size)
+            }
+            .onEnded { _ in
+                // Clear the stored start rect at end
+                dragStartRects[regionID] = nil
             }
     }
 

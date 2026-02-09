@@ -36,6 +36,13 @@ final class BarcodeScannerViewModel: ObservableObject {
             let product = try await productService.fetchProductInfo(for: barcode)
             modelContext.insert(product)
             try modelContext.save()
+            NotificationCenter.default.post(name: .barcodeScanCompleted, object: nil, userInfo: [
+                "upc": product.barcode,
+                "title": product.name,
+                "store": nil as String?
+            ])
+            // Event-driven aggregate update for the product's scan day
+            await AggregatorService.shared.upsertDaily(for: product.scannedDate, modelContext: modelContext)
             return product
         } catch {
             errorMessage = "Failed to fetch product information: \(error.localizedDescription)"

@@ -74,6 +74,8 @@ struct RecommendationListView: View {
         }
         .navigationTitle("Insights")
         .task(id: plateHistory.first?.id) {
+            // Foreground catch-up: ensure last 30 days aggregates are present
+            await AggregatorService.shared.upsertMissingDays(limit: 30, modelContext: modelContext)
             await viewModel.refresh(
                 plates: Array(plateHistory.prefix(50)),
                 products: Array(products.prefix(100))
