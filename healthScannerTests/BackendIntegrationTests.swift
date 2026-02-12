@@ -152,5 +152,35 @@ final class BackendIntegrationTests: XCTestCase {
         XCTAssertGreaterThan(response.analysis.macronutrients.calories, 0)
     }
 
+    func testRemoteHealthCheck() async throws {
+        let base = envOrDefault("REMOTE_BASE_URL", defaultValue: "https://norrish.myftiu.al")
+        let trimmedBase = base.hasSuffix("/") ? String(base.dropLast()) : base
+        let urlString = trimmedBase + BackendAPIClient.shared.endpoints.health
+        guard let url = URL(string: urlString) else {
+            XCTFail("Invalid remote base URL: \(urlString)")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = AppConfig.requestTimeout
+        if let apiKey = ProcessInfo.processInfo.environment["API_KEY"], !apiKey.isEmpty {
+            request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            XCTFail("Invalid HTTP response for \(urlString)")
+            return
+        }
+
+        if http.statusCode == 401 || http.statusCode == 403 {
+            throw XCTSkip("Remote health check requires API_KEY.")
+        }
+
+        XCTAssertEqual(http.statusCode, 200)
+        XCTAssertFalse(data.isEmpty)
+    }
+
     // Intentionally no helper for bundled resource lookup beyond the test itself.
 }

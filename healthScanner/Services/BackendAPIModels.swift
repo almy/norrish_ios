@@ -140,3 +140,17 @@ struct BackendCorrelationInsightPayload: Decodable {
     let tags: [String]
     let evidence: [String]
 }
+
+struct BackendSimilarProductsResponse: Decodable {
+    let ean: String
+    let results: [BackendSimilarProductItem]
+}
+
+struct BackendSimilarProductItem: Decodable {
+    let ean: String
+    let name: String?
+    let score: Double
+    let imageUrl: String?
+    let reason: String?
+    let allergenWarning: String?
+}

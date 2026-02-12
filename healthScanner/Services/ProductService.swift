@@ -5,6 +5,39 @@ final class ProductService: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    func fetchSimilarProducts(
+        for barcode: String,
+        limit: Int = 5,
+        preferences: DietaryPreferencesManager = .shared
+    ) async throws -> [SimilarProductSuggestion] {
+        var queryItems = [
+            URLQueryItem(name: "ean", value: barcode),
+            URLQueryItem(name: "k", value: String(limit))
+        ]
+        let allergies = preferences.selectedAllergies.map { $0.rawValue }
+        let customAllergies = preferences.customAllergies
+        if !allergies.isEmpty {
+            queryItems.append(URLQueryItem(name: "allergies", value: allergies.joined(separator: ",")))
+        }
+        if !customAllergies.isEmpty {
+            queryItems.append(URLQueryItem(name: "customAllergies", value: customAllergies.joined(separator: ",")))
+        }
+        let response: BackendSimilarProductsResponse = try await BackendAPIClient.shared.get(
+            endpoint: BackendAPIClient.shared.endpoints.similarProducts,
+            queryItems: queryItems
+        )
+        return response.results.map {
+            SimilarProductSuggestion(
+                ean: $0.ean,
+                name: $0.name ?? "Unknown Product",
+                score: $0.score,
+                imageUrl: $0.imageUrl,
+                reason: $0.reason,
+                allergenWarning: $0.allergenWarning
+            )
+        }
+    }
+
     func fetchProductInfo(for barcode: String) async throws -> Product {
         isLoading = true
         defer { isLoading = false }

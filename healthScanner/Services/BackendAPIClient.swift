@@ -33,6 +33,7 @@ struct BackendAPIEndpoints {
     let scanBarcode = "/v1/scans/barcode"
     let nutriscore = "/v1/nutriscore"
     let recommendations = "/v1/recommendations"
+    let similarProducts = "/v1/products/similar"
     let visionAnalyze = "/v1/vision/analyze"
     let register = "/v1/auth/register"
     let login = "/v1/auth/login"
@@ -57,6 +58,20 @@ final class BackendAPIClient {
         }
         request.httpBody = data
 
+        return try await send(request)
+    }
+
+    func get<Response: Decodable>(
+        endpoint: String,
+        queryItems: [URLQueryItem] = [],
+        token: String? = nil
+    ) async throws -> Response {
+        let request = try makeRequest(
+            endpoint: endpoint,
+            method: "GET",
+            token: token,
+            queryItems: queryItems
+        )
         return try await send(request)
     }
 
@@ -127,7 +142,12 @@ final class BackendAPIClient {
         return try await send(request)
     }
 
-    private func makeRequest(endpoint: String, method: String, token: String?) throws -> URLRequest {
+    private func makeRequest(
+        endpoint: String,
+        method: String,
+        token: String?,
+        queryItems: [URLQueryItem] = []
+    ) throws -> URLRequest {
         guard let baseURL = AppConfig.apiBaseURL, !baseURL.isEmpty else {
             throw BackendAPIError.missingConfig("API_BASE_URL")
         }
@@ -135,7 +155,13 @@ final class BackendAPIClient {
             throw BackendAPIError.missingConfig("API_KEY")
         }
         let urlString = baseURL + endpoint
-        guard let url = URL(string: urlString) else {
+        guard var components = URLComponents(string: urlString) else {
+            throw BackendAPIError.invalidURL(urlString)
+        }
+        if !queryItems.isEmpty {
+            components.queryItems = queryItems
+        }
+        guard let url = components.url else {
             throw BackendAPIError.invalidURL(urlString)
         }
 

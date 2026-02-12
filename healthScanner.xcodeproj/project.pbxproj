@@ -64,6 +64,8 @@
 		CEDDA7752F39D26300F80CA6 /* EnhancedCameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */; };
 		CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */; };
 		CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */; };
+		CEDF29302F3A9B2000C37A87 /* SimilarProductSuggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDF292F2F3A9B2000C37A87 /* SimilarProductSuggestion.swift */; };
+		CEDF29322F3E41C900C37A87 /* SimilarProductSuggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDF29312F3E41C900C37A87 /* SimilarProductSuggestion.swift */; };
 		CEF23E552E6C5F67002B903F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E542E6C5F67002B903F /* Assets.xcassets */; };
 		CEF23E582E6C5F67002B903F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */; };
 		CEF23E622E6C5F67002B903F /* healthScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E612E6C5F67002B903F /* healthScannerTests.swift */; };
@@ -170,6 +172,8 @@
 		CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCameraPreviewView.swift; sourceTree = "<group>"; };
 		CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationEnhancer.swift; sourceTree = "<group>"; };
 		CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateScanView.swift; sourceTree = "<group>"; };
+		CEDF292F2F3A9B2000C37A87 /* SimilarProductSuggestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarProductSuggestion.swift; sourceTree = "<group>"; };
+		CEDF29312F3E41C900C37A87 /* SimilarProductSuggestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarProductSuggestion.swift; sourceTree = "<group>"; };
 		CEF23E4B2E6C5F66002B903F /* healthScanner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = healthScanner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEF23E542E6C5F67002B903F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CEF23E572E6C5F67002B903F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -322,6 +326,7 @@
 		99AD44EA923649048C415328 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CEDF292F2F3A9B2000C37A87 /* SimilarProductSuggestion.swift */,
 				CE5335FE2E7AEBFF0086689E /* NutritionRecommendation.swift */,
 				CE5335DF2E79DD5B0086689E /* DietaryPreferences.swift */,
 				FF6E4A499A014860AA425C4D /* Item.swift */,
@@ -330,6 +335,7 @@
 				2DC72322DD2E4453A4C2D888 /* PlateAnalysisHistory.swift */,
 				DBF5C9CFF11E4AFF8EEFA817 /* Product.swift */,
 				8355D74FBF394F90B7C1A84C /* RecentScan.swift */,
+				CEDF29312F3E41C900C37A87 /* SimilarProductSuggestion.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -702,6 +708,7 @@
 				CE5335D82E79D2350086689E /* AppStyles.swift in Sources */,
 				CEF4FE612F30F1AF009FAA35 /* NotificationNames.swift in Sources */,
 				CE5336042E7AEC390086689E /* RecommendationListView.swift in Sources */,
+				CEDF29322F3E41C900C37A87 /* SimilarProductSuggestion.swift in Sources */,
 				BE202E34E36B4A9C878BE655 /* NutriScoreUtilities.swift in Sources */,
 				CE5336012E7AEC1C0086689E /* Recommendation+Insight.swift in Sources */,
 				CE5335D92E79D2350086689E /* NutritionStyles.swift in Sources */,
@@ -734,6 +741,7 @@
 				03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */,
 				CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */,
 				CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */,
+				CEDF29302F3A9B2000C37A87 /* SimilarProductSuggestion.swift in Sources */,
 				B8095E02957F4171B841C804 /* NutritionCard.swift in Sources */,
 				CE5335E02E79DD5B0086689E /* DietaryPreferences.swift in Sources */,
 				F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */,

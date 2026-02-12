@@ -86,6 +86,11 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
         static let minLowFiberPlateCount = 2
         static let minCategoryCount = 3
         static let categoryDominanceThreshold: Double = 0.4
+        static let substitutionMinCategoryCount = 2
+        static let substitutionMaxRecs = 3
+        static let substitutionSugarDeltaG: Double = 5.0
+        static let substitutionSodiumDeltaG: Double = 0.3
+        static let substitutionFatDeltaG: Double = 3.0
 
         // ML thresholds
         static let minTrainingDataSize = 5
@@ -641,6 +646,8 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
             ))
         }
 
+        recs += generateSubstitutionSuggestions(products: products)
+
         // Allergy safety: simple alert if products include likely allergens and user has preferences
         if preferences.hasAllergies, let ingredientsTexts = products.compactMap({ $0.ingredients?.lowercased() }) as [String]? {
             let allergyHits = preferences.selectedAllergies.filter { allergy in
@@ -659,6 +666,75 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
             }
         }
 
+        return recs
+    }
+
+    private func generateSubstitutionSuggestions(products: [Product]) -> [NutritionRecommendation] {
+        guard !products.isEmpty else { return [] }
+        var byCategory: [String: [Product]] = [:]
+        for product in products {
+            guard let category = product.categoriesTags?.first, !category.isEmpty else { continue }
+            byCategory[category, default: []].append(product)
+        }
+
+        struct Candidate {
+            let delta: Double
+            let category: String
+            let metric: String
+            let high: Product
+            let low: Product
+        }
+
+        var candidates: [Candidate] = []
+        for (category, items) in byCategory where items.count >= NutritionConstants.substitutionMinCategoryCount {
+            let metrics: [(String, (Product) -> Double, Double)] = [
+                ("sugar", { $0.nutritionData.sugar }, NutritionConstants.substitutionSugarDeltaG),
+                ("sodium", { $0.nutritionData.sodium }, NutritionConstants.substitutionSodiumDeltaG),
+                ("fat", { $0.nutritionData.fat }, NutritionConstants.substitutionFatDeltaG)
+            ]
+            for (label, getter, threshold) in metrics {
+                guard let high = items.max(by: { getter($0) < getter($1) }),
+                      let low = items.min(by: { getter($0) < getter($1) }) else { continue }
+                let highVal = getter(high)
+                let lowVal = getter(low)
+                let delta = highVal - lowVal
+                if delta >= threshold, high.name != low.name {
+                    candidates.append(Candidate(delta: delta, category: category, metric: label, high: high, low: low))
+                }
+            }
+        }
+
+        if candidates.isEmpty { return [] }
+        candidates.sort { $0.delta > $1.delta }
+
+        func displayCategory(_ raw: String) -> String {
+            var value = raw
+            if value.hasPrefix("en:") { value = String(value.dropFirst(3)) }
+            return value.replacingOccurrences(of: "_", with: " ")
+        }
+
+        var recs: [NutritionRecommendation] = []
+        for candidate in candidates.prefix(NutritionConstants.substitutionMaxRecs) {
+            let catLabel = displayCategory(candidate.category)
+            let highVal = candidate.metric == "sodium" ? String(format: "%.1f", candidate.high.nutritionData.sodium)
+                : String(format: "%.1f", candidate.metric == "sugar" ? candidate.high.nutritionData.sugar : candidate.high.nutritionData.fat)
+            let lowVal = candidate.metric == "sodium" ? String(format: "%.1f", candidate.low.nutritionData.sodium)
+                : String(format: "%.1f", candidate.metric == "sugar" ? candidate.low.nutritionData.sugar : candidate.low.nutritionData.fat)
+            let delta = String(format: "%.1f", candidate.delta)
+            recs.append(NutritionRecommendation(
+                title: "Swap Within Category",
+                message: "Within \(catLabel), try \(candidate.low.name) instead of \(candidate.high.name) to cut \(candidate.metric) by ~\(delta) g.",
+                reason: "Lower nutrient option in the same category",
+                relevanceScore: NutritionConstants.sugarSwapRelevance,
+                type: .swapSuggestion,
+                tags: ["substitution", candidate.metric, candidate.category],
+                evidence: [
+                    "Category: \(catLabel)",
+                    "\(candidate.high.name): \(highVal) g \(candidate.metric)",
+                    "\(candidate.low.name): \(lowVal) g \(candidate.metric)"
+                ]
+            ))
+        }
         return recs
     }
 
@@ -907,6 +983,5 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
 }
 
 // (Intentionally no underscore-named computed properties to avoid SwiftData macro collisions)
-
 
 

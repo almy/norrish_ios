@@ -13,6 +13,11 @@ struct ProductDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showNutriInfo = false
     @State private var didLogProduct = false
+    @State private var similarSuggestions: [SimilarProductSuggestion] = []
+    @State private var isLoadingSimilar = false
+    @State private var didLoadSimilar = false
+    @State private var similarError: String?
+    @StateObject private var productService = ProductService()
     
     private let nordicBackground = Color(red: 249 / 255, green: 250 / 255, blue: 251 / 255)
 
@@ -47,6 +52,24 @@ struct ProductDetailView: View {
             if product.localImagePath == nil, let path = ImageCacheService.shared.cachedFilePath(forKey: product.barcode) {
                 product.localImagePath = path
                 print("[ProductDetailView] Set missing localImagePath=\(path)")
+            }
+            if !didLoadSimilar {
+                didLoadSimilar = true
+                isLoadingSimilar = true
+                Task {
+                    do {
+                        let results = try await productService.fetchSimilarProducts(for: product.barcode, limit: 5)
+                        await MainActor.run {
+                            similarSuggestions = results
+                            isLoadingSimilar = false
+                        }
+                    } catch {
+                        await MainActor.run {
+                            similarError = error.localizedDescription
+                            isLoadingSimilar = false
+                        }
+                    }
+                }
             }
         }
     }
@@ -211,6 +234,14 @@ struct ProductDetailView: View {
                              color: .gray)
                 }
             }
+
+            if isLoadingSimilar {
+                Text("Loading alternatives…")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+            } else if !similarSuggestions.isEmpty {
+                similarSection
+            }
         }
         .padding(.horizontal, 28)
         .padding(.top, 28)
@@ -221,6 +252,66 @@ struct ProductDetailView: View {
                 .shadow(color: Color.black.opacity(0.08), radius: 18, x: 0, y: -6)
         )
         .offset(y: -28)
+    }
+
+    private var similarSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 16))
+                    .foregroundColor(.primary.opacity(0.4))
+                Text("Better Swaps")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary.opacity(0.4))
+                    .kerning(2)
+                    .textCase(.uppercase)
+            }
+
+            ForEach(similarSuggestions) { suggestion in
+                HStack(spacing: 12) {
+                    if let url = suggestion.imageUrl, !url.isEmpty {
+                        CachedAsyncImage(urlString: url, cacheKey: suggestion.ean)
+                            .scaledToFill()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(.systemGray6))
+                            .frame(width: 56, height: 56)
+                            .overlay(
+                                Image(systemName: "cart")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.secondary)
+                            )
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(suggestion.name)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        if let reason = suggestion.reason, !reason.isEmpty {
+                            Text(reason)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+                        if let warning = suggestion.allergenWarning, !warning.isEmpty {
+                            Text(warning)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.orange)
+                                .lineLimit(2)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(.systemGray6))
+                )
+            }
+        }
     }
 
     private var bottomCTA: some View {
