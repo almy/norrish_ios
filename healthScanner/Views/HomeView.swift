@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var products: [Product]
     @Query private var plates: [PlateAnalysisHistory]
     @State private var showingScanner = false
@@ -133,6 +134,13 @@ struct HomeView: View {
                                             RecentActivityTile(item: item)
                                         }
                                         .buttonStyle(.plain)
+                                        .contextMenu {
+                                            Button(role: .destructive) {
+                                                deleteRecentItem(item)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
                                     }
                                     // Add tile
                                     ZStack {
@@ -240,6 +248,19 @@ extension HomeView {
     }
 
     private func nilToEmptyUnit(_ value: String) -> String { "" }
+
+    private func deleteRecentItem(_ item: RecentActivityItem) {
+        switch item.kind {
+        case .plate(let plate):
+            ImageCacheService.shared.deleteImage(forKey: plate.cacheKey)
+            modelContext.delete(plate)
+        case .product(let product):
+            if let localPath = product.localImagePath, FileManager.default.fileExists(atPath: localPath) {
+                try? FileManager.default.removeItem(atPath: localPath)
+            }
+            modelContext.delete(product)
+        }
+    }
 }
 
 fileprivate enum RecentActivityKind {

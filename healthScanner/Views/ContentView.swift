@@ -165,19 +165,57 @@ struct ContentView: View {
     }
 
     private var historyJournalView: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 16) {
+        List {
+            Section {
                 historyHeader
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
 
                 if !historyTrendInsights.isEmpty {
                     digestSection
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
-
-                historyTimeline
             }
-            .padding(.bottom, 120)
+
+            ForEach(historySections) { section in
+                Section(header: sectionHeader(for: section.date)) {
+                    ForEach(section.items) { item in
+                        HistoryTimelineCard(item: item) {
+                            switch item {
+                            case .product(let product):
+                                selectedProduct = product
+                            case .plate(let plate):
+                                selectedPlateAnalysis = plate
+                            }
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                deleteHistoryItem(item)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                deleteHistoryItem(item)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 16, trailing: 20))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    }
+                }
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(Color(red: 252 / 255, green: 252 / 255, blue: 252 / 255))
+        .padding(.bottom, 80)
     }
 
     private var historyHeader: some View {
@@ -247,45 +285,6 @@ struct ContentView: View {
         .padding(.top, 8)
     }
 
-    private var historyTimeline: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            ZStack(alignment: .leading) {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.15))
-                    .frame(width: 1)
-                    .padding(.leading, 14)
-
-                VStack(alignment: .leading, spacing: 24) {
-                    ForEach(historySections) { section in
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text(sectionTitle(for: section.date))
-                                .font(.system(size: 10, weight: .black))
-                                .kerning(3)
-                                .foregroundColor(Color.gray.opacity(0.6))
-                                .textCase(.uppercase)
-                                .padding(.leading, 4)
-
-                            VStack(spacing: 16) {
-                                ForEach(section.items) { item in
-                                    HistoryTimelineCard(item: item) {
-                                        switch item {
-                                        case .product(let product):
-                                            selectedProduct = product
-                                        case .plate(let plate):
-                                            selectedPlateAnalysis = plate
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
-    }
-
     private var historySections: [HistorySection] {
         let grouped = Dictionary(grouping: filteredHistoryItems) { item in
             Calendar.current.startOfDay(for: item.date)
@@ -307,6 +306,32 @@ struct ContentView: View {
             return "\(label) • \(date.formatted(date: .abbreviated, time: .omitted))"
         }
         return date.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    private func sectionHeader(for date: Date) -> some View {
+        Text(sectionTitle(for: date))
+            .font(.system(size: 10, weight: .black))
+            .kerning(3)
+            .foregroundColor(Color.gray.opacity(0.6))
+            .textCase(.uppercase)
+            .padding(.leading, 24)
+            .padding(.top, 8)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+    }
+
+    private func deleteHistoryItem(_ item: HistoryItemType) {
+        switch item {
+        case .plate(let plate):
+            ImageCacheService.shared.deleteImage(forKey: plate.cacheKey)
+            modelContext.delete(plate)
+        case .product(let product):
+            if let localPath = product.localImagePath, FileManager.default.fileExists(atPath: localPath) {
+                try? FileManager.default.removeItem(atPath: localPath)
+            }
+            modelContext.delete(product)
+        }
     }
     
     var body: some View {
@@ -613,4 +638,3 @@ private struct HistoryTimelineCard: View {
     ContentView()
         .modelContainer(for: Product.self, inMemory: true)
 }
-

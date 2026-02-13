@@ -211,6 +211,14 @@ class ImageCacheService: ObservableObject {
         let fileURL = cacheDirectory.appendingPathComponent(filename)
         return fileManager.fileExists(atPath: fileURL.path) ? fileURL.path : nil
     }
+
+    // Delete cached image if present
+    func deleteImage(forKey key: String) {
+        let filename = sanitizeFilename(key) + ".jpg"
+        let fileURL = cacheDirectory.appendingPathComponent(filename)
+        guard fileManager.fileExists(atPath: fileURL.path) else { return }
+        try? fileManager.removeItem(at: fileURL)
+    }
     
     private func sanitizeFilename(_ filename: String) -> String {
         let sanitized = filename.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "_", options: .regularExpression)
