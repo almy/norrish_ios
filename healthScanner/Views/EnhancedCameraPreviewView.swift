@@ -41,6 +41,7 @@ final class LiveClassificationState: ObservableObject {
 
 extension Notification.Name {
     static let enhancedCapturePhoto = Notification.Name("enhancedCapturePhoto")
+    static let liveFoodDetectionUpdate = Notification.Name("liveFoodDetectionUpdate")
 }
 
 struct EnhancedCameraPreviewView: View {
@@ -282,11 +283,21 @@ private struct CameraControllerRepresentable: UIViewControllerRepresentable {
                         DispatchQueue.main.async {
                             self.state.label = label.prefix(1).uppercased() + label.dropFirst()
                             self.state.confidence = conf
+                            NotificationCenter.default.post(
+                                name: .liveFoodDetectionUpdate,
+                                object: nil,
+                                userInfo: ["label": self.state.label, "confidence": conf]
+                            )
                         }
                     } else {
                         DispatchQueue.main.async {
                             self.state.label = "Detecting…"
                             self.state.confidence = 0
+                            NotificationCenter.default.post(
+                                name: .liveFoodDetectionUpdate,
+                                object: nil,
+                                userInfo: ["label": self.state.label, "confidence": Float(0)]
+                            )
                         }
                     }
                 } catch {
@@ -308,6 +319,11 @@ private struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 DispatchQueue.main.async {
                     self.state.label = label.prefix(1).uppercased() + label.dropFirst()
                     self.state.confidence = conf
+                    NotificationCenter.default.post(
+                        name: .liveFoodDetectionUpdate,
+                        object: nil,
+                        userInfo: ["label": self.state.label, "confidence": conf]
+                    )
                 }
             }
             do { try handler.perform([request]) } catch { }
