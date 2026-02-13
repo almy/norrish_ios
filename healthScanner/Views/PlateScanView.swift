@@ -1,6 +1,10 @@
 import SwiftUI
 import SwiftData
 
+extension Notification.Name {
+    static let closePlateScanFlow = Notification.Name("closePlateScanFlow")
+}
+
 struct PlateScanView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -10,7 +14,8 @@ struct PlateScanView: View {
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var capturedImage: UIImage?
-    @State private var isProcessing = false
+    @State private var pendingImage: PendingImage?
+    @State private var awaitingAnalysisResult = false
     @State private var didOpenInitialPicker = false
 
     /// Called when a photo is captured or picked.
@@ -63,6 +68,10 @@ struct PlateScanView: View {
                     },
                     onClose: {
                         showResult = false
+                    },
+                    onLogMeal: {
+                        // Dismiss Plate Analysis and return to parent view
+                        showResult = false
                     }
                 )
             }
@@ -73,6 +82,16 @@ struct PlateScanView: View {
         .sheet(isPresented: $showPhotoPicker) {
             PhotoLibraryPickerView(image: $capturedImage)
         }
+        .sheet(item: $pendingImage, onDismiss: {
+            if !analysisVM.isAnalyzing {
+                awaitingAnalysisResult = false
+            }
+        }) { pending in
+            FoodRegionSelectionView(
+                image: pending.image,
+                viewModel: analysisVM
+            )
+        }
         .onAppear {
             if startInPhotoPicker && !didOpenInitialPicker {
                 didOpenInitialPicker = true
@@ -81,7 +100,26 @@ struct PlateScanView: View {
         }
         .onChange(of: capturedImage) { _, newValue in
             guard let image = newValue else { return }
-            handlePicked(image)
+            // Ensure any capture UI is dismissed before showing results
+            showCamera = false
+            showPhotoPicker = false
+            onImagePicked(image)
+            pendingImage = PendingImage(image: image)
+            awaitingAnalysisResult = true
+        }
+        .onChange(of: analysisVM.analysisResult) { _, newValue in
+            guard awaitingAnalysisResult, let img = pendingImage?.image else { return }
+            if let result = newValue ?? analysisVM.lastAnalysisResult {
+                resultAnalysis = result
+                capturedImage = img
+                showResult = true
+            } else {
+                dismiss()
+            }
+            awaitingAnalysisResult = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .closePlateScanFlow)) { _ in
+            dismiss()
         }
     }
 
@@ -167,23 +205,6 @@ struct PlateScanView: View {
         )
     }
 
-    private func handlePicked(_ image: UIImage) {
-        guard !isProcessing else { return }
-        isProcessing = true
-        onImagePicked(image)
-        Task { @MainActor in
-            await analysisVM.handleImageAnalysis(image: image, modelContext: modelContext)
-            resultAnalysis = analysisVM.analysisResult ?? analysisVM.lastAnalysisResult
-            isProcessing = false
-            if resultAnalysis != nil {
-                capturedImage = image
-                showResult = true
-            } else {
-                dismiss()
-            }
-        }
-    }
-
     private func handleCancel() {
         onCancel?()
         dismiss()
@@ -199,21 +220,27 @@ struct PlateQuickScanView: View {
     @StateObject private var analysisVM = PlateAnalysisViewModel()
     @State private var resultAnalysis: PlateAnalysis?
     @State private var capturedImage: UIImage?
-    @State private var isProcessing = false
     @State private var showResult = false
+    @State private var pendingImage: PendingImage?
+    @State private var awaitingAnalysisResult = false
     let mode: Mode
 
     var body: some View {
         ZStack {
             if mode == .camera {
-                CameraCaptureView(image: $capturedImage)
-                    .ignoresSafeArea()
+                EnhancedCameraPreviewView { image in
+                    // Forward the captured image to the quick scan flow
+                    DispatchQueue.main.async {
+                        self.capturedImage = image
+                    }
+                }
+                .ignoresSafeArea()
             } else {
                 PhotoLibraryPickerView(image: $capturedImage)
                     .ignoresSafeArea()
             }
 
-            if analysisVM.isAnalyzing || isProcessing {
+            if analysisVM.isAnalyzing && mode == .photo {
                 Color.black.opacity(0.35).ignoresSafeArea()
                 VStack(spacing: 16) {
                     ProgressView()
@@ -225,7 +252,8 @@ struct PlateQuickScanView: View {
         }
         .onChange(of: capturedImage) { _, newValue in
             guard let image = newValue else { return }
-            handlePicked(image)
+            pendingImage = PendingImage(image: image)
+            awaitingAnalysisResult = true
         }
         .fullScreenCover(isPresented: $showResult) {
             NavigationView {
@@ -239,26 +267,44 @@ struct PlateQuickScanView: View {
                     onClose: {
                         showResult = false
                         dismiss()
+                    },
+                    onLogMeal: {
+                        // Dismiss Plate Analysis and return to previous screen for quick scan
+                        showResult = false
+                        dismiss()
                     }
                 )
             }
         }
-    }
-
-    private func handlePicked(_ image: UIImage) {
-        guard !isProcessing else { return }
-        isProcessing = true
-        Task { @MainActor in
-            await analysisVM.handleImageAnalysis(image: image, modelContext: modelContext)
-            resultAnalysis = analysisVM.analysisResult ?? analysisVM.lastAnalysisResult
-            isProcessing = false
-            if resultAnalysis != nil {
+        .sheet(item: $pendingImage, onDismiss: {
+            if !analysisVM.isAnalyzing {
+                awaitingAnalysisResult = false
+            }
+        }) { pending in
+            FoodRegionSelectionView(
+                image: pending.image,
+                viewModel: analysisVM
+            )
+        }
+        .onChange(of: analysisVM.analysisResult) { _, newValue in
+            guard awaitingAnalysisResult else { return }
+            if let result = newValue ?? analysisVM.lastAnalysisResult {
+                resultAnalysis = result
                 showResult = true
             } else {
                 dismiss()
             }
+            awaitingAnalysisResult = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .closePlateScanFlow)) { _ in
+            dismiss()
         }
     }
+}
+
+private struct PendingImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
 }
 
 // MARK: - CameraCaptureView

@@ -73,7 +73,12 @@ struct FoodRegionSelectionView: View {
             }
 
             HStack {
-                Button("Cancel") { dismiss() }
+                Button("Retake") { dismiss() }
+                Spacer()
+                Button("Close") {
+                    NotificationCenter.default.post(name: .closePlateScanFlow, object: nil)
+                    dismiss()
+                }
                 Spacer()
                 Button(action: confirm) {
                     if viewModel.isAnalyzing { ProgressView() } else { Text("Analyze") }

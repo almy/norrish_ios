@@ -344,10 +344,10 @@ struct ContentView: View {
                 )
             }
             .fullScreenCover(isPresented: $showingPlateScan) {
-                PlateAnalysisView()
+                PlateQuickScanView(mode: .camera)
             }
             .fullScreenCover(isPresented: $showingPlateUpload) {
-                PlateAnalysisView()
+                PlateQuickScanView(mode: .photo)
             }
             .sheet(item: $selectedProduct) { product in
                 ProductDetailView(product: product)
@@ -613,3 +613,4 @@ private struct HistoryTimelineCard: View {
     ContentView()
         .modelContainer(for: Product.self, inMemory: true)
 }
+

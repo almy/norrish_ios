@@ -39,6 +39,10 @@ final class LiveClassificationState: ObservableObject {
     @Published var isRunning: Bool = false
 }
 
+extension Notification.Name {
+    static let enhancedCapturePhoto = Notification.Name("enhancedCapturePhoto")
+}
+
 struct EnhancedCameraPreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var state = LiveClassificationState()
@@ -68,26 +72,24 @@ struct EnhancedCameraPreviewView: View {
                 Spacer()
                 HStack {
                     Spacer()
-                    Circle()
-                        .fill(Color.white.opacity(0.25))
-                        .frame(width: 80, height: 80)
-                        .overlay(
-                            Button(action: {}) {
+                    Button {
+                        NotificationCenter.default.post(name: .enhancedCapturePhoto, object: nil)
+                    } label: {
+                        Circle()
+                            .fill(Color.white.opacity(0.25))
+                            .frame(width: 80, height: 80)
+                            .overlay(
                                 Circle()
                                     .fill(Color.white)
                                     .frame(width: 65, height: 65)
-                            }
-                            .simultaneousGesture(
-                                TapGesture().onEnded {
-                                    // shutter action handled inside UIViewController
-                                }
                             )
-                        )
-                        .padding(.bottom, 32)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 32)
                     Spacer()
                 }
             }
-            .allowsHitTesting(false) // disables taps on this overlay except buttons added in UIViewController
+            .allowsHitTesting(true)
 
         }
     }
@@ -132,10 +134,15 @@ private struct CameraControllerRepresentable: UIViewControllerRepresentable {
             super.init(nibName: nil, bundle: nil)
             configureSession()
             setupVision()
+            NotificationCenter.default.addObserver(self, selector: #selector(shutterTapped), name: .enhancedCapturePhoto, object: nil)
         }
 
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+
+        deinit {
+            NotificationCenter.default.removeObserver(self, name: .enhancedCapturePhoto, object: nil)
         }
 
         override func viewDidLoad() {
@@ -235,20 +242,6 @@ private struct CameraControllerRepresentable: UIViewControllerRepresentable {
         }
 
         private func setupButtons() {
-            let shutterButton = UIButton(type: .custom)
-            shutterButton.translatesAutoresizingMaskIntoConstraints = false
-            shutterButton.backgroundColor = .white
-            shutterButton.layer.cornerRadius = 32.5
-            shutterButton.clipsToBounds = true
-            shutterButton.addTarget(self, action: #selector(shutterTapped), for: .touchUpInside)
-            view.addSubview(shutterButton)
-            NSLayoutConstraint.activate([
-                shutterButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -32),
-                shutterButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-                shutterButton.widthAnchor.constraint(equalToConstant: 65),
-                shutterButton.heightAnchor.constraint(equalToConstant: 65),
-            ])
-
             let closeButton = UIButton(type: .close)
             closeButton.translatesAutoresizingMaskIntoConstraints = false
             closeButton.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)

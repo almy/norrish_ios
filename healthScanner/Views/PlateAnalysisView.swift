@@ -74,7 +74,7 @@ struct PlateAnalysisView: View {
                 FoodRegionSelectionView(image: img, viewModel: viewModel)
             }
         }
-        .sheet(isPresented: $showingCamera) {
+        .fullScreenCover(isPresented: $showingCamera) {
             EnhancedCameraPreviewView { image in
                 self.selectedImage = image
                 if enhancePhoto {

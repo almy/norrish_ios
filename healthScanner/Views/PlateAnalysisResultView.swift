@@ -6,15 +6,33 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct PlateAnalysisResultView: View {
     let analysis: PlateAnalysis
     let image: UIImage?
     let onStartNewScan: () -> Void
     let onClose: () -> Void
+    let onLogMeal: (() -> Void)?  // Simplified to avoid external type dependency
+
+    init(
+        analysis: PlateAnalysis,
+        image: UIImage?,
+        onStartNewScan: @escaping () -> Void,
+        onClose: @escaping () -> Void,
+        onLogMeal: (() -> Void)? = nil
+    ) {
+        self.analysis = analysis
+        self.image = image
+        self.onStartNewScan = onStartNewScan
+        self.onClose = onClose
+        self.onLogMeal = onLogMeal
+    }
+
     @Environment(\.dismiss) private var dismiss
     @State private var feedbackGiven = false
     @State private var showNutriInfo = false
+    @State private var showMealIntentSheet = false  // NEW
     
     private let primary = Color(red: 19 / 255, green: 182 / 255, blue: 236 / 255)
     private let nordicBackground = Color(red: 249 / 255, green: 250 / 255, blue: 251 / 255)
@@ -39,6 +57,35 @@ struct PlateAnalysisResultView: View {
             headerBar
 
             bottomCTA
+        }
+        .sheet(isPresented: $showMealIntentSheet) {
+            VStack(spacing: 16) {
+                Text("Log Your Meal")
+                    .font(.headline)
+                Text("Confirm logging this meal to your history.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Button(action: {
+                    showMealIntentSheet = false
+                    onLogMeal?()
+                }) {
+                    HStack {
+                        Image(systemName: "checkmark.circle")
+                        Text("Log Choice")
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .cornerRadius(14)
+                }
+                Button("Cancel") {
+                    showMealIntentSheet = false
+                }
+                .foregroundColor(.secondary)
+            }
+            .padding()
         }
     }
 
@@ -225,15 +272,14 @@ struct PlateAnalysisResultView: View {
         VStack {
             Spacer()
             Button(action: {
-                onStartNewScan()
-                dismiss()
+                showMealIntentSheet = true
             }) {
                 HStack(spacing: 10) {
                     Text(NSLocalizedString("plate.log_meal", comment: "Log This Meal"))
                         .font(.system(size: 13, weight: .bold))
                         .kerning(2)
                         .textCase(.uppercase)
-                    Image(systemName: "checkmark.circle")
+                    Image(systemName: "fork.knife")
                         .font(.system(size: 18, weight: .semibold))
                 }
                 .foregroundColor(.white)
@@ -640,3 +686,4 @@ private struct FlowLayoutContainer: Layout {
 #Preview {
     PlateAnalysisResultView(analysis: PlateAnalysis.mockAnalysis(), image: nil, onStartNewScan: {}, onClose: {})
 }
+
