@@ -144,18 +144,18 @@ struct PlateInsightCard: View {
                     .frame(width: 32, height: 32)
 
                 Image(systemName: iconName)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(AppFonts.sans(14, weight: .semibold))
                     .foregroundColor(iconColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .font(AppFonts.serif(15, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
 
                 Text(insight.description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
 
             Spacer()
@@ -179,33 +179,33 @@ struct PlateInsightCard: View {
     private var iconColor: Color {
         switch insight.type {
         case .positive:
-            return .green
+            return .mossInsight
         case .suggestion:
-            return .orange
+            return .momentumAmber
         case .warning:
-            return .red
+            return .midnightSpruce
         }
     }
 
     private var iconBackgroundColor: Color {
         switch insight.type {
         case .positive:
-            return Color.green.opacity(0.2)
+            return Color.mossInsight.opacity(0.2)
         case .suggestion:
-            return Color.orange.opacity(0.2)
+            return Color.momentumAmber.opacity(0.2)
         case .warning:
-            return Color.red.opacity(0.2)
+            return Color.midnightSpruce.opacity(0.2)
         }
     }
 
     private var cardBackgroundColor: Color {
         switch insight.type {
         case .positive:
-            return Color.green.opacity(0.05)
+            return Color.mossInsight.opacity(0.08)
         case .suggestion:
-            return Color.orange.opacity(0.05)
+            return Color.momentumAmber.opacity(0.08)
         case .warning:
-            return Color.red.opacity(0.05)
+            return Color.midnightSpruce.opacity(0.08)
         }
     }
 }
@@ -217,16 +217,16 @@ struct ModernInsightCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: iconName)
-                .font(.system(size: 20, weight: .semibold))
+                .font(AppFonts.serif(18, weight: .semibold))
                 .foregroundColor(iconColor)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
-                    .font(.headline)
+                    .font(AppFonts.serif(15, weight: .semibold))
                     .foregroundColor(textColor)
 
                 Text(insight.description)
-                    .font(.body)
+                    .font(AppFonts.sans(12, weight: .regular))
                     .foregroundColor(descriptionColor)
             }
 
@@ -251,11 +251,11 @@ struct ModernInsightCard: View {
     private var iconColor: Color {
         switch insight.type {
         case .positive:
-            return colorScheme == .dark ? .green : .white
+            return colorScheme == .dark ? .mossInsight : .white
         case .suggestion:
-            return colorScheme == .dark ? .orange : .white
+            return colorScheme == .dark ? .momentumAmber : .white
         case .warning:
-            return colorScheme == .dark ? .red : .white
+            return colorScheme == .dark ? .midnightSpruce : .white
         }
     }
 
@@ -263,16 +263,16 @@ struct ModernInsightCard: View {
         switch insight.type {
         case .positive:
             return colorScheme == .dark
-                ? Color.green.opacity(0.2)
-                : Color.green.opacity(0.8)
+                ? Color.mossInsight.opacity(0.2)
+                : Color.mossInsight.opacity(0.85)
         case .suggestion:
             return colorScheme == .dark
-                ? Color.orange.opacity(0.2)
-                : Color.orange.opacity(0.8)
+                ? Color.momentumAmber.opacity(0.2)
+                : Color.momentumAmber.opacity(0.85)
         case .warning:
             return colorScheme == .dark
-                ? Color.red.opacity(0.2)
-                : Color.red.opacity(0.8)
+                ? Color.midnightSpruce.opacity(0.2)
+                : Color.midnightSpruce.opacity(0.85)
         }
     }
 
@@ -306,16 +306,16 @@ struct MacronutrientCard: View {
                     .frame(width: 12, height: 12)
                 
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.primary)
+                    .font(AppFonts.sans(13, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 
                 Spacer()
             }
             
             HStack {
                 Text(value)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.primary)
+                    .font(AppFonts.serif(26, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
                 Spacer()
             }
         }
@@ -337,13 +337,12 @@ struct MicronutrientCard: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(name)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .font(AppFonts.sans(12, weight: .medium))
+                .foregroundColor(.midnightSpruce)
 
             Text(level)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(AppFonts.sans(11, weight: .regular))
+                .foregroundColor(.nordicSlate)
         }
         .padding()
         .background(color.opacity(0.1))
@@ -363,12 +362,12 @@ struct NutrientDot: View {
                     .fill(color)
                     .frame(width: 8, height: 8)
                 Text(label)
-                    .font(.caption)
+                    .font(AppFonts.sans(11, weight: .regular))
                     .foregroundColor(.white.opacity(0.8))
             }
 
             Text(value)
-                .font(.caption.weight(.semibold))
+                .font(AppFonts.sans(11, weight: .semibold))
                 .foregroundColor(.white)
         }
     }
@@ -382,14 +381,14 @@ struct IngredientRow: View {
     var body: some View {
         HStack {
             Text(name)
-                .font(.body)
-                .foregroundColor(.primary)
+                .font(AppFonts.sans(12, weight: .regular))
+                .foregroundColor(.midnightSpruce)
 
             Spacer()
 
             Text(amount)
-                .font(.body)
-                .foregroundColor(.secondary)
+                .font(AppFonts.sans(12, weight: .regular))
+                .foregroundColor(.nordicSlate)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -423,11 +422,11 @@ struct PlateMacroCard: View {
         VStack(spacing: 10) {
             HStack {
                 Circle().fill(color.opacity(0.2)).frame(width: 12, height: 12)
-                Text(title).font(.subheadline.weight(.semibold)).foregroundColor(.primary)
+                Text(title).font(AppFonts.sans(13, weight: .semibold)).foregroundColor(.midnightSpruce)
                 Spacer()
             }
             HStack {
-                Text(value).font(.system(size: 28, weight: .bold)).foregroundColor(.primary)
+                Text(value).font(AppFonts.serif(26, weight: .bold)).foregroundColor(.midnightSpruce)
                 Spacer()
             }
         }
@@ -467,19 +466,19 @@ func extractMicronutrients(from text: String) -> [Micronutrient] {
     
     // Define micronutrient keywords and their associated information
     let nutrientKeywords: [(name: String, keywords: [String], unit: String, color: Color)] = [
-        ("Vitamin C", ["vitamin c", "ascorbic acid", "citrus", "antioxidant"], "mg", .orange),
-        ("Vitamin A", ["vitamin a", "beta carotene", "carotenoids"], "µg", .yellow),
-        ("Vitamin K", ["vitamin k", "leafy greens"], "µg", .green),
-        ("Vitamin E", ["vitamin e", "tocopherol"], "mg", .purple),
-        ("B Vitamins", ["vitamin b", "b vitamins", "folate", "niacin", "thiamine"], "mg", .blue),
-        ("Fiber", ["fiber", "fibre", "dietary fiber"], "g", .brown),
-        ("Iron", ["iron", "heme iron"], "mg", .red),
-        ("Calcium", ["calcium", "bone health"], "mg", .gray),
-        ("Potassium", ["potassium", "electrolytes"], "mg", .pink),
-        ("Magnesium", ["magnesium"], "mg", .mint),
-        ("Zinc", ["zinc"], "mg", .indigo),
-        ("Omega-3", ["omega", "fatty acids", "omega-3"], "g", .teal),
-        ("Antioxidants", ["antioxidants", "polyphenols", "flavonoids"], "", .purple)
+        ("Vitamin C", ["vitamin c", "ascorbic acid", "citrus", "antioxidant"], "mg", .momentumAmber),
+        ("Vitamin A", ["vitamin a", "beta carotene", "carotenoids"], "µg", .nordicSlate),
+        ("Vitamin K", ["vitamin k", "leafy greens"], "µg", .mossInsight),
+        ("Vitamin E", ["vitamin e", "tocopherol"], "mg", .midnightSpruce),
+        ("B Vitamins", ["vitamin b", "b vitamins", "folate", "niacin", "thiamine"], "mg", .nordicSlate),
+        ("Fiber", ["fiber", "fibre", "dietary fiber"], "g", .mossInsight),
+        ("Iron", ["iron", "heme iron"], "mg", .midnightSpruce),
+        ("Calcium", ["calcium", "bone health"], "mg", .nordicSlate),
+        ("Potassium", ["potassium", "electrolytes"], "mg", .momentumAmber),
+        ("Magnesium", ["magnesium"], "mg", .mossInsight),
+        ("Zinc", ["zinc"], "mg", .midnightSpruce),
+        ("Omega-3", ["omega", "fatty acids", "omega-3"], "g", .nordicSlate),
+        ("Antioxidants", ["antioxidants", "polyphenols", "flavonoids"], "", .momentumAmber)
     ]
     
     // Check for each nutrient in the AI text
@@ -502,16 +501,16 @@ func extractMicronutrients(from text: String) -> [Micronutrient] {
     // If no specific nutrients found, extract general nutritional qualities
     if micronutrients.isEmpty {
         if lowercaseText.contains("vegetables") || lowercaseText.contains("greens") {
-            micronutrients.append(Micronutrient(name: "Vitamins", level: "Rich", color: .green))
+            micronutrients.append(Micronutrient(name: "Vitamins", level: "Rich", color: .mossInsight))
         }
         if lowercaseText.contains("protein") {
-            micronutrients.append(Micronutrient(name: "Amino Acids", level: "Complete", color: .blue))
+            micronutrients.append(Micronutrient(name: "Amino Acids", level: "Complete", color: .nordicSlate))
         }
         if lowercaseText.contains("whole grain") || lowercaseText.contains("fiber") {
-            micronutrients.append(Micronutrient(name: "Fiber", level: "Good", color: .brown))
+            micronutrients.append(Micronutrient(name: "Fiber", level: "Good", color: .mossInsight))
         }
         if lowercaseText.contains("healthy fats") || lowercaseText.contains("omega") {
-            micronutrients.append(Micronutrient(name: "Healthy Fats", level: "Present", color: .teal))
+            micronutrients.append(Micronutrient(name: "Healthy Fats", level: "Present", color: .nordicSlate))
         }
     }
     

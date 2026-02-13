@@ -17,22 +17,22 @@ struct CachedAsyncImage: View {
                     .aspectRatio(contentMode: .fit)
             } else if isLoading {
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.1))
+                    .fill(Color.nordicBone.opacity(0.8))
                     .overlay(
                         ProgressView()
                             .scaleEffect(1.2)
                     )
             } else {
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.gray.opacity(0.1))
+                    .fill(Color.nordicBone.opacity(0.8))
                     .overlay(
                         VStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle")
                                 .font(.system(size: 30))
-                                .foregroundColor(.orange)
+                                .foregroundColor(.momentumAmber)
                             Text("Image not available")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(AppFonts.sans(11, weight: .regular))
+                                .foregroundColor(.nordicSlate)
                         }
                     )
             }
@@ -87,4 +87,3 @@ struct CachedAsyncImage: View {
         }
     }
 }
-

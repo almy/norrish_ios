@@ -28,7 +28,7 @@ struct DietaryPreferencesView: View {
                 }
                 .padding(.bottom, 32)
             }
-            .background(Color(red: 252 / 255, green: 252 / 255, blue: 252 / 255))
+            .background(Color.nordicBone)
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showingCustomAllergySheet) {
@@ -75,17 +75,17 @@ struct DietaryPreferencesView: View {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 20, weight: .light))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .foregroundColor(Color.midnightSpruce)
                     .frame(width: 40, height: 40)
             }
             Spacer()
             VStack(alignment: .leading, spacing: 0) {
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.gray.opacity(0.12))
+                        .fill(Color.nordicBone.opacity(0.8))
                         .frame(height: 2)
                     Capsule()
-                        .fill(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                        .fill(Color.momentumAmber)
                         .frame(width: progressBarWidth, height: 2)
                 }
                 .frame(width: UIScreen.main.bounds.width - 140)
@@ -93,9 +93,9 @@ struct DietaryPreferencesView: View {
             Spacer()
             Button(action: { dismiss() }) {
                 Text("preferences.skip".localized())
-                    .font(.system(size: 12, weight: .medium))
-                    .kerning(2)
-                    .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                    .font(AppFonts.sans(12, weight: .medium))
+                    .kerning(1.5)
+                    .foregroundColor(.momentumAmber)
             }
             .frame(width: 60, alignment: .trailing)
         }
@@ -106,11 +106,11 @@ struct DietaryPreferencesView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("preferences.title".localized())
-                .font(.system(size: 34, weight: .medium, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(32, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
             Text("preferences.dietary_description".localized())
-                .font(.system(size: 15))
-                .foregroundColor(Color.gray.opacity(0.7))
+                .font(AppFonts.sans(14, weight: .regular))
+                .foregroundColor(.nordicSlate)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 20)
@@ -139,18 +139,18 @@ struct DietaryPreferencesView: View {
         Button(action: { showingAddActionSheet = true }) {
             HStack {
                 Text("preferences.search_placeholder".localized())
-                    .font(.system(size: 13))
-                    .foregroundColor(Color.gray.opacity(0.7))
+                    .font(AppFonts.sans(13, weight: .regular))
+                    .foregroundColor(.nordicSlate)
                 Spacer()
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(Color.gray.opacity(0.6))
+                    .foregroundColor(.nordicSlate.opacity(0.7))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
-            .background(Color.white)
+            .background(Color.cardSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 999)
-                    .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+                    .stroke(Color.cardBorder, lineWidth: 1)
             )
             .clipShape(Capsule())
         }
@@ -163,21 +163,21 @@ struct DietaryPreferencesView: View {
             Button(action: { dismiss() }) {
                 HStack(spacing: 8) {
                     Text("preferences.save_preferences".localized())
-                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .font(AppFonts.serif(16, weight: .medium))
                     Image(systemName: "arrow.right")
                         .font(.system(size: 14))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .background(Color.midnightSpruce)
                 .clipShape(Capsule())
             }
 
             Text(String(format: NSLocalizedString("preferences.step_label", comment: "Step label"), "\(Int(preferencesManager.profileCompletionPercentage))%"))
-                .font(.system(size: 11, weight: .medium))
-                .kerning(2)
-                .foregroundColor(Color.gray.opacity(0.6))
+                .font(AppFonts.sans(11, weight: .medium))
+                .kerning(1.5)
+                .foregroundColor(.nordicSlate)
                 .textCase(.uppercase)
         }
         .padding(.horizontal, 20)
@@ -298,28 +298,28 @@ private struct PreferenceListRow: View {
             HStack(spacing: 12) {
                 Image(systemName: item.icon)
                     .font(.system(size: 18, weight: .light))
-                    .foregroundColor(item.isSelected ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color.gray.opacity(0.6))
+                    .foregroundColor(item.isSelected ? .momentumAmber : .nordicSlate)
                     .frame(width: 24)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title)
-                        .font(.system(size: 16, weight: .medium, design: .serif))
-                        .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                        .font(AppFonts.serif(16, weight: .medium))
+                        .foregroundColor(.midnightSpruce)
                     Text(item.category.uppercased())
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(AppFonts.label)
                         .kerning(1)
-                        .foregroundColor(item.isSelected ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255).opacity(0.7) : Color.gray.opacity(0.5))
+                        .foregroundColor(item.isSelected ? Color.momentumAmber.opacity(0.8) : Color.nordicSlate.opacity(0.6))
                 }
                 Spacer()
                 Image(systemName: item.isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 16))
-                    .foregroundColor(item.isSelected ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color.gray.opacity(0.35))
+                    .foregroundColor(item.isSelected ? .momentumAmber : Color.nordicSlate.opacity(0.4))
             }
             .padding(.vertical, 14)
             .padding(.horizontal, 12)
-            .background(Color.white)
+            .background(Color.cardSurface)
             .overlay(
                 Rectangle()
-                    .fill(Color.gray.opacity(0.12))
+                    .fill(Color.softDivider)
                     .frame(height: 1),
                 alignment: .bottom
             )
@@ -336,9 +336,9 @@ private struct PreferenceSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .kerning(2)
-                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .font(AppFonts.label)
+                .kerning(1.5)
+                .foregroundColor(.nordicSlate)
                 .textCase(.uppercase)
 
             VStack(spacing: 0) {
@@ -351,9 +351,9 @@ private struct PreferenceSection: View {
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+                    .stroke(Color.cardBorder, lineWidth: 1)
             )
-            .background(Color.white)
+            .background(Color.cardSurface)
         }
     }
 }
@@ -368,12 +368,11 @@ struct CustomAllergySheet: View {
             VStack(spacing: 24) {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("preferences.add_custom_allergy".localized())
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(AppFonts.serif(20, weight: .bold))
 
                     Text("preferences.custom_allergy_description".localized())
-                        .font(.body)
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.sans(13, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -390,12 +389,11 @@ struct CustomAllergySheet: View {
                     saveAndDismiss()
                 } label: {
                     Text("preferences.add".localized())
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .font(AppFonts.sans(14, weight: .semibold))
+                        .foregroundColor(.nordicBone)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.mint)
+                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.nordicSlate.opacity(0.4) : Color.midnightSpruce)
                         .cornerRadius(25)
                 }
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -432,12 +430,11 @@ struct CustomRestrictionSheet: View {
             VStack(spacing: 24) {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("preferences.add_custom_restriction".localized())
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(AppFonts.serif(20, weight: .bold))
 
                     Text("preferences.custom_allergy_description".localized())
-                        .font(.body)
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.sans(13, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -454,12 +451,11 @@ struct CustomRestrictionSheet: View {
                     saveAndDismiss()
                 } label: {
                     Text("preferences.add".localized())
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .font(AppFonts.sans(14, weight: .semibold))
+                        .foregroundColor(.nordicBone)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.mint)
+                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.nordicSlate.opacity(0.4) : Color.midnightSpruce)
                         .cornerRadius(25)
                 }
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

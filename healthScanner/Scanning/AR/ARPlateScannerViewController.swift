@@ -416,7 +416,7 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         guard let ctx = UIGraphicsGetCurrentContext() else { return nil }
         ctx.setFillColor(UIColor.clear.cgColor)
         ctx.fill(CGRect(origin: .zero, size: size))
-        ctx.setFillColor(UIColor.green.withAlphaComponent(0.9).cgColor)
+        ctx.setFillColor(UIColor(red: 0.310, green: 0.475, blue: 0.259, alpha: 0.9).cgColor)
         for box in boxes {
             let w = CGFloat(box.boundingBox.width) * size.width
             let h = CGFloat(box.boundingBox.height) * size.height
@@ -662,4 +662,3 @@ private enum NutritionDB {
         return (e.kcal * f, e.protein * f, e.carbs * f, e.fat * f)
     }
 }
-

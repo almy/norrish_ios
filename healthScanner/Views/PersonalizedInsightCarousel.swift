@@ -44,28 +44,28 @@ class InsightDataService: ObservableObject {
         plateInsights = [
             PersonalizedInsight(
                 icon: "carrot.fill",
-                iconColor: .orange,
+                iconColor: .momentumAmber,
                 title: "Veggie Lover",
                 message: "You seem to like a lot of carrots! 🥕",
                 category: .preference
             ),
             PersonalizedInsight(
                 icon: "leaf.fill",
-                iconColor: .green,
+                iconColor: .mossInsight,
                 title: "Healthy Choices",
                 message: "Your meals are 85% healthier than average! 🌱",
                 category: .health
             ),
             PersonalizedInsight(
                 icon: "clock.fill",
-                iconColor: .blue,
+                iconColor: .midnightSpruce,
                 title: "Dinner Pattern",
                 message: "You usually eat dinner around 7 PM ⏰",
                 category: .habit
             ),
             PersonalizedInsight(
                 icon: "apple.logo",
-                iconColor: .red,
+                iconColor: .momentumAmber,
                 title: "Try Something New",
                 message: "Add some berries for extra antioxidants! 🫐",
                 category: .recommendation
@@ -76,35 +76,35 @@ class InsightDataService: ObservableObject {
         scanInsights = [
             PersonalizedInsight(
                 icon: "cup.and.saucer.fill",
-                iconColor: .brown,
+                iconColor: .midnightSpruce,
                 title: "Coca-Cola Fan",
                 message: "You seem to enjoy Coca-Cola frequently! 🥤",
                 category: .preference
             ),
             PersonalizedInsight(
                 icon: "checkmark.seal.fill",
-                iconColor: .green,
+                iconColor: .mossInsight,
                 title: "Smart Scanner",
                 message: "You've scanned 23 products this week! 📱",
                 category: .habit
             ),
             PersonalizedInsight(
                 icon: "exclamationmark.triangle.fill",
-                iconColor: .orange,
+                iconColor: .momentumAmber,
                 title: "Sugar Alert",
                 message: "Consider low-sugar alternatives 🍯",
                 category: .health
             ),
             PersonalizedInsight(
                 icon: "heart.fill",
-                iconColor: .red,
+                iconColor: .momentumAmber,
                 title: "Heart Healthy",
                 message: "Try products with less sodium 💖",
                 category: .recommendation
             ),
             PersonalizedInsight(
                 icon: "star.fill",
-                iconColor: .yellow,
+                iconColor: .nordicSlate,
                 title: "Top Brands",
                 message: "You prefer organic brands 65% of the time ⭐",
                 category: .preference
@@ -137,15 +137,15 @@ struct PersonalizedInsightCarousel: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Your Dashboard")
-                    .font(.title3)
-                    .fontWeight(.semibold)
+                    .font(AppFonts.serif(18, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 Spacer()
                 
                 // Page indicators
                 HStack(spacing: 4) {
                     ForEach(0..<insights.count, id: \.self) { index in
                         Circle()
-                            .fill(index == currentIndex ? Color.green : Color.gray.opacity(0.3))
+                            .fill(index == currentIndex ? Color.momentumAmber : Color.nordicSlate.opacity(0.3))
                             .frame(width: 8, height: 8)
                     }
                 }
@@ -165,7 +165,7 @@ struct PersonalizedInsightCarousel: View {
                 // Placeholder when no insights
                 PersonalizedInsightCard(insight: PersonalizedInsight(
                     icon: "lightbulb.fill",
-                    iconColor: .gray,
+                    iconColor: .nordicSlate,
                     title: "Getting to know you",
                     message: "Keep using the app to see personalized insights!",
                     category: .preference
@@ -195,12 +195,12 @@ struct PersonalizedInsightCard: View {
             // Content
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .font(AppFonts.serif(16, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 
                 Text(insight.message)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
                     .lineLimit(2)
 
                 // Tags from underlying recommendation/correlation
@@ -209,10 +209,11 @@ struct PersonalizedInsightCard: View {
                         HStack(spacing: 6) {
                             ForEach(insight.tags, id: \.self) { tag in
                                 Text(tag.replacingOccurrences(of: "_", with: " "))
-                                    .font(.caption2)
+                                    .font(AppFonts.sans(9, weight: .bold))
+                                    .foregroundColor(.nordicSlate)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 3)
-                                    .background(Color.gray.opacity(0.15))
+                                    .background(Color.nordicBone.opacity(0.8))
                                     .cornerRadius(6)
                             }
                         }
@@ -222,8 +223,8 @@ struct PersonalizedInsightCard: View {
                 // Brief causal line to connect to user data
                 if let reason = insight.reason, !reason.isEmpty {
                     Text("Because: \(reason)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.sans(10, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                         .lineLimit(2)
                 }
 
@@ -231,8 +232,8 @@ struct PersonalizedInsightCard: View {
                 if !insight.evidence.isEmpty {
                     ForEach(Array(insight.evidence.prefix(2)), id: \.self) { ev in
                         Text("• \(ev)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(10, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
                 }
             }
@@ -242,11 +243,11 @@ struct PersonalizedInsightCard: View {
                 if insight.message.localizedCaseInsensitiveContains("up") {
                     Image(systemName: "arrow.up.right")
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .foregroundColor(.mossInsight)
                 } else if insight.message.localizedCaseInsensitiveContains("down") {
                     Image(systemName: "arrow.down.right")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundColor(.momentumAmber)
                 }
 
                 // Minimal sparkline using mock normalization if we can parse numbers
@@ -255,7 +256,7 @@ struct PersonalizedInsightCard: View {
                     let recent = Double(recentLine.components(separatedBy: CharacterSet(charactersIn: "0123456789.-").inverted).joined()) ?? 0
                     let base = Double(baselineLine.components(separatedBy: CharacterSet(charactersIn: "0123456789.-").inverted).joined()) ?? 0
                     let series = [base * 0.9, base, (base + recent) / 2, recent]
-                    SparklineView(values: series, lineColor: recent >= base ? Color.green : Color.orange)
+                    SparklineView(values: series, lineColor: recent >= base ? Color.mossInsight : Color.momentumAmber)
                         .frame(width: 60, height: 22)
                 }
             }
@@ -264,7 +265,7 @@ struct PersonalizedInsightCard: View {
             
             // Category badge
             Text(categoryText(for: insight.category))
-                .font(.caption2)
+                .font(AppFonts.sans(9, weight: .bold))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(categoryColor(for: insight.category))
@@ -272,7 +273,11 @@ struct PersonalizedInsightCard: View {
                 .cornerRadius(8)
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(Color.cardSurface)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
@@ -288,10 +293,10 @@ struct PersonalizedInsightCard: View {
     
     private func categoryColor(for category: PersonalizedInsight.InsightCategory) -> Color {
         switch category {
-        case .preference: return .blue
-        case .health: return .green
-        case .habit: return .purple
-        case .recommendation: return .orange
+        case .preference: return .nordicSlate
+        case .health: return .mossInsight
+        case .habit: return .midnightSpruce
+        case .recommendation: return .momentumAmber
         }
     }
 }
@@ -331,7 +336,7 @@ struct AutoRotatingCarousel: View {
 // Fallback Sparkline in case the component isn't linked in this target
 struct SparklineView: View {
     let values: [Double]
-    var lineColor: Color = .green
+    var lineColor: Color = .mossInsight
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
@@ -366,4 +371,3 @@ struct SparklineView: View {
             .padding()
     }
 }
-

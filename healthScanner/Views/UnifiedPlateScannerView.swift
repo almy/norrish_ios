@@ -64,7 +64,8 @@ private struct SimulatorFallback: View {
             Color.black.opacity(0.94).ignoresSafeArea()
             VStack(spacing: 24) {
                 Text("Unified Scanner (Simulator)")
-                    .font(.title3).bold().foregroundColor(.white)
+                    .font(AppFonts.serif(18, weight: .semibold))
+                    .foregroundColor(.nordicBone)
                 if isSimulating {
                     ProgressView("Analyzing…")
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -94,13 +95,14 @@ private struct SimulatorFallback: View {
                         }
                     } label: {
                         HStack { Image(systemName: "sparkles"); Text("Simulate Scan") }
-                            .font(.headline).foregroundColor(.black)
+                            .font(AppFonts.sans(13, weight: .semibold))
+                            .foregroundColor(.nordicBone)
                             .padding(.horizontal, 34).padding(.vertical, 14)
-                            .background(Color.green).cornerRadius(28)
+                            .background(Color.midnightSpruce).cornerRadius(28)
                     }
                 }
                 Button("Cancel", role: .cancel) { dismiss() }
-                    .foregroundColor(.white)
+                    .foregroundColor(.momentumAmber)
             }
             .padding(.top, 60)
         }

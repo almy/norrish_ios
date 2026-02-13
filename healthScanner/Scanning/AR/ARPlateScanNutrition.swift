@@ -128,7 +128,7 @@ public struct ARPlateScannerView: View {
                         HStack { Image(systemName: "sparkles"); Text("Simulate Scan") }
                             .font(.headline).foregroundColor(.black)
                             .padding(.horizontal, 34).padding(.vertical, 14)
-                            .background(Color.green).cornerRadius(28)
+                            .background(Color.midnightSpruce).cornerRadius(28)
                     }
                 }
                 Button("Cancel", role: .cancel) { onCancel(); dismiss() }
@@ -167,4 +167,3 @@ public struct ARPlateScannerView: View {
     } onCancel: {}
     .preferredColorScheme(.dark)
 }
-

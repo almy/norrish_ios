@@ -34,8 +34,8 @@ struct PlateAnalysisResultView: View {
     @State private var showNutriInfo = false
     @State private var showMealIntentSheet = false  // NEW
     
-    private let primary = Color(red: 19 / 255, green: 182 / 255, blue: 236 / 255)
-    private let nordicBackground = Color(red: 249 / 255, green: 250 / 255, blue: 251 / 255)
+    private let primary = Color.momentumAmber
+    private let nordicBackground = Color.nordicBone
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -61,10 +61,11 @@ struct PlateAnalysisResultView: View {
         .sheet(isPresented: $showMealIntentSheet) {
             VStack(spacing: 16) {
                 Text("Log Your Meal")
-                    .font(.headline)
+                    .font(AppFonts.serif(18, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 Text("Confirm logging this meal to your history.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
                 Button(action: {
                     showMealIntentSheet = false
                     onLogMeal?()
@@ -72,18 +73,18 @@ struct PlateAnalysisResultView: View {
                     HStack {
                         Image(systemName: "checkmark.circle")
                         Text("Log Choice")
-                            .fontWeight(.semibold)
+                            .font(AppFonts.sans(13, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(.nordicBone)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.green)
+                    .background(Color.midnightSpruce)
                     .cornerRadius(14)
                 }
                 Button("Cancel") {
                     showMealIntentSheet = false
                 }
-                .foregroundColor(.secondary)
+                .foregroundColor(.momentumAmber)
             }
             .padding()
         }
@@ -98,7 +99,7 @@ struct PlateAnalysisResultView: View {
                         .scaledToFill()
                 } else {
                     Rectangle()
-                        .fill(Color.gray.opacity(0.15))
+                        .fill(Color.nordicBone.opacity(0.8))
                         .overlay(
                             Image(systemName: "fork.knife.circle.fill")
                                 .font(.system(size: 56))
@@ -122,20 +123,20 @@ struct PlateAnalysisResultView: View {
                         .fill(primary)
                         .frame(width: 32, height: 1)
                     Text(NSLocalizedString("plate.optimized", comment: "Nutritionally Optimized label"))
-                        .font(.system(size: 10, weight: .bold))
-                        .kerning(3)
+                        .font(AppFonts.label)
+                        .kerning(2.5)
                         .foregroundColor(primary)
                         .textCase(.uppercase)
                 }
                 Text(analysis.description)
-                    .font(.system(size: 34, weight: .semibold, design: .serif))
+                    .font(AppFonts.serif(32, weight: .semibold))
                     .foregroundColor(.white)
                     .lineLimit(2)
                 let m = analysis.macronutrients
                 Text("\(m.calories) kcal • \(Int(analysis.nutritionScore))/10")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppFonts.sans(12, weight: .medium))
                     .foregroundColor(.white.opacity(0.7))
-                    .kerning(1.4)
+                    .kerning(1.2)
                     .textCase(.uppercase)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -159,8 +160,8 @@ struct PlateAnalysisResultView: View {
             }
             Spacer()
             Text(NSLocalizedString("plate.visual_insight", comment: "Visual Insight title"))
-                .font(.system(size: 10, weight: .bold))
-                .kerning(3)
+                .font(AppFonts.label)
+                .kerning(2.5)
                 .foregroundColor(.white.opacity(0.9))
                 .textCase(.uppercase)
             Spacer()
@@ -184,29 +185,29 @@ struct PlateAnalysisResultView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 8) {
                     Image(systemName: "menucard")
-                        .font(.system(size: 16))
-                        .foregroundColor(.primary.opacity(0.4))
+                        .font(AppFonts.sans(16, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                     Text(NSLocalizedString("chef.insight", comment: "Chef's Insight"))
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.primary.opacity(0.4))
+                        .font(AppFonts.label)
+                        .foregroundColor(.nordicSlate)
                         .kerning(2)
                         .textCase(.uppercase)
                 }
                 Text("“\(overviewText)”")
-                    .font(.system(size: 24, weight: .regular, design: .serif))
+                    .font(AppFonts.serif(22, weight: .regular))
                     .italic()
-                    .foregroundColor(Color(.label))
+                    .foregroundColor(.midnightSpruce)
                     .lineSpacing(6)
             }
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal")
-                        .font(.system(size: 16))
-                        .foregroundColor(.primary.opacity(0.4))
+                        .font(AppFonts.sans(16, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                     Text(NSLocalizedString("ingredients.detected", comment: "Detected Ingredients"))
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.primary.opacity(0.4))
+                        .font(AppFonts.label)
+                        .foregroundColor(.nordicSlate)
                         .kerning(2)
                         .textCase(.uppercase)
                 }
@@ -214,17 +215,17 @@ struct PlateAnalysisResultView: View {
                     ForEach(analysis.ingredients.indices, id: \.self) { idx in
                         let ing = analysis.ingredients[idx]
                         Text(ing.name)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(Color(.systemGray))
+                            .font(AppFonts.sans(11, weight: .medium))
+                            .foregroundColor(.nordicSlate)
                             .textCase(.uppercase)
                             .padding(.vertical, 6)
                             .padding(.horizontal, 14)
                             .background(
                                 RoundedRectangle(cornerRadius: 999)
-                                    .fill(Color.white)
+                                    .fill(Color.cardSurface)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 999)
-                                            .stroke(Color(.systemGray4), lineWidth: 1)
+                                            .stroke(Color.cardBorder, lineWidth: 1)
                                     )
                             )
                     }
@@ -234,13 +235,13 @@ struct PlateAnalysisResultView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Text(NSLocalizedString("macro.profile", comment: "Macro Profile"))
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.label)
+                        .foregroundColor(.nordicSlate)
                         .kerning(3)
                         .textCase(.uppercase)
                     Spacer()
                     Text(NSLocalizedString("plate.optimized.badge", comment: "Optimized badge"))
-                        .font(.system(size: 9, weight: .bold))
+                        .font(AppFonts.sans(9, weight: .bold))
                         .foregroundColor(primary)
                         .textCase(.uppercase)
                         .padding(.vertical, 4)
@@ -276,7 +277,7 @@ struct PlateAnalysisResultView: View {
             }) {
                 HStack(spacing: 10) {
                     Text(NSLocalizedString("plate.log_meal", comment: "Log This Meal"))
-                        .font(.system(size: 13, weight: .bold))
+                        .font(AppFonts.sans(13, weight: .bold))
                         .kerning(2)
                         .textCase(.uppercase)
                     Image(systemName: "fork.knife")
@@ -285,7 +286,7 @@ struct PlateAnalysisResultView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: 360)
                 .frame(height: 64)
-                .background(Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255))
+                .background(Color.midnightSpruce)
                 .clipShape(Capsule())
                 .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 10)
             }
@@ -314,12 +315,12 @@ struct InsightCard: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .font(AppFonts.serif(15, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 
                 Text(insight.description)
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
             
             Spacer()
@@ -343,33 +344,33 @@ struct InsightCard: View {
     private var iconColor: Color {
         switch insight.type {
         case .positive:
-            return .green
+            return .mossInsight
         case .suggestion:
-            return .orange
+            return .momentumAmber
         case .warning:
-            return .red
+            return .midnightSpruce
         }
     }
     
     private var iconBackgroundColor: Color {
         switch insight.type {
         case .positive:
-            return Color.green.opacity(0.2)
+            return Color.mossInsight.opacity(0.2)
         case .suggestion:
-            return Color.orange.opacity(0.2)
+            return Color.momentumAmber.opacity(0.2)
         case .warning:
-            return Color.red.opacity(0.2)
+            return Color.midnightSpruce.opacity(0.2)
         }
     }
     
     private var cardBackgroundColor: Color {
         switch insight.type {
         case .positive:
-            return Color.green.opacity(0.05)
+            return Color.mossInsight.opacity(0.08)
         case .suggestion:
-            return Color.orange.opacity(0.05)
+            return Color.momentumAmber.opacity(0.08)
         case .warning:
-            return Color.red.opacity(0.05)
+            return Color.midnightSpruce.opacity(0.08)
         }
     }
 }
@@ -394,7 +395,7 @@ struct ScoreRingView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.gray.opacity(0.2), lineWidth: 16)
+                .stroke(Color.nordicSlate.opacity(0.2), lineWidth: 16)
                 .frame(width: 200, height: 200)
             Circle()
                 .trim(from: 0, to: Swift.min(Swift.max(score/10.0, 0.0), 1.0))
@@ -404,13 +405,13 @@ struct ScoreRingView: View {
             VStack(spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text(String(format: "%.1f", score))
-                        .font(.system(size: 36, weight: .bold))
+                        .font(AppFonts.serif(34, weight: .bold))
                     Text("/10")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.sans(14, weight: .medium))
+                        .foregroundColor(.nordicSlate)
                 }
                 Text(label)
-                    .font(.headline)
+                    .font(AppFonts.sans(12, weight: .semibold))
                     .foregroundColor(color)
             }
         }
@@ -428,19 +429,21 @@ private struct ResultMacroCard: View {
         VStack(spacing: 10) {
             HStack {
                 Circle().fill(color.opacity(0.25)).frame(width: 12, height: 12)
-                Text(title).font(.subheadline.weight(.semibold)).foregroundColor(.primary)
+                Text(title)
+                    .font(AppFonts.sans(12, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 Spacer()
             }
             HStack {
-                Text(value).font(.system(size: 28, weight: .bold)).foregroundColor(.primary)
+                Text(value).font(AppFonts.serif(26, weight: .bold)).foregroundColor(.midnightSpruce)
                 Spacer()
             }
         }
         .padding()
         .frame(minHeight: 96)
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(Color.cardSurface)
         .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardBorder, lineWidth: 1))
     }
 }
 
@@ -456,12 +459,12 @@ struct ResultNutrientDot: View {
                     .fill(color)
                     .frame(width: 8, height: 8)
                 Text(label)
-                    .font(.caption)
+                    .font(AppFonts.sans(11, weight: .regular))
                     .foregroundColor(.white.opacity(0.8))
             }
 
             Text(value)
-                .font(.caption.weight(.semibold))
+                .font(AppFonts.sans(11, weight: .semibold))
                 .foregroundColor(.white)
         }
     }
@@ -476,30 +479,23 @@ struct ResultIngredientRow: View {
         HStack {
             Text(name)
                 .font(.body)
-                .foregroundColor(.primary)
+                .foregroundColor(.midnightSpruce)
 
             Spacer()
 
             Text(amount)
-                .font(.body)
-                .foregroundColor(.secondary)
+                .font(AppFonts.sans(13, weight: .regular))
+                .foregroundColor(.nordicSlate)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .background(
-            colorScheme == .dark
-                ? Color(.systemGray6)
-                : Color(.systemBackground)
+            Color.cardSurface
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(
-                    colorScheme == .dark
-                        ? Color.white.opacity(0.1)
-                        : Color.black.opacity(0.05),
-                    lineWidth: 1
-                )
+                .stroke(Color.cardBorder, lineWidth: 1)
         )
         .padding(.bottom, 8)
     }
@@ -517,21 +513,21 @@ struct ResultModernInsightCard: View {
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
+                    .font(AppFonts.sans(15, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 Text(insight.description)
-                    .font(.system(size: 13))
-                    .foregroundColor(.primary.opacity(0.6))
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
             Spacer()
         }
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(UIColor.systemBackground))
+                .fill(Color.cardSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+                        .stroke(Color.cardBorder, lineWidth: 1)
                 )
         )
     }
@@ -549,9 +545,9 @@ struct ResultModernInsightCard: View {
 
     private var iconColor: Color {
         switch insight.type {
-        case .positive: return .green
-        case .suggestion: return .orange
-        case .warning: return .red
+        case .positive: return .mossInsight
+        case .suggestion: return .momentumAmber
+        case .warning: return .midnightSpruce
         }
     }
 }
@@ -564,16 +560,16 @@ struct PlateMicronutrientCard: View {
     var body: some View {
         VStack(spacing: 6) {
             Text(name)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.primary)
+                .font(AppFonts.sans(13, weight: .medium))
+                .foregroundColor(.midnightSpruce)
             Text(level)
-                .font(.system(size: 11))
-                .foregroundColor(.primary.opacity(0.6))
+                .font(AppFonts.sans(11, weight: .regular))
+                .foregroundColor(.nordicSlate)
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(UIColor.systemBackground))
+                .fill(Color.cardSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(color.opacity(0.25), lineWidth: 1)
@@ -602,18 +598,18 @@ struct MacroBarRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(title.uppercased())
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.label)
+                    .foregroundColor(.nordicSlate)
                     .kerning(2)
                 Spacer()
                 Text(label)
-                    .font(.system(size: 20, weight: .regular, design: .serif))
-                    .foregroundColor(Color(.label))
+                    .font(AppFonts.serif(18, weight: .regular))
+                    .foregroundColor(.midnightSpruce)
             }
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color(.systemGray6))
+                        .fill(Color.cardSurface)
                         .frame(height: 2)
                     Capsule()
                         .fill(accent.opacity(0.3))
@@ -686,4 +682,3 @@ private struct FlowLayoutContainer: Layout {
 #Preview {
     PlateAnalysisResultView(analysis: PlateAnalysis.mockAnalysis(), image: nil, onStartNewScan: {}, onClose: {})
 }
-

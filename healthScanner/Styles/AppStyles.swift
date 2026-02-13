@@ -1,78 +1,104 @@
 import SwiftUI
 
-// MARK: - Color Extensions
+// MARK: - Design System Colors
 extension Color {
-    static let primaryBackground = Color("Primary")
+    static let nordicBone = Color(red: 0.976, green: 0.969, blue: 0.949)
+    static let midnightSpruce = Color(red: 0.106, green: 0.169, blue: 0.129)
+    static let mossInsight = Color(red: 0.310, green: 0.475, blue: 0.259)
+    static let nordicSlate = Color(red: 0.290, green: 0.365, blue: 0.400)
+    static let momentumAmber = Color(red: 0.851, green: 0.466, blue: 0.024)
 
-    // Adaptive colors for light/dark mode
-    static let cardBackground = Color(.systemBackground)
-    static let secondaryCardBackground = Color(.secondarySystemBackground)
-    static let textPrimary = Color(.label)
-    static let textSecondary = Color(.secondaryLabel)
-    static let tertiaryText = Color(.tertiaryLabel)
+    static let cardSurface = Color.white
+    static let cardBorder = Color.black.opacity(0.05)
+    static let softDivider = Color.black.opacity(0.06)
+    static let accentGlow = Color.momentumAmber.opacity(0.15)
 
-    // Custom semantic colors
-    static let appAccent = Color.mint
-    static let appSecondaryAccent = Color.green
-
-    // Background colors
-    static let primaryBg = Color(.systemBackground)
-    static let secondaryBg = Color(.secondarySystemBackground)
-    static let tertiaryBg = Color(.tertiarySystemBackground)
-
-    // Border and separator colors
-    static let separatorColor = Color(.separator)
-    static let borderColor = Color(.separator)
+    // Legacy aliases
+    static let cardBackground = Color.cardSurface
+    static let secondaryCardBackground = Color.nordicBone
+    static let textPrimary = Color.midnightSpruce
+    static let textSecondary = Color.nordicSlate
+    static let tertiaryText = Color.nordicSlate.opacity(0.7)
+    static let appAccent = Color.momentumAmber
+    static let appSecondaryAccent = Color.mossInsight
+    static let primaryBg = Color.nordicBone
+    static let secondaryBg = Color.cardSurface
+    static let tertiaryBg = Color.nordicBone
+    static let separatorColor = Color.softDivider
+    static let borderColor = Color.cardBorder
 }
 
-// MARK: - Font Styles
+// MARK: - Typography
 struct AppFonts {
-    static let title = Font.largeTitle.bold()
-    static let heading = Font.title2.weight(.semibold)
-    static let body = Font.body
-    static let caption = Font.caption
+    static func serif(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        let name: String
+        switch weight {
+        case .bold: name = "PlayfairDisplay-Bold"
+        case .semibold: name = "PlayfairDisplay-SemiBold"
+        default: name = "PlayfairDisplay-Regular"
+        }
+        return Font.custom(name, size: size)
+    }
+
+    static func serifItalic(_ size: CGFloat) -> Font {
+        Font.custom("PlayfairDisplay-Italic", size: size)
+    }
+
+    static func sans(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        let name: String
+        switch weight {
+        case .bold: name = "Inter28pt-Bold"
+        case .semibold: name = "Inter28pt-SemiBold"
+        case .medium: name = "Inter28pt-Medium"
+        default: name = "Inter28pt-Regular"
+        }
+        return Font.custom(name, size: size)
+    }
+
+    static let display = serif(36, weight: .bold)
+    static let title = serif(26, weight: .bold)
+    static let heading = serif(20, weight: .semibold)
+    static let body = sans(14, weight: .regular)
+    static let bodyStrong = sans(14, weight: .semibold)
+    static let caption = sans(12, weight: .regular)
+    static let label = sans(10, weight: .bold)
 }
 
 // MARK: - View Modifiers
 struct CardStyle: ViewModifier {
-    @Environment(\.colorScheme) var colorScheme
-
     func body(content: Content) -> some View {
         content
-            .background(Color.cardBackground)
-            .cornerRadius(12)
-            .shadow(
-                color: colorScheme == .dark ? .black.opacity(0.3) : .gray.opacity(0.2),
-                radius: 4,
-                x: 0,
-                y: 2
+            .background(Color.cardSurface)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.cardBorder, lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
     }
 }
 
 struct PrimaryButtonStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .font(AppFonts.body.bold())
-            .foregroundColor(.white)
-            .padding()
-            .background(Color.appAccent)
-            .cornerRadius(8)
+            .font(AppFonts.sans(13, weight: .semibold))
+            .foregroundColor(Color.nordicBone)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 18)
+            .background(
+                Capsule().fill(Color.midnightSpruce)
+            )
     }
 }
 
 struct SecondaryButtonStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .font(AppFonts.body.bold())
-            .foregroundColor(Color.appAccent)
-            .padding()
-            .background(Color.secondaryCardBackground)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.appAccent, lineWidth: 1)
-            )
+            .font(AppFonts.sans(13, weight: .medium))
+            .foregroundColor(Color.momentumAmber)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 18)
+            .background(Color.clear)
     }
 }
 

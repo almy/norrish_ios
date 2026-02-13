@@ -62,11 +62,11 @@ struct EnhancedCameraPreviewView: View {
                 HStack {
                     Spacer()
                     Text("\(state.label) \(Int(state.confidence * 100))%")
-                        .font(.footnote.weight(.semibold))
+                        .font(AppFonts.sans(11, weight: .semibold))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 6)
                         .background(.ultraThinMaterial, in: Capsule())
-                        .foregroundColor(.primary)
+                        .foregroundColor(.nordicBone)
                     Spacer()
                 }
                 .padding(.top, 16)

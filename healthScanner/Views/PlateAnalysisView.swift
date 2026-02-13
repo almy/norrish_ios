@@ -50,6 +50,7 @@ struct PlateAnalysisView: View {
                     .padding(.bottom, 24)
                 }
             }
+            .background(Color.nordicBone)
             .navigationBarHidden(true)
         }
         .onAppear { viewModel.loadLastAnalysisFromDefaults() }
@@ -103,7 +104,9 @@ struct PlateAnalysisView: View {
 private extension PlateAnalysisView {
     var header: some View {
         HStack {
-            Text("What's on your plate?").font(.title2).fontWeight(.bold)
+            Text("What's on your plate?")
+                .font(AppFonts.serif(22, weight: .bold))
+                .foregroundColor(.midnightSpruce)
             Spacer()
         }
         .padding(.horizontal, 20)
@@ -113,7 +116,8 @@ private extension PlateAnalysisView {
     var cameraPreview: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.orange.opacity(0.08))
+                .fill(Color.cardSurface)
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.cardBorder, lineWidth: 1))
                 .frame(height: 300)
             if let selectedImage {
                 Image(uiImage: selectedImage)
@@ -126,10 +130,10 @@ private extension PlateAnalysisView {
                 VStack(spacing: 12) {
                     Image(systemName: "fork.knife.circle")
                         .font(.system(size: 56))
-                        .foregroundColor(.mint)
+                        .foregroundColor(.mossInsight)
                     Text("camera.preview_hint".localized)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.sans(12, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                 }
                 .padding(.horizontal, 20)
             }
@@ -145,11 +149,11 @@ private extension PlateAnalysisView {
                 }
             } label: {
                 HStack { Image(systemName: "camera.viewfinder"); Text("camera.take_photo".localized) }
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.nordicBone)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(UIImagePickerController.isSourceTypeAvailable(.camera) ? Color.indigo : Color.gray)
+                    .background(UIImagePickerController.isSourceTypeAvailable(.camera) ? Color.midnightSpruce : Color.nordicSlate.opacity(0.4))
                     .cornerRadius(24)
             }
             .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
@@ -157,11 +161,11 @@ private extension PlateAnalysisView {
 
             PhotosPicker(selection: $selectedItem, matching: .images) {
                 HStack { Image(systemName: "photo.on.rectangle"); Text("camera.choose_photo".localized) }
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .font(AppFonts.sans(13, weight: .medium))
+                    .foregroundColor(.momentumAmber)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color.cardSurface)
                     .cornerRadius(24)
             }
             .padding(.horizontal, 20)
@@ -173,10 +177,11 @@ private extension PlateAnalysisView {
                     HStack(spacing: 8) {
                         ForEach(detectedCategories, id: \.self) { cat in
                             Text(cat)
-                                .font(.caption)
+                                .font(AppFonts.sans(10, weight: .medium))
+                                .foregroundColor(.nordicSlate)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(Color.gray.opacity(0.15))
+                                .background(Color.nordicBone.opacity(0.8))
                                 .cornerRadius(12)
                         }
                     }
@@ -188,7 +193,7 @@ private extension PlateAnalysisView {
                 .padding(.horizontal, 20)
 
             HStack {
-                Text("Style").font(.footnote).foregroundColor(.secondary)
+                Text("Style").font(AppFonts.sans(12, weight: .regular)).foregroundColor(.nordicSlate)
                 Picker("Style", selection: $enhancerStyle) {
                     Text("Clean").tag(InlinePhotoEnhancer.Style.clean)
                     Text("Vibrant").tag(InlinePhotoEnhancer.Style.vibrant)
@@ -202,10 +207,10 @@ private extension PlateAnalysisView {
 
     var tips: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Pro tip").font(.footnote).fontWeight(.semibold)
+            Text("Pro tip").font(AppFonts.sans(12, weight: .semibold)).foregroundColor(.midnightSpruce)
             Text("camera.tip_lighting".localized)
-                .font(.footnote)
-                .foregroundColor(.secondary)
+                .font(AppFonts.sans(12, weight: .regular))
+                .foregroundColor(.nordicSlate)
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
@@ -214,8 +219,8 @@ private extension PlateAnalysisView {
     var reopenLastSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Previous Analysis")
-                .font(.footnote).fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .font(AppFonts.sans(12, weight: .semibold))
+                .foregroundColor(.nordicSlate)
             Button {
                 if let last = viewModel.lastAnalysisResult {
                     viewModel.analysisResult = last
@@ -227,11 +232,11 @@ private extension PlateAnalysisView {
                     Image(systemName: "clock.arrow.circlepath")
                     Text("Reopen Results")
                 }
-                .font(.subheadline).fontWeight(.semibold)
-                .foregroundColor(.white)
+                .font(AppFonts.sans(13, weight: .semibold))
+                .foregroundColor(.nordicBone)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color.mint)
+                .background(Color.midnightSpruce)
                 .cornerRadius(20)
             }
         }
@@ -335,4 +340,3 @@ private extension PlateAnalysisView {
         }
     }
 }
-

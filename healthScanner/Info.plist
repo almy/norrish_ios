@@ -2,5 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Fonts/Playfair_Display/static/PlayfairDisplay-Regular.ttf</string>
+		<string>Fonts/Playfair_Display/static/PlayfairDisplay-SemiBold.ttf</string>
+		<string>Fonts/Playfair_Display/static/PlayfairDisplay-Bold.ttf</string>
+		<string>Fonts/Playfair_Display/static/PlayfairDisplay-Italic.ttf</string>
+		<string>Fonts/Inter/static/Inter_28pt-Regular.ttf</string>
+		<string>Fonts/Inter/static/Inter_28pt-Medium.ttf</string>
+		<string>Fonts/Inter/static/Inter_28pt-SemiBold.ttf</string>
+		<string>Fonts/Inter/static/Inter_28pt-Bold.ttf</string>
+	</array>
 </dict>
 </plist>

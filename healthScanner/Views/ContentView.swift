@@ -85,9 +85,9 @@ struct ContentView: View {
         return recs.prefix(3).map { r in
             let icon: String
             let color: Color
-            if r.tags.contains("fiber") { icon = "leaf.fill"; color = .green }
-            else if r.tags.contains("protein") { icon = "bolt.heart.fill"; color = .pink }
-            else { icon = "lightbulb.fill"; color = .yellow }
+            if r.tags.contains("fiber") { icon = "leaf.fill"; color = .mossInsight }
+            else if r.tags.contains("protein") { icon = "bolt.heart.fill"; color = .momentumAmber }
+            else { icon = "lightbulb.fill"; color = .nordicSlate }
             return PersonalizedInsight(icon: icon, iconColor: color, title: r.title, message: r.message, category: .health, reason: r.reason, evidence: r.evidence, tags: r.tags)
         }
     }
@@ -214,26 +214,26 @@ struct ContentView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color(red: 252 / 255, green: 252 / 255, blue: 252 / 255))
-        .padding(.bottom, 80)
+        .background(Color.nordicBone)
+        .padding(.bottom, 0)
     }
 
     private var historyHeader: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 6) {
                 Text(NSLocalizedString("history.story_label", comment: "History header label"))
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(3)
-                    .foregroundColor(Color.gray.opacity(0.6))
+                    .font(AppFonts.label)
+                    .kerning(2.5)
+                    .foregroundColor(.nordicSlate)
                     .textCase(.uppercase)
                 Text(NSLocalizedString("history.journal_title", comment: "History journal title"))
-                    .font(.system(size: 30, weight: .black, design: .serif))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .font(AppFonts.serif(30, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
             }
             Spacer()
             Image(systemName: "book")
                 .font(.system(size: 20))
-                .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                .foregroundColor(.momentumAmber)
                 .padding(8)
         }
         .padding(.horizontal, 20)
@@ -244,19 +244,19 @@ struct ContentView: View {
         VStack(spacing: 12) {
             HStack {
                 Text(NSLocalizedString("history.digest_title", comment: "Digest title"))
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .font(AppFonts.serif(20, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
                 Spacer()
                 Button(action: {}) {
                     HStack(spacing: 4) {
                         Text(NSLocalizedString("history.digest_action", comment: "Digest action"))
-                            .font(.system(size: 11, weight: .bold))
-                            .kerning(1.5)
+                            .font(AppFonts.sans(11, weight: .bold))
+                            .kerning(1.2)
                             .textCase(.uppercase)
                         Image(systemName: "chevron.right")
                             .font(.system(size: 12))
                     }
-                    .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                    .foregroundColor(.momentumAmber)
                 }
             }
             .padding(.horizontal, 20)
@@ -275,7 +275,7 @@ struct ContentView: View {
                 HStack(spacing: 6) {
                     ForEach(0..<historyTrendInsights.count, id: \.self) { idx in
                         Circle()
-                            .fill(idx == historyDigestIndex ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color.gray.opacity(0.3))
+                            .fill(idx == historyDigestIndex ? Color.momentumAmber : Color.nordicSlate.opacity(0.3))
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -310,9 +310,9 @@ struct ContentView: View {
 
     private func sectionHeader(for date: Date) -> some View {
         Text(sectionTitle(for: date))
-            .font(.system(size: 10, weight: .black))
-            .kerning(3)
-            .foregroundColor(Color.gray.opacity(0.6))
+            .font(AppFonts.label)
+            .kerning(2.5)
+            .foregroundColor(.nordicSlate)
             .textCase(.uppercase)
             .padding(.leading, 24)
             .padding(.top, 8)
@@ -340,7 +340,7 @@ struct ContentView: View {
                 // Home Tab
                 ZStack {
                     HomeView()
-                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.white).padding() }.background(Color.green).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
+                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.nordicBone).padding() }.background(Color.midnightSpruce).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
                 }
                 .tabItem { VStack { Image(systemName: "house"); Text(NSLocalizedString("home.title", comment: "Home tab title")) } }
                 .tag(0)
@@ -349,8 +349,8 @@ struct ContentView: View {
                 ZStack {
                     historyJournalView
 
-                    // Floating + button
-                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.white).padding() }.background(Color.green).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
+                    // Floating + button (matches Home)
+                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.nordicBone).padding() }.background(Color.midnightSpruce).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
                 }
                 .tabItem { VStack { Image(systemName: "clock"); Text("tab.history".localized()) } }
                 .tag(1)
@@ -360,7 +360,7 @@ struct ContentView: View {
                     .tabItem { VStack { Image(systemName: "person"); Text("tab.profile".localized()) } }
                     .tag(2)
             }
-            .accentColor(.green)
+            .accentColor(.momentumAmber)
             .fullScreenCover(isPresented: $showingScanner) {
                 QuickBarcodeScanView(
                     scannedCode: $scannedCode,
@@ -384,15 +384,39 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingQuickAdd) {
                 VStack(spacing: 12) {
-                    Text(NSLocalizedString("home.section.suggestions", comment: "Quick actions title")).font(.headline).padding(.top, 16)
+                    Text(NSLocalizedString("home.section.suggestions", comment: "Quick actions title"))
+                        .font(AppFonts.serif(18, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
+                        .padding(.top, 16)
                     Button { showingScanner = true ; showingQuickAdd = false } label: {
-                        HStack { Image(systemName: "barcode.viewfinder"); Text("tab.scan".localized()) }.frame(maxWidth: .infinity).padding().background(Color.indigo).foregroundColor(.white).cornerRadius(12)
+                        HStack { Image(systemName: "barcode.viewfinder"); Text("tab.scan".localized()) }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.midnightSpruce)
+                            .foregroundColor(.nordicBone)
+                            .cornerRadius(12)
                     }
                     Button { showingPlateScan = true ; showingQuickAdd = false } label: {
-                        HStack { Image(systemName: "fork.knife"); Text("tab.plate".localized()) }.frame(maxWidth: .infinity).padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
+                        HStack { Image(systemName: "fork.knife"); Text("tab.plate".localized()) }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.cardSurface)
+                            .foregroundColor(.midnightSpruce)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.cardBorder, lineWidth: 1)
+                            )
                     }
                     Button { showingPlateUpload = true ; showingQuickAdd = false } label: {
-                        HStack { Image(systemName: "photo"); Text(NSLocalizedString("plate.upload_photo", comment: "Upload photo")) }.frame(maxWidth: .infinity).padding().background(Color(.secondarySystemBackground)).cornerRadius(12)
+                        HStack { Image(systemName: "photo"); Text(NSLocalizedString("plate.upload_photo", comment: "Upload photo")) }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.cardSurface)
+                            .foregroundColor(.midnightSpruce)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.cardBorder, lineWidth: 1)
+                            )
                     }
                     Spacer()
                 }
@@ -420,13 +444,18 @@ struct FilterButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .medium)
-                .foregroundColor(isSelected ? .white : .primary)
+                .font(AppFonts.sans(12, weight: isSelected ? .semibold : .medium))
+                .foregroundColor(isSelected ? .nordicBone : .midnightSpruce)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.mint : Color.gray.opacity(0.1))
-                .cornerRadius(20)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(isSelected ? Color.midnightSpruce : Color.cardSurface)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.cardBorder, lineWidth: isSelected ? 0 : 1)
+                )
         }
     }
 }
@@ -460,10 +489,10 @@ private struct HistoryDigestCard: View {
 
     private var accent: Color {
         switch insight.category {
-        case .health: return Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
-        case .habit: return Color(red: 168 / 255, green: 85 / 255, blue: 247 / 255)
-        case .preference: return Color(red: 59 / 255, green: 130 / 255, blue: 246 / 255)
-        case .recommendation: return Color(red: 249 / 255, green: 115 / 255, blue: 22 / 255)
+        case .health: return .mossInsight
+        case .habit: return .momentumAmber
+        case .preference: return .nordicSlate
+        case .recommendation: return .momentumAmber
         }
     }
 
@@ -480,23 +509,23 @@ private struct HistoryDigestCard: View {
                     )
                 VStack(alignment: .leading, spacing: 4) {
                     Text(insight.title)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                        .font(AppFonts.serif(16, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
                     Text(insight.message)
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.gray.opacity(0.7))
+                        .font(AppFonts.sans(12, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                 }
                 Spacer()
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(Color.cardSurface)
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                .stroke(Color.cardBorder, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 6)
     }
 }
 
@@ -514,8 +543,8 @@ private struct HistoryTimelineCard: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text(item.name)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                            .font(AppFonts.serif(16, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
                             .lineLimit(1)
                         Spacer()
                         nutriBadge
@@ -523,16 +552,16 @@ private struct HistoryTimelineCard: View {
                     HStack(spacing: 8) {
                         let kcal = NSLocalizedString("unit.kilocalories", comment: "Kilocalories unit")
                         Text("\(caloriesText) \(kcal)")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(Color.gray.opacity(0.8))
+                            .font(AppFonts.sans(10, weight: .bold))
+                            .foregroundColor(.nordicSlate)
                         Text(macroText)
-                            .font(.system(size: 10, weight: .medium, design: .monospaced))
-                            .foregroundColor(Color.gray.opacity(0.6))
+                            .font(AppFonts.sans(10, weight: .medium))
+                            .foregroundColor(.nordicSlate.opacity(0.85))
                     }
                     if let note = noteText {
                         Text("“\(note)”")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color.gray.opacity(0.5))
+                            .font(AppFonts.sans(11, weight: .regular))
+                            .foregroundColor(.nordicSlate.opacity(0.7))
                             .italic()
                             .lineLimit(2)
                     }
@@ -540,13 +569,13 @@ private struct HistoryTimelineCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(12)
-            .background(Color.white)
+            .background(Color.cardSurface)
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                    .stroke(Color.cardBorder, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .shadow(color: Color.black.opacity(0.03), radius: 6, x: 0, y: 3)
+            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
     }
@@ -560,11 +589,11 @@ private struct HistoryTimelineCard: View {
             } else if let image = plate.image {
                 Image(uiImage: image).resizable().scaledToFill()
             } else {
-                Color.gray.opacity(0.08)
+                Color.nordicBone.opacity(0.8)
                     .overlay(
                         Image(systemName: "fork.knife")
                             .font(.system(size: 18))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.nordicSlate)
                     )
             }
         case .product(let product):
@@ -576,11 +605,11 @@ private struct HistoryTimelineCard: View {
                 CachedAsyncImage(urlString: url, cacheKey: product.barcode)
                     .scaledToFill()
             } else {
-                Color.gray.opacity(0.08)
+                Color.nordicBone.opacity(0.8)
                     .overlay(
                         Image(systemName: "cart")
                             .font(.system(size: 18))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.nordicSlate)
                     )
             }
         }
@@ -590,7 +619,7 @@ private struct HistoryTimelineCard: View {
         let rgb = item.nutriScoreLetter.color
         let color = Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
         return Text(item.nutriScoreLetter.rawValue)
-            .font(.system(size: 10, weight: .black))
+            .font(AppFonts.sans(10, weight: .bold))
             .foregroundColor(color)
             .frame(width: 22, height: 22)
             .background(color.opacity(0.12))

@@ -59,23 +59,23 @@ struct EnhancedCameraPreviewView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
                             Circle()
-                                .fill(coreMLService.isReady ? Color.green : Color.orange)
+                                .fill(coreMLService.isReady ? Color.mossInsight : Color.momentumAmber)
                                 .frame(width: 8, height: 8)
                             Text(coreMLService.isReady ? "ai.status.ready".localized : "ai.status.loading".localized)
-                                .font(.caption)
+                                .font(AppFonts.sans(11, weight: .semibold))
                                 .foregroundColor(.white)
                         }
 
                         if let food = detectedFood, !food.isEmpty {
                             Text(String(format: "ai.food_detected".localized, food))
-                                .font(.caption)
+                                .font(AppFonts.sans(11, weight: .regular))
                                 .foregroundColor(.white)
                                 .opacity(confidence > 0.3 ? 1.0 : 0.5)
                         }
 
                         if confidence > 0 {
                             Text(String(format: "analysis.confidence_score".localized, confidence * 100))
-                                .font(.caption2)
+                                .font(AppFonts.sans(10, weight: .regular))
                                 .foregroundColor(.white.opacity(0.8))
                         }
                     }
@@ -202,34 +202,34 @@ struct AnalyzingOverlayView: View {
                         .scaleEffect(1.6)
                     Text(message)
                         .foregroundColor(.white)
-                        .font(.headline)
+                        .font(AppFonts.sans(13, weight: .semibold))
                 } else {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.yellow)
+                        .foregroundColor(.momentumAmber)
                         .font(.system(size: 48))
                     Text(message)
                         .foregroundColor(.white)
-                        .font(.headline)
+                        .font(AppFonts.sans(13, weight: .semibold))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
 
                     HStack(spacing: 16) {
                         Button(action: onRetry) {
                             Text("Retry")
-                                .font(.headline)
-                                .foregroundColor(.black)
+                                .font(AppFonts.sans(13, weight: .semibold))
+                                .foregroundColor(.nordicBone)
                                 .padding(.horizontal, 24)
                                 .padding(.vertical, 12)
-                                .background(Color.white)
+                                .background(Color.midnightSpruce)
                                 .cornerRadius(24)
                         }
                         Button(action: onCancel) {
                             Text("Close")
-                                .font(.headline)
-                                .foregroundColor(.white)
+                                .font(AppFonts.sans(13, weight: .semibold))
+                                .foregroundColor(.momentumAmber)
                                 .padding(.horizontal, 24)
                                 .padding(.vertical, 12)
-                                .background(Color.white.opacity(0.2))
+                                .background(Color.white.opacity(0.08))
                                 .cornerRadius(24)
                         }
                     }
@@ -239,4 +239,3 @@ struct AnalyzingOverlayView: View {
         }
     }
 }
-

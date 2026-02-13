@@ -50,13 +50,14 @@ struct PlateScanView: View {
                             ProgressView()
                             Text(NSLocalizedString("scan.status.fetching", tableName: "Scan", comment: ""))
                                 .foregroundColor(.white)
-                                .font(.body.weight(.semibold))
+                                .font(AppFonts.sans(13, weight: .semibold))
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
             )
         }
+        .background(Color.nordicBone)
         .fullScreenCover(isPresented: $showResult) {
             NavigationView {
                 PlateAnalysisResultView(
@@ -131,7 +132,8 @@ struct PlateScanView: View {
             }
             Spacer()
             Text("Scan Your Plate")
-                .font(.title2).fontWeight(.semibold)
+                .font(AppFonts.serif(22, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
             Spacer()
             // balance spacer
             Image(systemName: "chevron.backward").opacity(0)
@@ -143,19 +145,20 @@ struct PlateScanView: View {
     private var heroArea: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color.cardSurface)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.cardBorder, lineWidth: 1))
                 .frame(height: 200)
             VStack(spacing: 10) {
-                Image(systemName: "camera.viewfinder").font(.system(size: 44)).foregroundColor(.mint)
+                Image(systemName: "camera.viewfinder").font(.system(size: 44)).foregroundColor(.momentumAmber)
                 Text("Center the plate inside the frame")
-                    .font(.body).foregroundColor(.secondary)
+                    .font(AppFonts.sans(13, weight: .regular)).foregroundColor(.nordicSlate)
             }
         }
     }
 
     private var guidanceTips: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Tips for a great scan").font(.headline)
+            Text("Tips for a great scan").font(AppFonts.serif(16, weight: .semibold)).foregroundColor(.midnightSpruce)
             tipRow(icon: "sun.max.fill", title: "Good lighting", message: "Avoid strong shadows; use natural light when possible.")
             tipRow(icon: "crop", title: "Fill the frame", message: "Get close enough so the plate is prominent in view.")
             tipRow(icon: "square.and.arrow.down", title: "Top-down angle", message: "Hold your phone above the plate for best results.")
@@ -167,22 +170,23 @@ struct PlateScanView: View {
         VStack(spacing: 12) {
             Button(action: { showCamera = true }) {
                 HStack { Image(systemName: "camera.fill"); Text("Take Photo") }
-                    .font(.headline)
-                    .foregroundColor(.white)
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.nordicBone)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.green)
+                    .background(Color.midnightSpruce)
                     .cornerRadius(14)
             }
 
             Button(action: { showPhotoPicker = true }) {
                 HStack { Image(systemName: "photo.fill.on.rectangle.fill"); Text("Import from Photos") }
-                    .font(.body.weight(.medium))
-                    .foregroundColor(.primary)
+                    .font(AppFonts.sans(13, weight: .medium))
+                    .foregroundColor(.momentumAmber)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(Color(.systemGray6))
+                    .background(Color.cardSurface)
                     .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardBorder, lineWidth: 1))
             }
         }
     }
@@ -190,18 +194,18 @@ struct PlateScanView: View {
     // MARK: - Helpers
     private func tipRow(icon: String, title: String, message: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon).foregroundColor(.mint).frame(width: 22)
+            Image(systemName: icon).foregroundColor(.mossInsight).frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.subheadline).fontWeight(.semibold)
-                Text(message).font(.footnote).foregroundColor(.secondary)
+                Text(title).font(AppFonts.sans(13, weight: .semibold)).foregroundColor(.midnightSpruce)
+                Text(message).font(AppFonts.sans(12, weight: .regular)).foregroundColor(.nordicSlate)
             }
             Spacer()
         }
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.systemBackground))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.12), lineWidth: 1))
+                .fill(Color.cardSurface)
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardBorder, lineWidth: 1))
         )
     }
 
@@ -246,7 +250,7 @@ struct PlateQuickScanView: View {
                     ProgressView()
                     Text(NSLocalizedString("scan.status.fetching", tableName: "Scan", comment: ""))
                         .foregroundColor(.white)
-                        .font(.body.weight(.semibold))
+                        .font(AppFonts.sans(13, weight: .semibold))
                 }
             }
         }

@@ -20,11 +20,11 @@ struct RecentScanRow: View {
                         .aspectRatio(contentMode: .fill)
                 } else {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.orange.opacity(0.3))
+                        .fill(Color.momentumAmber.opacity(0.15))
                         .overlay(
                             Image(systemName: "cart.fill")
                                 .font(.title3)
-                                .foregroundColor(.orange)
+                                .foregroundColor(.momentumAmber)
                         )
                 }
             }
@@ -34,17 +34,17 @@ struct RecentScanRow: View {
             // Product Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(scan.productName)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                    .font(AppFonts.serif(16, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 Text(dateFormatter.string(from: scan.scanDate))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
             Spacer()
             NutriScoreBadge(letter: scan.nutriScoreLetter, compact: true)
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+        Image(systemName: "chevron.right")
+            .font(.caption)
+            .foregroundColor(.nordicSlate.opacity(0.7))
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
@@ -57,4 +57,3 @@ struct RecentScanRow: View {
         }
     }
 }
-

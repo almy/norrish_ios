@@ -62,9 +62,9 @@ struct BarcodeCameraOverlayView: View {
 
     var body: some View {
         ZStack {
-            Color.white.opacity(0.35)
+            Color.nordicBone.opacity(0.6)
                 .ignoresSafeArea()
-                .overlay(Color.black.opacity(0.02))
+                .overlay(Color.black.opacity(0.04))
 
             VStack {
                 Spacer(minLength: 24)
@@ -76,9 +76,9 @@ struct BarcodeCameraOverlayView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        .stroke(Color.cardBorder, lineWidth: 1)
                 )
-                .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 8)
+                .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 8)
                 .padding(.horizontal, 20)
                 .frame(height: UIScreen.main.bounds.height * 0.6)
                 Spacer(minLength: 32)

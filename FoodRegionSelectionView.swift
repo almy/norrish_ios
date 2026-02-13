@@ -34,8 +34,8 @@ struct FoodRegionSelectionView: View {
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.footnote)
-                        .foregroundColor(.red)
+                        .font(AppFonts.sans(11, weight: .medium))
+                        .foregroundColor(.momentumAmber)
                 }
 
                 infoPanel
@@ -46,7 +46,7 @@ struct FoodRegionSelectionView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 24)
-            .background(Colors.nordicBone.ignoresSafeArea())
+            .background(Color.nordicBone.ignoresSafeArea())
             .onAppear {
                 detect()
                 analyzePhotoLabel()
@@ -58,18 +58,10 @@ struct FoodRegionSelectionView: View {
 }
 
 private extension FoodRegionSelectionView {
-    enum Colors {
-        static let nordicBone = Color(red: 0.976, green: 0.969, blue: 0.949)
-        static let midnightSpruce = Color(red: 0.106, green: 0.169, blue: 0.129)
-        static let mossInsight = Color(red: 0.310, green: 0.475, blue: 0.259)
-        static let nordicSlate = Color(red: 0.290, green: 0.365, blue: 0.400)
-        static let momentumAmber = Color(red: 0.851, green: 0.466, blue: 0.024)
-    }
-
     var titleHeader: some View {
         Text("Select food areas")
-            .font(.system(.title2, design: .serif).weight(.semibold))
-            .foregroundColor(Colors.midnightSpruce)
+            .font(AppFonts.serif(22, weight: .semibold))
+            .foregroundColor(.midnightSpruce)
             .padding(.top, 8)
             .padding(.bottom, 4)
     }
@@ -87,7 +79,7 @@ private extension FoodRegionSelectionView {
                     .overlay {
                         ForEach($editableRegions) { $region in
                             let viewRect = imageRectToViewRect(region.rect, imageSize: image.size, fittedSize: fitted, origin: origin)
-                            RegionOverlay(rect: viewRect, color: Colors.momentumAmber, selected: region.isSelected)
+                            RegionOverlay(rect: viewRect, color: .momentumAmber, selected: region.isSelected)
                                 .gesture(dragGesture(for: $region, fittedSize: fitted, origin: origin))
                                 .simultaneousGesture(magnifyGesture(for: $region))
                                 .onTapGesture { region.isSelected.toggle() }
@@ -111,12 +103,12 @@ private extension FoodRegionSelectionView {
     func infoCard(title: String, lines: [String]) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(Colors.midnightSpruce)
+                .font(AppFonts.sans(12, weight: .semibold))
+            .foregroundColor(.midnightSpruce)
             ForEach(lines, id: \.self) { line in
                 Text(line)
-                    .font(.system(size: 11, weight: .regular, design: .monospaced))
-                    .foregroundColor(Colors.nordicSlate)
+                    .font(AppFonts.sans(11, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -217,11 +209,11 @@ private extension FoodRegionSelectionView {
             HStack {
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(Colors.momentumAmber)
+                        .fill(Color.momentumAmber)
                         .frame(width: 10, height: 10)
                     Text("Include")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(Colors.midnightSpruce)
+                        .font(AppFonts.sans(13, weight: .medium))
+                        .foregroundColor(.midnightSpruce)
                 }
                 Spacer()
                 toggle
@@ -231,8 +223,8 @@ private extension FoodRegionSelectionView {
 
             HStack {
                 Text(String(format: "conf: %.2f", currentConfidence))
-                    .font(.system(size: 11, weight: .regular, design: .monospaced))
-                    .foregroundColor(Colors.nordicSlate)
+                    .font(AppFonts.sans(11, weight: .regular))
+                    .foregroundColor(.nordicSlate)
                     .textCase(.uppercase)
                     .tracking(1)
                 Spacer()
@@ -240,7 +232,7 @@ private extension FoodRegionSelectionView {
                     iconButton(system: "minus") { adjustFirstRegion(scale: 0.95) }
                     iconButton(system: "plus") { adjustFirstRegion(scale: 1.05) }
                 }
-                .foregroundColor(Colors.momentumAmber)
+                .foregroundColor(.momentumAmber)
             }
         }
         .padding(14)
@@ -257,7 +249,7 @@ private extension FoodRegionSelectionView {
     var bottomBar: some View {
         VStack(spacing: 0) {
             LinearGradient(
-                colors: [Colors.nordicBone.opacity(0.0), Colors.nordicBone],
+                colors: [Color.nordicBone.opacity(0.0), Color.nordicBone],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -285,7 +277,7 @@ private extension FoodRegionSelectionView {
             .padding(.horizontal, 20)
             .padding(.bottom, 18)
             .padding(.top, 12)
-            .background(Colors.nordicBone)
+            .background(Color.nordicBone)
         }
     }
 
@@ -296,7 +288,7 @@ private extension FoodRegionSelectionView {
     var toggle: some View {
         Toggle("", isOn: bindingForFirstRegion)
             .labelsHidden()
-            .toggleStyle(FRPillToggleStyle(onColor: Colors.mossInsight))
+            .toggleStyle(FRPillToggleStyle(onColor: .mossInsight))
     }
 
     var bindingForFirstRegion: Binding<Bool> {
@@ -330,7 +322,7 @@ private extension FoodRegionSelectionView {
         isLoading = true
         Task { @MainActor in
             let results = viewModel.detectFoodRegions(in: image, maxRegions: 5)
-            let colors: [Color] = [.yellow, .green, .blue, .orange, .pink, .purple]
+            let colors: [Color] = [.momentumAmber, .mossInsight, .midnightSpruce, .nordicSlate, .momentumAmber.opacity(0.7), .mossInsight.opacity(0.7)]
             self.editableRegions = results.enumerated().map { idx, r in
                 EditableRegion(rect: r.boundingBox, confidence: r.confidence, isSelected: true, color: colors[idx % colors.count])
             }
@@ -457,8 +449,8 @@ private struct RegionOverlay: View {
 private struct FRNeutralOutlineButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .medium, design: .rounded))
-            .foregroundColor(FoodRegionSelectionView.Colors.momentumAmber)
+            .font(AppFonts.sans(13, weight: .medium))
+            .foregroundColor(.momentumAmber)
             .padding(.vertical, 12)
             .padding(.horizontal, 14)
             .background(Color.clear)
@@ -469,12 +461,12 @@ private struct FRNeutralOutlineButtonStyle: ButtonStyle {
 private struct FRPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
-            .foregroundColor(FoodRegionSelectionView.Colors.nordicBone)
+            .font(AppFonts.sans(13, weight: .semibold))
+            .foregroundColor(.nordicBone)
             .padding(.vertical, 12)
             .padding(.horizontal, 16)
             .background(
-                Capsule().fill(FoodRegionSelectionView.Colors.midnightSpruce)
+                Capsule().fill(Color.midnightSpruce)
             )
             .opacity(configuration.isPressed ? 0.85 : 1.0)
     }
@@ -485,7 +477,7 @@ private struct FRPillToggleStyle: ToggleStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(configuration.isOn ? onColor : Color.gray.opacity(0.3))
+            .fill(configuration.isOn ? onColor : Color.nordicSlate.opacity(0.3))
             .frame(width: 44, height: 24)
             .overlay(
                 Circle()

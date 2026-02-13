@@ -22,15 +22,23 @@ struct PlateHistoryDetailView: View {
             // Adaptive qualitative message for this plate
             if let rec = OnDeviceNutritionRecommendationEngine().qualitativeMealMessage(for: plateAnalysis) {
                 HStack(spacing: 12) {
-                    Image(systemName: "lightbulb.fill").foregroundColor(.yellow)
+                    Image(systemName: "lightbulb.fill").foregroundColor(.momentumAmber)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(rec.title).font(.subheadline).fontWeight(.semibold)
-                        Text(rec.message).font(.caption).foregroundColor(.secondary)
+                        Text(rec.title)
+                            .font(AppFonts.sans(12, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                        Text(rec.message)
+                            .font(AppFonts.sans(11, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
                     Spacer()
                 }
                 .padding(12)
-                .background(Color.gray.opacity(0.06))
+                .background(Color.cardSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                )
                 .cornerRadius(10)
                 .padding(.horizontal, 16)
             }

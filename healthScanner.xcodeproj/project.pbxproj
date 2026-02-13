@@ -92,6 +92,7 @@
 		E5F61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift */; };
 		F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81B5F38D5DE44326AF954F94 /* RecentScanRow.swift */; };
 		F61728394A5B6C7D8E9FA0B1 /* resources/plate.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A0B1C2D3E4F5061728394A5B /* resources/plate.jpg */; };
+		F0A1B2C3D4E5F67890123457 /* Fonts in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C3D4E5F67890123456 /* Fonts */; };
 		FD4AF8AB5ED2421B8442279A /* RecentScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8355D74FBF394F90B7C1A84C /* RecentScan.swift */; };
 		FF8408BD6B2A4F06801E3EB2 /* norrishApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */; };
 /* End PBXBuildFile section */
@@ -212,6 +213,7 @@
 		F5E61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendIntegrationTests.swift; sourceTree = "<group>"; };
 		FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		FF6E4A499A014860AA425C4D /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		F0A1B2C3D4E5F67890123456 /* Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources/Fonts; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -460,6 +462,7 @@
 				CE5335D32E79D1E00086689E /* Settings */,
 				CE5335D02E79D1AE0086689E /* Managers */,
 				CE5335CD2E79CD2F0086689E /* Styles */,
+				F0A1B2C3D4E5F67890123456 /* Fonts */,
 				E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */,
 				F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */,
 				CEF23E542E6C5F67002B903F /* Assets.xcassets */,
@@ -642,6 +645,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE5335CE2E79CD2F0086689E /* Styles in Resources */,
+				F0A1B2C3D4E5F67890123457 /* Fonts in Resources */,
 				CEF4FE512F281D07009FAA35 /* ARCHITECTURE.md in Resources */,
 				CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */,
 				CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */,

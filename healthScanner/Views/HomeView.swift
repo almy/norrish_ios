@@ -18,9 +18,9 @@ struct HomeView: View {
         return recs.prefix(5).map { r in
             let icon: String
             let color: Color
-            if r.tags.contains("fiber") { icon = "leaf.fill"; color = .green }
-            else if r.tags.contains("protein") { icon = "bolt.heart.fill"; color = .pink }
-            else { icon = "lightbulb.fill"; color = .yellow }
+            if r.tags.contains("fiber") { icon = "leaf.fill"; color = .mossInsight }
+            else if r.tags.contains("protein") { icon = "bolt.heart.fill"; color = .momentumAmber }
+            else { icon = "lightbulb.fill"; color = .nordicSlate }
             return PersonalizedInsight(icon: icon, iconColor: color, title: r.title, message: r.message, category: .health, reason: r.reason, evidence: r.evidence, tags: r.tags)
         }
     }
@@ -34,21 +34,21 @@ struct HomeView: View {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("Welcome back")
-                                    .font(.system(size: 34, weight: .bold, design: .serif))
-                                    .foregroundColor(.primary)
+                                    .font(AppFonts.display)
+                                    .foregroundColor(.midnightSpruce)
                                 Text("Keep using the app to see more personalized insights")
-                                    .font(.system(size: 13, weight: .light, design: .default))
-                                    .foregroundColor(.primary.opacity(0.5))
-                                    .tracking(0.3)
+                                    .font(AppFonts.sans(13, weight: .regular))
+                                    .foregroundColor(.nordicSlate)
+                                    .tracking(0.2)
                             }
                             Spacer()
                             // Avatar placeholder
                             ZStack {
-                                Circle().stroke(Color.gray.opacity(0.2))
+                                Circle().stroke(Color.black.opacity(0.08))
                                 Image(systemName: "person.crop.circle")
                                     .resizable()
                                     .scaledToFit()
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.nordicSlate)
                                     .padding(6)
                             }
                             .frame(width: 48, height: 48)
@@ -73,14 +73,14 @@ struct HomeView: View {
                         VStack(spacing: 10) {
                             HStack {
                                 Text("Weekly Trends")
-                                    .font(.system(size: 10, weight: .semibold, design: .default))
+                                    .font(AppFonts.label)
                                     .textCase(.uppercase)
-                                    .tracking(1.5)
-                                    .foregroundColor(.primary.opacity(0.4))
+                                    .tracking(2)
+                                    .foregroundColor(.nordicSlate)
                                 Spacer()
                                 Button("View All") { }
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundColor(.primary.opacity(0.6))
+                                    .font(AppFonts.sans(10, weight: .semibold))
+                                    .foregroundColor(.nordicSlate)
                             }
                             .padding(.horizontal, 16)
 
@@ -109,14 +109,14 @@ struct HomeView: View {
                         VStack(spacing: 10) {
                             HStack {
                                 Text(NSLocalizedString("recent.activity", comment: "Recent activity title"))
-                                    .font(.system(size: 10, weight: .semibold, design: .default))
+                                    .font(AppFonts.label)
                                     .textCase(.uppercase)
-                                    .tracking(1.5)
-                                    .foregroundColor(.primary.opacity(0.4))
+                                    .tracking(2)
+                                    .foregroundColor(.nordicSlate)
                                 Spacer()
                                 Button(NSLocalizedString("recent.activity.archive", comment: "Archive recent activity")) { }
-                                    .font(.system(size: 10, weight: .semibold))
-                                    .foregroundColor(.primary.opacity(0.6))
+                                    .font(AppFonts.sans(10, weight: .semibold))
+                                    .foregroundColor(.nordicSlate)
                             }
                             .padding(.horizontal, 16)
 
@@ -146,11 +146,11 @@ struct HomeView: View {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 16)
                                             .stroke(style: StrokeStyle(lineWidth: 1, dash: [6]))
-                                            .foregroundColor(Color.gray.opacity(0.25))
-                                            .background(Color.gray.opacity(0.06))
+                                            .foregroundColor(Color.cardBorder)
+                                            .background(Color.nordicBone.opacity(0.6))
                                             .clipShape(RoundedRectangle(cornerRadius: 16))
                                         Image(systemName: "plus")
-                                            .foregroundColor(.secondary.opacity(0.4))
+                                            .foregroundColor(.nordicSlate.opacity(0.6))
                                     }
                                     .frame(width: 120, height: 120)
                                 }
@@ -163,6 +163,7 @@ struct HomeView: View {
                     }
                     .padding(.top, 8)
                 }
+                .background(Color.nordicBone)
             }
             .navigationBarHidden(true)
         }
@@ -213,9 +214,9 @@ extension HomeView {
             // Choose icon/color from tags if available
             let icon: String
             let color: Color
-            if ins.tags.contains("fiber") { icon = "leaf"; color = .green }
-            else if ins.tags.contains("protein") { icon = "bolt.heart"; color = Color(red: 1.0, green: 0.56, blue: 0.70) }
-            else { icon = "lightbulb"; color = .yellow }
+            if ins.tags.contains("fiber") { icon = "leaf"; color = .mossInsight }
+            else if ins.tags.contains("protein") { icon = "bolt.heart"; color = .momentumAmber }
+            else { icon = "lightbulb"; color = .nordicSlate }
 
             // Try to extract a metric from message or evidence
             let metric = extractMetric(from: ins.message) ?? ins.evidence.compactMap { extractMetric(from: $0) }.first
@@ -282,27 +283,27 @@ private struct EditorialInsightCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.primary.opacity(0.4))
-                .tracking(1.5)
+                .font(AppFonts.label)
+                .foregroundColor(.nordicSlate)
+                .tracking(2)
             Text(title)
-                .font(.system(size: 22, weight: .light))
-                .foregroundColor(.primary)
+                .font(AppFonts.serif(22, weight: .regular))
+                .foregroundColor(.midnightSpruce)
                 .lineLimit(3)
             Text(subtitle)
-                .font(.system(size: 13))
-                .foregroundColor(.primary.opacity(0.5))
+                .font(AppFonts.sans(12, weight: .regular))
+                .foregroundColor(.nordicSlate)
                 .lineLimit(3)
         }
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 28)
-                .fill(Color.white)
+                .fill(Color.cardSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 28)
-                        .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+                        .stroke(Color.cardBorder, lineWidth: 1)
                 )
-                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
+                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
         )
     }
 }
@@ -321,27 +322,27 @@ private struct DashboardPill: View {
                 .font(.system(size: 20))
                 .foregroundColor(iconColor)
             Text(title.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.primary.opacity(0.4))
-                .tracking(1.5)
+                .font(AppFonts.label)
+                .foregroundColor(.nordicSlate)
+                .tracking(2)
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 if italic {
-                    Text(value).font(.system(size: 22, weight: .regular, design: .serif)).italic()
+                    Text(value).font(AppFonts.serif(20, weight: .regular)).italic()
                 } else {
-                    Text(value).font(.system(size: 22, weight: .regular))
+                    Text(value).font(AppFonts.serif(20, weight: .regular))
                 }
-                if let suffix { Text(suffix).font(.system(size: 12)) }
+                if let suffix { Text(suffix).font(AppFonts.sans(11, weight: .regular)) }
             }
-            .foregroundColor(.primary)
+            .foregroundColor(.midnightSpruce)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 28)
-                .fill(Color.white)
+                .fill(Color.cardSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 28)
-                        .stroke(Color.gray.opacity(0.12), lineWidth: 1)
+                        .stroke(Color.cardBorder, lineWidth: 1)
                 )
         )
     }
@@ -359,35 +360,36 @@ private struct TrendCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 ZStack {
-                    Circle().fill(Color.white)
+                    Circle().fill(Color.cardSurface)
                         .frame(width: 28, height: 28)
                     Image(systemName: icon)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(iconColor)
                 }
                 Text(title)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.primary.opacity(0.6))
-                    .tracking(1.0)
+                    .font(AppFonts.label)
+                    .foregroundColor(.nordicSlate)
+                    .tracking(1.5)
             }
             if let value, !value.isEmpty {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(value)
-                        .font(.system(size: 28, weight: .light))
+                        .font(AppFonts.serif(26, weight: .regular))
                     Text(unit ?? "")
-                        .font(.system(size: 14))
-                        .foregroundColor(.primary.opacity(0.3))
+                        .font(AppFonts.sans(12, weight: .regular))
+                        .foregroundColor(.nordicSlate.opacity(0.6))
                 }
             }
             Text(note)
-                .font(.system(size: 11))
-                .foregroundColor(.primary.opacity(0.5))
+                .font(AppFonts.sans(11, weight: .regular))
+                .foregroundColor(.nordicSlate)
                 .lineLimit(3)
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color(UIColor.systemGray6))
+                .fill(Color.cardSurface)
+                .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.cardBorder, lineWidth: 1))
         )
     }
 }
@@ -412,8 +414,8 @@ private struct RecentActivityTile: View {
             VStack(alignment: .leading, spacing: 4) {
                 activityBadge
                 Text(activityTitle)
-                    .font(.system(size: 11, weight: .light))
-                    .foregroundColor(.white)
+                    .font(AppFonts.sans(11, weight: .regular))
+                    .foregroundColor(.nordicBone)
                     .lineLimit(1)
             }
             .padding(8)
@@ -438,19 +440,19 @@ private struct RecentActivityTile: View {
             switch item.kind {
             case .plate(let plate):
                 Text("\(plate.protein)g Pro")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.green)
+                    .font(AppFonts.sans(9, weight: .bold))
+                    .foregroundColor(.mossInsight)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.9))
+                    .background(Color.nordicBone.opacity(0.95))
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             case .product(let product):
                 Text("Nutri \(product.nutriScoreLetter.rawValue)")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.blue)
+                    .font(AppFonts.sans(9, weight: .bold))
+                    .foregroundColor(.momentumAmber)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.9))
+                    .background(Color.nordicBone.opacity(0.95))
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             }
         }
@@ -465,7 +467,7 @@ private struct RecentActivityTile: View {
             } else if let img = plate.image {
                 Image(uiImage: img).resizable().scaledToFill()
             } else {
-                Color.gray.opacity(0.08)
+                Color.nordicBone.opacity(0.8)
             }
         case .product(let product):
             if let localPath = product.localImagePath,
@@ -476,7 +478,7 @@ private struct RecentActivityTile: View {
                 CachedAsyncImage(urlString: url, cacheKey: product.barcode)
                     .scaledToFill()
             } else {
-                Color.gray.opacity(0.08)
+                Color.nordicBone.opacity(0.8)
             }
         }
     }

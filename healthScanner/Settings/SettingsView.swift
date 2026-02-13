@@ -25,18 +25,17 @@ struct SettingsView: View {
                             .clipShape(Circle())
                             .overlay(
                                 Circle()
-                                    .stroke(.mint, lineWidth: 3)
+                                    .stroke(Color.momentumAmber, lineWidth: 3)
                             )
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Health Scanner User")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary)
+                                .font(AppFonts.serif(20, weight: .semibold))
+                                .foregroundColor(.midnightSpruce)
 
                             Text(NSLocalizedString("profile.tagline", comment: "Profile tagline"))
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .font(AppFonts.sans(13, weight: .regular))
+                                .foregroundColor(.nordicSlate)
                                 .multilineTextAlignment(.leading)
                         }
 
@@ -51,11 +50,11 @@ struct SettingsView: View {
                     VStack(spacing: 0) {
                         HStack {
                             Image(systemName: "paintbrush.fill")
-                                .foregroundColor(.mint)
+                                .foregroundColor(.momentumAmber)
                                 .frame(width: 24)
 
                             Text(NSLocalizedString("settings.appearance", comment: "Appearance section title"))
-                                .font(.body)
+                                .font(AppFonts.sans(14, weight: .regular))
 
                             Spacer()
                         }
@@ -81,7 +80,7 @@ struct SettingsView: View {
                 Section {
                     HStack {
                         Image(systemName: "info.circle.fill")
-                            .foregroundColor(.mint)
+                            .foregroundColor(.momentumAmber)
                             .frame(width: 24)
 
                         Text(NSLocalizedString("settings.version", comment: "App version label"))
@@ -89,7 +88,7 @@ struct SettingsView: View {
                         Spacer()
 
                         Text(getAppVersion())
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.nordicSlate)
                     }
                     .padding(.vertical, 4)
 
@@ -98,17 +97,17 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "questionmark.circle.fill")
-                                .foregroundColor(.mint)
+                                .foregroundColor(.momentumAmber)
                                 .frame(width: 24)
 
                             Text(NSLocalizedString("settings.about", comment: "About button"))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.midnightSpruce)
 
                             Spacer()
 
                             Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .font(AppFonts.sans(11, weight: .regular))
+                                .foregroundColor(.nordicSlate)
                         }
                         .padding(.vertical, 4)
                     }
@@ -121,7 +120,7 @@ struct SettingsView: View {
                 Section {
                     HStack {
                         Image(systemName: "lock.fill")
-                            .foregroundColor(.mint)
+                            .foregroundColor(.momentumAmber)
                             .frame(width: 24)
 
                         Text(NSLocalizedString("settings.privacy", comment: "Privacy label"))
@@ -129,8 +128,8 @@ struct SettingsView: View {
                         Spacer()
 
                         Text(NSLocalizedString("settings.local_only", comment: "Local only text"))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(11, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
                     .padding(.vertical, 4)
 
@@ -140,6 +139,8 @@ struct SettingsView: View {
                     Text(NSLocalizedString("settings.privacy_footer", comment: "Privacy section footer"))
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.nordicBone)
             .navigationTitle(NSLocalizedString("settings.title", comment: "Settings navigation title"))
             .navigationBarTitleDisplayMode(.large)
         }
@@ -159,7 +160,7 @@ struct SettingsView: View {
                 Image(systemName: "moon.fill")
             }
         }
-        .foregroundColor(.mint)
+        .foregroundColor(.momentumAmber)
     }
 
     private func getAppVersion() -> String {
@@ -182,15 +183,15 @@ struct AboutView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "heart.text.square.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(.mint)
+                            .foregroundColor(.momentumAmber)
 
                         Text("Health Scanner")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                            .font(AppFonts.serif(28, weight: .bold))
+                            .foregroundColor(.midnightSpruce)
 
                         Text(NSLocalizedString("about.tagline", comment: "App tagline"))
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(14, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -200,7 +201,8 @@ struct AboutView: View {
                     // Features
                     VStack(alignment: .leading, spacing: 16) {
                         Text(NSLocalizedString("about.features", comment: "Features section title"))
-                            .font(.headline)
+                            .font(AppFonts.serif(18, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
 
                         VStack(alignment: .leading, spacing: 12) {
                             FeatureRow(icon: "barcode.viewfinder", title: NSLocalizedString("about.feature_scan", comment: "Barcode scanning feature"))
@@ -216,6 +218,7 @@ struct AboutView: View {
                 }
                 .padding()
             }
+            .background(Color.nordicBone)
             .navigationTitle(NSLocalizedString("about.title", comment: "About navigation title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -236,11 +239,11 @@ struct FeatureRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.mint)
+                .foregroundColor(.momentumAmber)
                 .frame(width: 20)
 
             Text(title)
-                .font(.body)
+                .font(AppFonts.sans(14, weight: .regular))
 
             Spacer()
         }

@@ -26,9 +26,8 @@ struct BarcodeScannerView: View {
                     // Header
                     HStack {
                         Text("Scan")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .font(AppFonts.serif(32, weight: .bold))
+                            .foregroundColor(.midnightSpruce)
                         
                         Spacer()
                         
@@ -36,8 +35,8 @@ struct BarcodeScannerView: View {
                             // Settings action
                         }) {
                             Image(systemName: "gearshape.fill")
-                                .font(.title2)
-                                .foregroundColor(.gray)
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.nordicSlate)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -51,30 +50,30 @@ struct BarcodeScannerView: View {
                             // Large scan area
                             ZStack {
                                 RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.gray.opacity(0.1))
+                                    .fill(Color.cardSurface)
+                                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.cardBorder, lineWidth: 1))
                                     .frame(height: 300)
                                 
                                 VStack(spacing: 20) {
                                     // Barcode icon in circle
                                     ZStack {
                                         Circle()
-                                            .fill(Color.gray.opacity(0.2))
+                                            .fill(Color.momentumAmber.opacity(0.15))
                                             .frame(width: 120, height: 120)
                                         
                                         Image(systemName: "barcode.viewfinder")
                                             .font(.system(size: 60))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.momentumAmber)
                                     }
                                     
                                     VStack(spacing: 8) {
                                         Text("Scan a Product")
-                                            .font(.title2)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(.primary)
+                                            .font(AppFonts.serif(22, weight: .semibold))
+                                            .foregroundColor(.midnightSpruce)
                                         
                                         Text("Center the barcode in the frame to get started.")
-                                            .font(.body)
-                                            .foregroundColor(.secondary)
+                                            .font(AppFonts.sans(13, weight: .regular))
+                                            .foregroundColor(.nordicSlate)
                                             .multilineTextAlignment(.center)
                                             .padding(.horizontal, 20)
                                     }
@@ -90,13 +89,12 @@ struct BarcodeScannerView: View {
                                     Image(systemName: "camera.fill")
                                         .font(.title3)
                                     Text("Start Scanning")
-                                        .font(.headline)
-                                        .fontWeight(.semibold)
+                                        .font(AppFonts.sans(14, weight: .semibold))
                                 }
-                                .foregroundColor(.white)
+                                .foregroundColor(.nordicBone)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .background(Color.green)
+                                .background(Color.midnightSpruce)
                                 .cornerRadius(28)
                             }
                         }
@@ -112,24 +110,23 @@ struct BarcodeScannerView: View {
                     // Recent Scans Section
                     VStack(alignment: .leading, spacing: 20) {
                         Text("Recent Scans")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .font(AppFonts.serif(20, weight: .bold))
+                            .foregroundColor(.midnightSpruce)
                             .padding(.horizontal, 20)
                         
                         if viewModel.recentScans.isEmpty {
                             VStack(spacing: 12) {
                                 Image(systemName: "clock")
                                     .font(.system(size: 40))
-                                    .foregroundColor(.gray.opacity(0.6))
+                                    .foregroundColor(.nordicSlate.opacity(0.7))
                                 
                                 Text("No recent scans")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
+                                    .font(AppFonts.sans(13, weight: .medium))
+                                    .foregroundColor(.nordicSlate)
                                 
                                 Text("Start scanning products to see your history here")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .font(AppFonts.sans(12, weight: .regular))
+                                    .foregroundColor(.nordicSlate)
                                     .multilineTextAlignment(.center)
                             }
                             .frame(maxWidth: .infinity)
@@ -176,9 +173,10 @@ struct BarcodeScannerView: View {
                     Button("OK") { }
                 } message: {
                     Text(viewModel.errorMessage ?? "Unknown error occurred")
-                }
-                .navigationBarHidden(true)
             }
+            .background(Color.nordicBone)
+            .navigationBarHidden(true)
+        }
             .sheet(isPresented: $showingCamera) {
                 BarcodeCameraOverlayView(
                     scannedCode: $scannedCode,

@@ -25,12 +25,12 @@ struct NutriScoreStyle: ViewModifier {
 
     private func nutriScoreColor(for score: String) -> Color {
         switch score.uppercased() {
-        case "A": return .green
-        case "B": return Color.green.opacity(0.7)
-        case "C": return .yellow
-        case "D": return .orange
-        case "E": return .red
-        default: return .gray
+        case "A": return .mossInsight
+        case "B": return Color.mossInsight.opacity(0.7)
+        case "C": return .momentumAmber
+        case "D": return .nordicSlate
+        case "E": return .midnightSpruce
+        default: return .nordicSlate
         }
     }
 }

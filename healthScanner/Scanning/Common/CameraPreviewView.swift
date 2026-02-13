@@ -135,13 +135,12 @@ struct CameraPreviewView: View {
                 .foregroundColor(.white)
 
             Text("placeholder.camera.title".localized)
-                .font(.title2)
-                .fontWeight(.medium)
+                .font(AppFonts.serif(20, weight: .semibold))
                 .foregroundColor(.white)
 
             Text("placeholder.camera.simulator_message".localized)
-                .font(.body)
-                .foregroundColor(.gray)
+                .font(AppFonts.sans(12, weight: .regular))
+                .foregroundColor(.nordicSlate)
                 .multilineTextAlignment(.center)
 
             Button("button.camera.simulator_capture".localized) {
@@ -149,11 +148,11 @@ struct CameraPreviewView: View {
                 onImageCaptured(testImage)
                 dismiss()
             }
-            .font(.headline)
-            .foregroundColor(.black)
+            .font(AppFonts.sans(13, weight: .semibold))
+            .foregroundColor(.nordicBone)
             .padding(.horizontal, 40)
             .padding(.vertical, 15)
-            .background(Color.white)
+            .background(Color.midnightSpruce)
             .cornerRadius(25)
         }
         .padding()
@@ -164,7 +163,7 @@ struct CameraPreviewView: View {
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
 
         let context = UIGraphicsGetCurrentContext()!
-        let colors = [UIColor.orange.cgColor, UIColor.red.cgColor]
+        let colors = [UIColor(Color.momentumAmber).cgColor, UIColor(Color.midnightSpruce).cgColor]
         let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: nil)!
         context.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: size.width, y: size.height), options: [])
 

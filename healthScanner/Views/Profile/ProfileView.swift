@@ -36,7 +36,7 @@ struct ProfileView: View {
                 }
                 .padding(.bottom, 32)
             }
-            .background(Color(red: 252 / 255, green: 252 / 255, blue: 252 / 255))
+            .background(Color.nordicBone)
             .navigationBarHidden(true)
         }
         .alert("profile.logout".localized(), isPresented: $showingLogoutAlert) {
@@ -68,20 +68,20 @@ private extension ProfileView {
             Button(action: {}) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 20, weight: .light))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .foregroundColor(.midnightSpruce)
                     .frame(width: 40, height: 40)
             }
             Spacer()
             Text("tab.profile".localized())
-                .font(.system(size: 12, weight: .semibold))
-                .kerning(3)
-                .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255).opacity(0.6))
+                .font(AppFonts.label)
+                .kerning(2.5)
+                .foregroundColor(.nordicSlate)
                 .textCase(.uppercase)
             Spacer()
             Button(action: { showingManageAccount = true }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 20, weight: .light))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .foregroundColor(.midnightSpruce)
                     .frame(width: 40, height: 40)
             }
         }
@@ -97,24 +97,24 @@ private extension ProfileView {
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 96, height: 96)
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255).opacity(0.1), lineWidth: 1))
+                    .overlay(Circle().stroke(Color.momentumAmber.opacity(0.2), lineWidth: 1))
 
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 14))
-                    .foregroundColor(Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255))
+                    .foregroundColor(.momentumAmber)
                     .padding(6)
-                    .background(Color.white)
+                    .background(Color.nordicBone)
                     .clipShape(Circle())
             }
 
             VStack(spacing: 6) {
                 Text("Sophia Bennett")
-                    .font(.system(size: 34, weight: .medium, design: .serif))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .font(AppFonts.serif(32, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
                 Text("profile.membership".localized())
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppFonts.sans(11, weight: .medium))
                     .kerning(2)
-                    .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                    .foregroundColor(.nordicSlate)
                     .textCase(.uppercase)
             }
         }
@@ -124,8 +124,8 @@ private extension ProfileView {
     var dietaryOverviewSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("profile.overview".localized())
-                .font(.system(size: 22, weight: .medium, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(22, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
                 .padding(.horizontal, 20)
 
             let daysLabel = NSLocalizedString("profile.days", comment: "Days label")
@@ -137,9 +137,9 @@ private extension ProfileView {
 
             HStack(spacing: 16) {
                 ProfileStatCell(value: healthScoreText, label: "profile.health_score".localized(), accent: true)
-                Divider().frame(height: 36).background(Color.gray.opacity(0.2))
+                Divider().frame(height: 36).background(Color.softDivider)
                 ProfileStatCell(value: "\(plates.count)", label: "profile.analyzed_plates".localized(), accent: false)
-                Divider().frame(height: 36).background(Color.gray.opacity(0.2))
+                Divider().frame(height: 36).background(Color.softDivider)
                 ProfileStatCell(value: averageGradeText, label: "profile.avg_grade".localized(), accent: false)
             }
             .padding(.horizontal, 20)
@@ -149,8 +149,8 @@ private extension ProfileView {
     var preferencesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("profile.preferences".localized())
-                .font(.system(size: 22, weight: .medium, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(22, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
                 .padding(.horizontal, 20)
 
             VStack(spacing: 0) {
@@ -198,8 +198,8 @@ private extension ProfileView {
     var accountSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("profile.privacy_account".localized())
-                .font(.system(size: 22, weight: .medium, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(22, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
                 .padding(.horizontal, 20)
 
             VStack(spacing: 0) {
@@ -232,25 +232,25 @@ private extension ProfileView {
             Button(action: { showingAbout = true }) {
                 HStack(spacing: 8) {
                     Text("profile.download_report".localized())
-                        .font(.system(size: 16, weight: .medium, design: .serif))
+                        .font(AppFonts.serif(16, weight: .medium))
                     Image(systemName: "arrow.down.circle")
                         .font(.system(size: 16))
                 }
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .foregroundColor(.midnightSpruce)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color.white)
+                .background(Color.cardSurface)
                 .overlay(
                     RoundedRectangle(cornerRadius: 999)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.cardBorder, lineWidth: 1)
                 )
                 .clipShape(Capsule())
             }
 
             Text("profile.version".localized())
-                .font(.system(size: 10, weight: .medium))
-                .kerning(3)
-                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255).opacity(0.7))
+                .font(AppFonts.label)
+                .kerning(2.5)
+                .foregroundColor(.nordicSlate.opacity(0.7))
                 .textCase(.uppercase)
         }
         .padding(.horizontal, 20)
@@ -295,20 +295,20 @@ private struct ProfileMetricCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(AppFonts.label)
                 .kerning(2)
-                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .foregroundColor(.nordicSlate)
             Text(value)
-                .font(.system(size: 20, weight: .medium, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(20, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Color.white)
+        .background(Color.cardSurface)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.gray.opacity(0.1), lineWidth: 1)
+                .stroke(Color.cardBorder, lineWidth: 1)
         )
     }
 }
@@ -321,12 +321,12 @@ private struct ProfileStatCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(.system(size: 28, weight: .light, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(28, weight: .medium))
+                .foregroundColor(.midnightSpruce)
             Text(label.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(AppFonts.label)
                 .kerning(2)
-                .foregroundColor(accent ? Color(red: 43 / 255, green: 108 / 255, blue: 238 / 255) : Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .foregroundColor(accent ? Color.momentumAmber : Color.nordicSlate)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -343,7 +343,7 @@ private struct ProfileListRow: View {
     let icon: String
     let trailing: ProfileRowTrailing
     var isLast: Bool = false
-    var tint: Color = Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255)
+    var tint: Color = Color.nordicSlate
     let action: () -> Void
 
     var body: some View {
@@ -354,20 +354,20 @@ private struct ProfileListRow: View {
                     .foregroundColor(tint)
                     .frame(width: 24)
                 Text(title)
-                    .font(.system(size: 18, weight: .medium, design: .serif))
-                    .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                    .font(AppFonts.serif(18, weight: .medium))
+                    .foregroundColor(.midnightSpruce)
                 Spacer()
                 trailingView
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .background(Color.white)
+            .background(Color.cardSurface)
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
         .overlay(
             Rectangle()
-                .fill(Color.gray.opacity(0.1))
+                .fill(Color.softDivider)
                 .frame(height: isLast ? 0 : 1),
             alignment: .bottom
         )
@@ -379,16 +379,16 @@ private struct ProfileListRow: View {
         case .chevron:
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
-                .foregroundColor(Color.gray.opacity(0.5))
+                .foregroundColor(Color.nordicSlate.opacity(0.7))
         case .value(let value):
             Text(value)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .font(AppFonts.sans(12, weight: .medium))
+                .foregroundColor(.nordicSlate)
         case .badge(let value):
             Text(value.uppercased())
-                .font(.system(size: 10, weight: .bold))
+                .font(AppFonts.label)
                 .kerning(1)
-                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .foregroundColor(.nordicSlate)
         }
     }
 }
@@ -403,22 +403,22 @@ private struct ProfileToggleListRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .light))
-                .foregroundColor(Color(red: 97 / 255, green: 111 / 255, blue: 137 / 255))
+                .foregroundColor(.nordicSlate)
                 .frame(width: 24)
             Text(title)
-                .font(.system(size: 18, weight: .medium, design: .serif))
-                .foregroundColor(Color(red: 17 / 255, green: 19 / 255, blue: 24 / 255))
+                .font(AppFonts.serif(18, weight: .medium))
+                .foregroundColor(.midnightSpruce)
             Spacer()
             Toggle("", isOn: $isOn)
                 .labelsHidden()
         }
         .padding(.vertical, 16)
         .padding(.horizontal, 12)
-        .background(Color.white)
+        .background(Color.cardSurface)
         .cornerRadius(12)
         .overlay(
             Rectangle()
-                .fill(Color.gray.opacity(0.1))
+                .fill(Color.softDivider)
                 .frame(height: isLast ? 0 : 1),
             alignment: .bottom
         )
@@ -435,13 +435,13 @@ struct LanguageSelectionView: View {
                 ForEach(AppLanguage.allCases, id: \.self) { language in
                     HStack {
                         Text(language.displayName)
-                            .font(.body)
+                            .font(AppFonts.sans(14, weight: .regular))
 
                         Spacer()
 
                         if language == localizationManager.currentLanguage {
                             Image(systemName: "checkmark")
-                                .foregroundColor(.mint)
+                                .foregroundColor(.momentumAmber)
                         }
                     }
                     .contentShape(Rectangle())
@@ -473,18 +473,16 @@ struct PrivacyView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Data Collection")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(AppFonts.serif(18, weight: .semibold))
 
                         Text("Health Scanner is committed to protecting your privacy. All your data is stored locally on your device and is never shared with third parties.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Information We Store")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(AppFonts.serif(18, weight: .semibold))
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("• Scanned product information")
@@ -492,42 +490,40 @@ struct PrivacyView: View {
                             Text("• Your dietary preferences")
                             Text("• App settings and preferences")
                         }
-                        .font(.body)
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.sans(13, weight: .regular))
+                        .foregroundColor(.nordicSlate)
                     }
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Data Security")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(AppFonts.serif(18, weight: .semibold))
 
                         Text("Your data is encrypted and stored securely on your device using iOS's built-in security features. We use industry-standard encryption methods to protect your information.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Third-Party Services")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(AppFonts.serif(18, weight: .semibold))
 
                         Text("Health Scanner may use third-party services for product information lookup, but no personal data is transmitted. Only product barcodes are sent to retrieve nutritional information.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Contact Us")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(AppFonts.serif(18, weight: .semibold))
 
                         Text("If you have any questions about this privacy policy, please contact us at privacy@healthscanner.app")
-                            .font(.body)
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
                 }
                 .padding()
             }
+            .background(Color.nordicBone)
             .navigationTitle("Privacy Policy")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -547,8 +543,7 @@ struct DietaryPill: View {
 
     var body: some View {
         Text(text)
-            .font(.caption)
-            .fontWeight(.medium)
+            .font(AppFonts.sans(11, weight: .medium))
             .foregroundColor(.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)

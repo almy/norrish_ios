@@ -19,7 +19,7 @@ struct ProductDetailView: View {
     @State private var similarError: String?
     @StateObject private var productService = ProductService()
     
-    private let nordicBackground = Color(red: 249 / 255, green: 250 / 255, blue: 251 / 255)
+    private let nordicBackground = Color.nordicBone
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -94,17 +94,17 @@ struct ProductDetailView: View {
                     }
                     .buttonStyle(.plain)
                     Text(productCategoryLabel.uppercased())
-                        .font(.system(size: 10, weight: .bold))
-                        .kerning(3)
+                        .font(AppFonts.label)
+                        .kerning(2.5)
                         .foregroundColor(.white.opacity(0.8))
                 }
                 Text(product.name)
-                    .font(.system(size: 34, weight: .semibold, design: .serif))
+                    .font(AppFonts.serif(32, weight: .semibold))
                     .foregroundColor(.white)
                     .lineLimit(2)
                 Text(productSubtitle.uppercased())
-                    .font(.system(size: 11, weight: .medium))
-                    .kerning(3)
+                    .font(AppFonts.sans(11, weight: .medium))
+                    .kerning(2.5)
                     .foregroundColor(.white.opacity(0.7))
                     .italic()
             }
@@ -129,8 +129,8 @@ struct ProductDetailView: View {
             }
             Spacer()
             Text(NSLocalizedString("product.analysis", comment: "Product analysis title"))
-                .font(.system(size: 10, weight: .bold))
-                .kerning(3)
+                .font(AppFonts.label)
+                .kerning(2.5)
                 .foregroundColor(.white.opacity(0.9))
                 .textCase(.uppercase)
             Spacer()
@@ -148,17 +148,17 @@ struct ProductDetailView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 16))
-                        .foregroundColor(.primary.opacity(0.4))
+                        .foregroundColor(.nordicSlate)
                     Text(NSLocalizedString("product.insight", comment: "Product insight header"))
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.primary.opacity(0.4))
+                        .font(AppFonts.label)
+                        .foregroundColor(.nordicSlate)
                         .kerning(2)
                         .textCase(.uppercase)
                 }
                 Text("“\(productInsightText)”")
-                    .font(.system(size: 24, weight: .regular, design: .serif))
+                    .font(AppFonts.serif(22, weight: .regular))
                     .italic()
-                    .foregroundColor(Color(.label))
+                    .foregroundColor(.midnightSpruce)
                     .lineSpacing(6)
             }
 
@@ -167,10 +167,10 @@ struct ProductDetailView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "book")
                             .font(.system(size: 16))
-                            .foregroundColor(.primary.opacity(0.4))
+                            .foregroundColor(.nordicSlate)
                         Text(NSLocalizedString("ingredients.detected", comment: "Detected ingredients header"))
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.primary.opacity(0.4))
+                            .font(AppFonts.label)
+                            .foregroundColor(.nordicSlate)
                             .kerning(2)
                             .textCase(.uppercase)
                     }
@@ -178,16 +178,16 @@ struct ProductDetailView: View {
                     FlowLayout(alignment: .leading, spacing: 8) {
                         ForEach(chips, id: \.self) { ing in
                             Text(ing)
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(AppFonts.sans(10, weight: .semibold))
                                 .textCase(.uppercase)
-                                .kerning(2)
-                                .foregroundColor(.secondary)
+                                .kerning(1.5)
+                                .foregroundColor(.nordicSlate)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(
                                     Capsule()
-                                        .fill(Color(.systemGray6))
-                                        .overlay(Capsule().stroke(Color(.systemGray4), lineWidth: 1))
+                                        .fill(Color.cardSurface)
+                                        .overlay(Capsule().stroke(Color.cardBorder, lineWidth: 1))
                                 )
                         }
                     }
@@ -197,20 +197,20 @@ struct ProductDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Text(NSLocalizedString("macro.profile", comment: "Macro profile header"))
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.secondary)
+                        .font(AppFonts.label)
+                        .foregroundColor(.nordicSlate)
                         .kerning(3)
                         .textCase(.uppercase)
                     Spacer()
                     if let badge = glycemicBadgeText {
                         Text(badge)
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(Color.orange)
-                            .kerning(2)
+                            .font(AppFonts.sans(9, weight: .bold))
+                            .foregroundColor(.momentumAmber)
+                            .kerning(1.5)
                             .textCase(.uppercase)
                             .padding(.vertical, 4)
                             .padding(.horizontal, 8)
-                            .background(Color.orange.opacity(0.12))
+                            .background(Color.momentumAmber.opacity(0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                 }
@@ -219,26 +219,26 @@ struct ProductDetailView: View {
                     MacroRow(title: String(format: NSLocalizedString("macro.carbs", comment: "Carbohydrates label with amount placeholder"), String(format: "%.1f", product.nutritionData.carbohydrates)),
                              level: macroLevelText(for: .carbs),
                              widthFraction: macroWidth(for: .carbs),
-                             color: .yellow)
+                             color: .momentumAmber)
                     MacroRow(title: String(format: NSLocalizedString("macro.sugar", comment: "Sugar label with amount placeholder"), String(format: "%.1f", product.nutritionData.sugar)),
                              level: macroLevelText(for: .sugar),
                              widthFraction: macroWidth(for: .sugar),
-                             color: .orange)
+                             color: .midnightSpruce)
                     MacroRow(title: String(format: NSLocalizedString("macro.protein", comment: "Protein label with amount placeholder"), String(format: "%.1f", product.nutritionData.protein)),
                              level: macroLevelText(for: .protein),
                              widthFraction: macroWidth(for: .protein),
-                             color: .gray)
+                             color: .nordicSlate)
                     MacroRow(title: String(format: NSLocalizedString("macro.fat", comment: "Fat label with amount placeholder"), String(format: "%.1f", product.nutritionData.fat)),
                              level: macroLevelText(for: .fat),
                              widthFraction: macroWidth(for: .fat),
-                             color: .gray)
+                             color: .nordicSlate)
                 }
             }
 
             if isLoadingSimilar {
                 Text("Loading alternatives…")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .font(AppFonts.sans(12, weight: .medium))
+                    .foregroundColor(.nordicSlate)
             } else if !similarSuggestions.isEmpty {
                 similarSection
             }
@@ -247,9 +247,13 @@ struct ProductDetailView: View {
         .padding(.top, 28)
         .padding(.bottom, 40)
         .background(
-            Color.white
+            Color.cardSurface
                 .clipShape(RoundedRectangle(cornerRadius: 40, style: .continuous))
-                .shadow(color: Color.black.opacity(0.08), radius: 18, x: 0, y: -6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 40, style: .continuous)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: -6)
         )
         .offset(y: -28)
     }
@@ -259,10 +263,10 @@ struct ProductDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .font(.system(size: 16))
-                    .foregroundColor(.primary.opacity(0.4))
+                    .foregroundColor(.nordicSlate)
                 Text("Better Swaps")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.primary.opacity(0.4))
+                    .font(AppFonts.label)
+                    .foregroundColor(.nordicSlate)
                     .kerning(2)
                     .textCase(.uppercase)
             }
@@ -276,30 +280,31 @@ struct ProductDetailView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     } else {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(.systemGray6))
+                            .fill(Color.cardSurface)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardBorder, lineWidth: 1))
                             .frame(width: 56, height: 56)
                             .overlay(
                                 Image(systemName: "cart")
                                     .font(.system(size: 18))
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.nordicSlate)
                             )
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(suggestion.name)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.primary)
+                            .font(AppFonts.sans(14, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
                             .lineLimit(1)
                         if let reason = suggestion.reason, !reason.isEmpty {
                             Text(reason)
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.secondary)
+                                .font(AppFonts.sans(11, weight: .medium))
+                                .foregroundColor(.nordicSlate)
                                 .lineLimit(2)
                         }
                         if let warning = suggestion.allergenWarning, !warning.isEmpty {
                             Text(warning)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.orange)
+                                .font(AppFonts.sans(11, weight: .semibold))
+                                .foregroundColor(.momentumAmber)
                                 .lineLimit(2)
                         }
                     }
@@ -308,7 +313,8 @@ struct ProductDetailView: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(.systemGray6))
+                        .fill(Color.cardSurface)
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.cardBorder, lineWidth: 1))
                 )
             }
         }
@@ -320,8 +326,8 @@ struct ProductDetailView: View {
             Button(action: { logThisProduct(); dismiss() }) {
                 HStack(spacing: 10) {
                     Text(NSLocalizedString("product.log", comment: "Log this product CTA"))
-                        .font(.system(size: 12, weight: .bold))
-                        .kerning(2)
+                        .font(AppFonts.sans(12, weight: .bold))
+                        .kerning(1.5)
                         .textCase(.uppercase)
                     Image(systemName: "plus.circle")
                         .font(.system(size: 18, weight: .semibold))
@@ -329,7 +335,7 @@ struct ProductDetailView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: 360)
                 .frame(height: 64)
-                .background(Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255))
+                .background(Color.midnightSpruce)
                 .clipShape(Capsule())
                 .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 10)
             }
@@ -351,11 +357,11 @@ struct ProductDetailView: View {
                 CachedAsyncImage(urlString: productImageURL, cacheKey: product.barcode)
                     .scaledToFill()
             } else {
-                Color.gray.opacity(0.1)
+                Color.nordicBone.opacity(0.8)
                     .overlay(
                         Image(systemName: "cart")
                             .font(.system(size: 48))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.nordicSlate)
                     )
             }
         }
@@ -365,9 +371,9 @@ struct ProductDetailView: View {
         let color = nutriColor
         return HStack(spacing: 4) {
             Text(NSLocalizedString("nutri.score", comment: "Nutri-score label"))
-                .font(.system(size: 9, weight: .bold))
+                .font(AppFonts.sans(9, weight: .bold))
             Text(product.nutriScoreLetter.rawValue)
-                .font(.system(size: 14, weight: .bold))
+                .font(AppFonts.sans(13, weight: .bold))
         }
         .foregroundColor(.white)
         .padding(.horizontal, 8)
@@ -489,13 +495,13 @@ struct ProductDetailView: View {
                         .frame(width: max(8, proxy.size.width * widthFraction), height: 32)
                     HStack {
                         Text(title)
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.secondary)
+                            .font(AppFonts.label)
+                            .foregroundColor(.nordicSlate)
                             .kerning(2)
                         Spacer()
                         Text(level)
-                            .font(.system(size: 20, weight: .regular, design: .serif))
-                            .foregroundColor(.primary)
+                            .font(AppFonts.serif(18, weight: .regular))
+                            .foregroundColor(.midnightSpruce)
                     }
                     .padding(.horizontal, 6)
                 }

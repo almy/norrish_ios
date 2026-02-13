@@ -7,10 +7,10 @@ struct NutriScoreBadge: View {
     var body: some View {
         HStack(spacing: 6) {
             Text("Nutri-Score")
-                .font(compact ? .caption2 : .caption)
-                .foregroundColor(.secondary)
+                .font(compact ? AppFonts.sans(9, weight: .bold) : AppFonts.sans(10, weight: .bold))
+                .foregroundColor(.nordicSlate)
             Text(letter.rawValue)
-                .font(compact ? .footnote.weight(.bold) : .subheadline.weight(.bold))
+                .font(compact ? AppFonts.sans(11, weight: .bold) : AppFonts.sans(12, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, compact ? 8 : 10)
                 .padding(.vertical, compact ? 4 : 6)
@@ -19,7 +19,11 @@ struct NutriScoreBadge: View {
         }
         .padding(.horizontal, compact ? 6 : 8)
         .padding(.vertical, compact ? 4 : 6)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.cardSurface)
+        .overlay(
+            RoundedRectangle(cornerRadius: 999)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
         .clipShape(Capsule())
     }
 

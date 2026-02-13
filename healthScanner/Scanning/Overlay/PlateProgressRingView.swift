@@ -41,7 +41,7 @@ public struct PlateProgressRingView: View {
                         .trim(from: 0, to: max(0.04, min(1, model.progress)))
                         .stroke(style: StrokeStyle(lineWidth: 8, lineCap: .round))
                         .fill(AngularGradient(
-                            gradient: Gradient(colors: [.yellow, .orange, .green]),
+                            gradient: Gradient(colors: [.momentumAmber, .nordicSlate, .mossInsight]),
                             center: .center))
                         .rotationEffect(.degrees(-90))
                         .frame(width: model.ringSize, height: model.ringSize)
@@ -51,10 +51,10 @@ public struct PlateProgressRingView: View {
                     // progress percentage label
                     VStack(spacing: 4) {
                         Text("\(Int(model.progress*100))%")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(model.progress >= 0.999 ? .green : .yellow)
+                            .font(AppFonts.sans(26, weight: .bold))
+                            .foregroundStyle(model.progress >= 0.999 ? Color.mossInsight : Color.momentumAmber)
                         Text(model.progress >= 0.999 ? "Ready" : "")
-                            .font(.footnote.weight(.semibold))
+                            .font(AppFonts.sans(11, weight: .semibold))
                             .foregroundColor(.white.opacity(0.9))
                     }
                     .position(center)
@@ -76,7 +76,7 @@ public struct PlateProgressRingView: View {
             VStack {
                 Spacer()
                 Text(model.hint)
-                    .font(.footnote.weight(.semibold))
+                    .font(AppFonts.sans(11, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 14).padding(.vertical, 8)
                     .background(Color.black.opacity(0.35))
@@ -95,9 +95,9 @@ private struct StatusPill: View {
         HStack(spacing: 6) {
             Image(systemName: ok ? "checkmark.circle.fill" : "circle")
                 .font(.caption)
-                .foregroundColor(ok ? .green : .gray)
+                .foregroundColor(ok ? .mossInsight : .nordicSlate)
             Text(title)
-                .font(.caption.weight(.semibold))
+                .font(AppFonts.sans(10, weight: .semibold))
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 10).padding(.vertical, 6)

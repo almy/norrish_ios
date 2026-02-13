@@ -6,15 +6,15 @@ extension NutritionRecommendation {
     func asPersonalizedInsight() -> PersonalizedInsight {
         let (icon, color): (String, Color) = {
             switch type {
-            case .deficiencyCorrection: return ("leaf.fill", .green)
-            case .swapSuggestion: return ("arrow.2.squarepath", .blue)
-            case .riskAlert: return ("exclamationmark.triangle.fill", .orange)
-            case .habitPattern: return ("clock.fill", .purple)
-            case .synergyPairing: return ("link", .teal)
-            case .hydration: return ("drop.fill", .cyan)
-            case .categoryExploration: return ("sparkles", .yellow)
-            case .correlationInsight: return ("chart.line.uptrend.xyaxis", .indigo)
-            case .recommendation: return ("lightbulb.fill", .yellow)
+            case .deficiencyCorrection: return ("leaf.fill", .mossInsight)
+            case .swapSuggestion: return ("arrow.2.squarepath", .midnightSpruce)
+            case .riskAlert: return ("exclamationmark.triangle.fill", .momentumAmber)
+            case .habitPattern: return ("clock.fill", .nordicSlate)
+            case .synergyPairing: return ("link", .mossInsight)
+            case .hydration: return ("drop.fill", .mossInsight)
+            case .categoryExploration: return ("sparkles", .momentumAmber)
+            case .correlationInsight: return ("chart.line.uptrend.xyaxis", .nordicSlate)
+            case .recommendation: return ("lightbulb.fill", .momentumAmber)
             }
         }()
 

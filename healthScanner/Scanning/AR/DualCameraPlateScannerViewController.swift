@@ -869,7 +869,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         let ctx = UIGraphicsGetCurrentContext()!
         ctx.setFillColor(UIColor.clear.cgColor)
         ctx.fill(CGRect(origin: .zero, size: size))
-        ctx.setStrokeColor(UIColor.green.withAlphaComponent(0.9).cgColor)
+        ctx.setStrokeColor(UIColor(red: 0.310, green: 0.475, blue: 0.259, alpha: 0.9).cgColor)
         ctx.setLineWidth(2.0)
         for box in boxes {
             // VN boxes are normalized with origin at bottom-left; convert
@@ -1275,4 +1275,3 @@ private extension UIImage {
         return normalized ?? self
     }
 }
-
