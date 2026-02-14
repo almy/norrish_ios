@@ -17,6 +17,7 @@ typealias PlateHistoryType = PlateAnalysisHistory
 struct norrishApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var localizationManager = LocalizationManager.shared
+    @State private var showSplash = true
 
     init() {
         // Kick off Core ML model prewarm at app launch (guaranteed entry point)
@@ -35,20 +36,46 @@ struct norrishApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(themeManager)
-                .environmentObject(localizationManager)
-                .preferredColorScheme(themeManager.currentTheme.colorScheme)
-                .localized()
-                .onAppear {
-                    // Debug localization helper (optional)
-                    // Re-enable if extension is added to target
-                    // #if DEBUG
-                    // Bundle.debugLocalization()
-                    // #endif
+            ZStack {
+                ContentView()
+                    .environmentObject(themeManager)
+                    .environmentObject(localizationManager)
+                    .preferredColorScheme(themeManager.currentTheme.colorScheme)
+                    .localized()
+
+                if showSplash {
+                    SplashOverlayView()
+                        .transition(.opacity)
+                        .zIndex(1)
                 }
+            }
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    withAnimation(.easeOut(duration: 0.45)) {
+                        showSplash = false
+                    }
+                }
+            }
         }
         .modelContainer(sharedModelContainer)
     }
 }
 
+private struct SplashOverlayView: View {
+    var body: some View {
+        ZStack {
+            Color.nordicBone.ignoresSafeArea()
+            VStack(spacing: 12) {
+                Image(systemName: "fork.knife.circle.fill")
+                    .font(.system(size: 56, weight: .semibold))
+                    .foregroundColor(.momentumAmber)
+                Text("Norrish")
+                    .font(AppFonts.serif(22, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
+                Text("Personalized nutrition insights")
+                    .font(AppFonts.sans(12, weight: .regular))
+                    .foregroundColor(.nordicSlate)
+            }
+        }
+    }
+}

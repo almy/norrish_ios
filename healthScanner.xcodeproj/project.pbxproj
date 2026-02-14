@@ -60,7 +60,7 @@
 		CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */; };
 		CEA6620F2F2624FE002A7EA2 /* TODO.md in Resources */ = {isa = PBXBuildFile; fileRef = CEA6620E2F2624FE002A7EA2 /* TODO.md */; };
 		CEA662112F2624FE002A7EA2 /* PlateAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */; };
-		CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */; };
+		CED6D9E92E6F09A4006C1A7A /* LaunchScreenV2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */; };
 		CEDDA7752F39D26300F80CA6 /* EnhancedCameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */; };
 		CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */; };
 		CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */; };
@@ -169,7 +169,7 @@
 		CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodRegionSelectionView.swift; sourceTree = "<group>"; };
 		CEA6620E2F2624FE002A7EA2 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisService.swift; sourceTree = "<group>"; };
-		CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
+		CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreenV2.storyboard; sourceTree = "<group>"; };
 		CEDDA7742F39D26200F80CA6 /* EnhancedCameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCameraPreviewView.swift; sourceTree = "<group>"; };
 		CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationEnhancer.swift; sourceTree = "<group>"; };
 		CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateScanView.swift; sourceTree = "<group>"; };
@@ -431,7 +431,7 @@
 			isa = PBXGroup;
 			children = (
 				CE2042512F25012B004E0BBD /* healthScanner.xctestplan */,
-				CED6D9E82E6F09A4006C1A7A /* Launch Screen.storyboard */,
+				CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */,
 				CEF23E4D2E6C5F66002B903F /* healthScanner */,
 				CEF23E602E6C5F67002B903F /* healthScannerTests */,
 				CEF23E6A2E6C5F67002B903F /* healthScannerUITests */,
@@ -648,7 +648,7 @@
 				F0A1B2C3D4E5F67890123457 /* Fonts in Resources */,
 				CEF4FE512F281D07009FAA35 /* ARCHITECTURE.md in Resources */,
 				CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */,
-				CED6D9E92E6F09A4006C1A7A /* Launch Screen.storyboard in Resources */,
+				CED6D9E92E6F09A4006C1A7A /* LaunchScreenV2.storyboard in Resources */,
 				CEA6620F2F2624FE002A7EA2 /* TODO.md in Resources */,
 				CE5335CC2E79A8CF0086689E /* Localizable.strings in Resources */,
 				CEF23E582E6C5F67002B903F /* Preview Assets.xcassets in Resources */,
@@ -949,7 +949,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"healthScanner/Preview Content\"";
 				DEVELOPMENT_TEAM = W68D4B8SR3;
 				ENABLE_PREVIEWS = YES;
@@ -962,7 +962,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreenV2;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -988,7 +988,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"healthScanner/Preview Content\"";
 				DEVELOPMENT_TEAM = W68D4B8SR3;
 				ENABLE_PREVIEWS = YES;
@@ -1001,7 +1001,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreenV2;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1027,7 +1027,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
 				MARKETING_VERSION = 1.0;
@@ -1050,7 +1050,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
 				MARKETING_VERSION = 1.0;
@@ -1072,7 +1072,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = W68D4B8SR3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs uses the camera to scan food";
@@ -1095,7 +1095,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = W68D4B8SR3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs uses the camera to scan food";

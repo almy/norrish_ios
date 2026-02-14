@@ -13,5 +13,9 @@
 		<string>Fonts/Inter/static/Inter_28pt-SemiBold.ttf</string>
 		<string>Fonts/Inter/static/Inter_28pt-Bold.ttf</string>
 	</array>
+	<key>UILaunchScreen_Generation</key>
+	<false/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreenV2</string>
 </dict>
 </plist>
