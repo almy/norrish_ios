@@ -59,20 +59,24 @@ struct PlateScanView: View {
         .background(Color.nordicBone)
         .fullScreenCover(isPresented: $showResult) {
             NavigationView {
-                PlateAnalysisResultView(
-                    analysis: resultAnalysis ?? PlateAnalysis.mockAnalysis(),
-                    image: capturedImage,
-                    onStartNewScan: {
-                        showResult = false
-                        showCamera = true
-                    },
-                    onClose: {
-                        showResult = false
-                    },
-                    onLogMeal: {
-                        showResult = false
-                    }
-                )
+                if let analysis = resultAnalysis {
+                    PlateAnalysisResultView(
+                        analysis: analysis,
+                        image: capturedImage,
+                        onStartNewScan: {
+                            showResult = false
+                            showCamera = true
+                        },
+                        onClose: {
+                            showResult = false
+                        },
+                        onLogMeal: {
+                            showResult = false
+                        }
+                    )
+                } else {
+                    ProgressView()
+                }
             }
         }
         .sheet(isPresented: $showCamera) {
@@ -81,11 +85,7 @@ struct PlateScanView: View {
         .sheet(isPresented: $showPhotoPicker) {
             PhotoLibraryPickerView(image: $capturedImage)
         }
-        .sheet(item: $pendingImage, onDismiss: {
-            if !analysisVM.isAnalyzing {
-                awaitingAnalysisResult = false
-            }
-        }) { pending in
+        .sheet(item: $pendingImage) { pending in
             FoodRegionSelectionView(
                 image: pending.image,
                 viewModel: analysisVM
@@ -102,12 +102,14 @@ struct PlateScanView: View {
             showCamera = false
             showPhotoPicker = false
             onImagePicked(image)
+            analysisVM.analysisResult = nil
+            resultAnalysis = nil
             pendingImage = PendingImage(image: image)
             awaitingAnalysisResult = true
         }
         .onChange(of: analysisVM.analysisResult) { _, newValue in
             guard awaitingAnalysisResult, let img = pendingImage?.image else { return }
-            if let result = newValue ?? analysisVM.lastAnalysisResult {
+            if let result = newValue {
                 resultAnalysis = result
                 capturedImage = img
                 showResult = true
@@ -256,39 +258,41 @@ struct PlateQuickScanView: View {
             guard let image = newValue else { return }
             analysisVM.setTransientScanMetrics(volumeML: capturedVolumeML, massG: capturedMassG)
             analysisVM.setTransientDepthSnapshot(capturedDepthSnapshot)
+            analysisVM.analysisResult = nil
+            resultAnalysis = nil
             pendingImage = PendingImage(image: image)
             awaitingAnalysisResult = true
         }
         .fullScreenCover(isPresented: $showResult) {
             NavigationView {
-                PlateAnalysisResultView(
-                    analysis: resultAnalysis ?? PlateAnalysis.mockAnalysis(),
-                    image: capturedImage,
-                    onStartNewScan: {
-                        showResult = false
-                        capturedImage = nil
-                        capturedVolumeML = nil
-                        capturedMassG = nil
-                        capturedDepthSnapshot = nil
-                        analysisVM.setTransientScanMetrics(volumeML: nil, massG: nil)
-                        analysisVM.setTransientDepthSnapshot(nil)
-                    },
-                    onClose: {
-                        showResult = false
-                        dismiss()
-                    },
-                    onLogMeal: {
-                        showResult = false
-                        dismiss()
-                    }
-                )
+                if let analysis = resultAnalysis {
+                    PlateAnalysisResultView(
+                        analysis: analysis,
+                        image: capturedImage,
+                        onStartNewScan: {
+                            showResult = false
+                            capturedImage = nil
+                            capturedVolumeML = nil
+                            capturedMassG = nil
+                            capturedDepthSnapshot = nil
+                            analysisVM.setTransientScanMetrics(volumeML: nil, massG: nil)
+                            analysisVM.setTransientDepthSnapshot(nil)
+                        },
+                        onClose: {
+                            showResult = false
+                            dismiss()
+                        },
+                        onLogMeal: {
+                            showResult = false
+                            dismiss()
+                        }
+                    )
+                } else {
+                    ProgressView()
+                }
             }
         }
-        .sheet(item: $pendingImage, onDismiss: {
-            if !analysisVM.isAnalyzing {
-                awaitingAnalysisResult = false
-            }
-        }) { pending in
+        .sheet(item: $pendingImage) { pending in
             FoodRegionSelectionView(
                 image: pending.image,
                 viewModel: analysisVM
@@ -296,7 +300,7 @@ struct PlateQuickScanView: View {
         }
         .onChange(of: analysisVM.analysisResult) { _, newValue in
             guard awaitingAnalysisResult else { return }
-            if let result = newValue ?? analysisVM.lastAnalysisResult {
+            if let result = newValue {
                 resultAnalysis = result
                 showResult = true
             } else {

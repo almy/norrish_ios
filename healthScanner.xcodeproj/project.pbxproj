@@ -10,6 +10,7 @@
 		03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */; };
 			1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42784632A507491D970BC129 /* ProductService.swift */; };
 			1D58B9102829457C892B5917 /* CoreMLFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D58B90F2829457C892B5917 /* CoreMLFoodAnalysisService.swift */; };
+			A91D10072F3C000100AAA001 /* YOLO26X-seg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */; };
 			25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */; };
 		29A1F3A42E7D001F0086689E /* ARPlateScanNutrition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F39F2E7D001F0086689E /* ARPlateScanNutrition.swift */; };
 		29A1F3A52E7D00200086689E /* ARPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F3A02E7D00200086689E /* ARPlateScannerViewController.swift */; };
@@ -78,7 +79,6 @@
 		CEF23E6C2E6C5F67002B903F /* healthScannerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */; };
 		CEF23E6E2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */; };
 		CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */; };
-		CEF4FE552F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */; };
 		CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */; };
 		CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */; };
 		CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */ = {isa = PBXBuildFile; fileRef = CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */; };
@@ -150,6 +150,7 @@
 			A91D10142F3C000100AAA001 /* ReticleOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReticleOverlayView.swift; sourceTree = "<group>"; };
 			A91D10152F3C000100AAA001 /* YOLOModelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelProvider.swift; sourceTree = "<group>"; };
 			A91D10162F3C000100AAA001 /* EnhancedCaptureMetricsEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCaptureMetricsEstimator.swift; sourceTree = "<group>"; };
+			A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "YOLO26X-seg.mlpackage"; sourceTree = "<group>"; };
 			ABE9DF8501314CD2902886EE /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
 		AC1F6370882F47499FF0ED7A /* PlateAnalysisResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisResultView.swift; sourceTree = "<group>"; };
 		AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraBarcodeScannerView.swift; sourceTree = "<group>"; };
@@ -191,7 +192,6 @@
 		CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITests.swift; sourceTree = "<group>"; };
 		CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedPlateScannerView.swift; sourceTree = "<group>"; };
-		CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = DepthAnythingV2SmallF16.mlpackage; sourceTree = "<group>"; };
 		CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8x-oiv7.mlpackage"; sourceTree = "<group>"; };
 		CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconMapper.swift; sourceTree = "<group>"; };
 		CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = IconMapping.json; sourceTree = "<group>"; };
@@ -429,13 +429,13 @@
 			path = Recommendations;
 			sourceTree = "<group>";
 		};
-		CE53360A2E7C61C60086689E /* CoreML */ = {
-			isa = PBXGroup;
-			children = (
-				CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */,
-				CEF4FE542F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage */,
-				CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */,
-			);
+			CE53360A2E7C61C60086689E /* CoreML */ = {
+				isa = PBXGroup;
+				children = (
+					CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */,
+					A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */,
+					CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */,
+				);
 			path = CoreML;
 			sourceTree = "<group>";
 		};
@@ -704,16 +704,16 @@
 					A91D10042F3C000100AAA001 /* ReticleOverlayView.swift in Sources */,
 					A91D10062F3C000100AAA001 /* EnhancedCaptureMetricsEstimator.swift in Sources */,
 					CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */,
-					CEF4FE552F28E08D009FAA35 /* DepthAnythingV2SmallF16.mlpackage in Sources */,
 					CE5335D42E79D1E00086689E /* SettingsView.swift in Sources */,
 				A5F1B41B55D944F6BD142399 /* BarcodeScannerViewController.swift in Sources */,
 				CE5336062E7AEDA90086689E /* DashboardInsightsView.swift in Sources */,
 				CE5335FF2E7AEBFF0086689E /* NutritionRecommendation.swift in Sources */,
 				25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */,
-				CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */,
-				CE5335FD2E7AEBE60086689E /* NutritionRecommendationEngine.swift in Sources */,
-				CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */,
-				3DF611CC8AAC484DAB977179 /* PlateProgressRingView.swift in Sources */,
+					CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */,
+					CE5335FD2E7AEBE60086689E /* NutritionRecommendationEngine.swift in Sources */,
+					CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */,
+					A91D10072F3C000100AAA001 /* YOLO26X-seg.mlpackage in Sources */,
+					3DF611CC8AAC484DAB977179 /* PlateProgressRingView.swift in Sources */,
 				5066ECD1C42A429BBA1B96B3 /* OpenAIService.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5D /* BackendAPIClient.swift in Sources */,
 				B1C2D3E4F5061728394A5B6C /* BackendAPIModels.swift in Sources */,
