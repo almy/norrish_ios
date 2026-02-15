@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 final class LiveClassificationState: ObservableObject {
-    @Published var label: String = "Detecting…"
+    @Published var label: String = "Scanning food…"
     @Published var confidence: Float = 0
     @Published var isRunning: Bool = false
 }
@@ -29,7 +29,7 @@ struct EnhancedCameraPreviewView: View {
                 Spacer()
                 HStack {
                     Spacer()
-                    Text("\(state.label) \(Int(state.confidence * 100))%")
+                    Text(overlayText)
                         .font(AppFonts.sans(11, weight: .semibold))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 6)
@@ -60,5 +60,12 @@ struct EnhancedCameraPreviewView: View {
             }
             .allowsHitTesting(true)
         }
+    }
+
+    private var overlayText: String {
+        if state.confidence >= 0.35, state.label != "Scanning food…" {
+            return "Likely food: \(state.label) \(Int(state.confidence * 100))%"
+        }
+        return "Scanning food… align plate inside the center box"
     }
 }

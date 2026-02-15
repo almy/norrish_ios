@@ -27,13 +27,27 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         private let depthStateQueue = DispatchQueue(label: "enhancedDepthStateQueue")
 
         private var previewLayer: AVCaptureVideoPreviewLayer!
+        private let focusMaskLayer = CAShapeLayer()
+        private let focusBoxLayer = CAShapeLayer()
+        private let focusLabel = CATextLayer()
+        private let roiRectNormalized = CGRect(x: 0.2, y: 0.2, width: 0.6, height: 0.6)
 
-        private var lastAnalysisTime: CFTimeInterval = 0
-        private let analysisInterval: CFTimeInterval = 1.0 / 3.0
+        private var lastDetectionTime: CFTimeInterval = 0
+        private var lastClassificationTime: CFTimeInterval = 0
+        private var lastIntermediatePublishTime: CFTimeInterval = 0
+        private let detectionInterval: CFTimeInterval = 1.0 / 10.0
+        private let classificationInterval: CFTimeInterval = 1.0 / 3.0
+        private let intermediatePublishInterval: CFTimeInterval = 1.0 / 15.0
 
         private var classificationRequest: VNClassifyImageRequest!
         private var detectionRequest: VNCoreMLRequest?
         private var isAnalyzing = false
+        private var lastReliableDetectionTime: CFTimeInterval = 0
+        private var pendingLabel: String?
+        private var pendingCount: Int = 0
+        private let minStableHits = 2
+        private let minReliableConfidence: Float = 0.35
+        private let staleResetInterval: CFTimeInterval = 1.5
 
         private var latestDepthMap: CVPixelBuffer?
         private var latestIntrinsics: simd_float3x3 = {
@@ -72,12 +86,14 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             previewLayer.videoGravity = .resizeAspectFill
             previewLayer.frame = view.layer.bounds
             view.layer.addSublayer(previewLayer)
+            setupFocusOverlay()
 
             setupButtons()
 
             if let vn = YOLOModelProvider.load() {
                 let req = VNCoreMLRequest(model: vn)
                 req.imageCropAndScaleOption = .scaleFill
+                req.regionOfInterest = roiRectNormalized
                 detectionRequest = req
             }
         }
@@ -85,6 +101,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         override func viewWillLayoutSubviews() {
             super.viewWillLayoutSubviews()
             previewLayer.frame = view.bounds
+            updateFocusOverlayFrame()
         }
 
         override func viewWillAppear(_ animated: Bool) {
@@ -113,7 +130,13 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
 
         private func configureSession() {
             session.beginConfiguration()
-            session.sessionPreset = .photo
+            if session.canSetSessionPreset(.vga640x480) {
+                session.sessionPreset = .vga640x480
+            } else if session.canSetSessionPreset(.hd1280x720) {
+                session.sessionPreset = .hd1280x720
+            } else if session.canSetSessionPreset(.high) {
+                session.sessionPreset = .high
+            }
 
             let requested: [AVCaptureDevice.DeviceType] = [.builtInDualCamera, .builtInDualWideCamera, .builtInWideAngleCamera]
             let discovery = AVCaptureDevice.DiscoverySession(deviceTypes: requested, mediaType: .video, position: .back)
@@ -137,7 +160,10 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 depthOutput.connection(with: .depthData)?.isEnabled = true
             }
 
-            videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
+            videoOutput.videoSettings = [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+            ]
+            videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue", qos: .userInitiated))
             videoOutput.alwaysDiscardsLateVideoFrames = true
             if session.canAddOutput(videoOutput) {
                 session.addOutput(videoOutput)
@@ -157,12 +183,49 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                     }
                 } else {
                     DispatchQueue.main.async {
-                        self.state.label = "Detecting…"
+                        self.state.label = "Scanning food…"
                         self.state.confidence = 0
                     }
                 }
             })
+            classificationRequest.regionOfInterest = roiRectNormalized
             classificationRequest.usesCPUOnly = false
+        }
+
+        private func setupFocusOverlay() {
+            focusMaskLayer.fillRule = .evenOdd
+            focusMaskLayer.fillColor = UIColor.black.withAlphaComponent(0.28).cgColor
+            previewLayer.addSublayer(focusMaskLayer)
+
+            focusBoxLayer.strokeColor = UIColor.white.withAlphaComponent(0.75).cgColor
+            focusBoxLayer.fillColor = UIColor.clear.cgColor
+            focusBoxLayer.lineWidth = 2.0
+            focusBoxLayer.lineDashPattern = [6, 4]
+            previewLayer.addSublayer(focusBoxLayer)
+
+            focusLabel.string = "Center food here"
+            focusLabel.fontSize = 11
+            focusLabel.alignmentMode = .center
+            focusLabel.foregroundColor = UIColor.white.withAlphaComponent(0.85).cgColor
+            focusLabel.contentsScale = UIScreen.main.scale
+            previewLayer.addSublayer(focusLabel)
+        }
+
+        private func updateFocusOverlayFrame() {
+            guard previewLayer.bounds.width > 0, previewLayer.bounds.height > 0 else { return }
+            let rect = previewLayer.layerRectConverted(fromMetadataOutputRect: roiRectNormalized)
+            let cutout = UIBezierPath(roundedRect: rect, cornerRadius: 12)
+            let outer = UIBezierPath(rect: previewLayer.bounds)
+            outer.append(cutout)
+            focusMaskLayer.path = outer.cgPath
+            focusBoxLayer.path = UIBezierPath(roundedRect: rect, cornerRadius: 12).cgPath
+            let labelHeight: CGFloat = 16
+            focusLabel.frame = CGRect(
+                x: rect.minX,
+                y: max(0, rect.minY - labelHeight - 6),
+                width: rect.width,
+                height: labelHeight
+            )
         }
 
         private func setupButtons() {
@@ -188,64 +251,72 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
 
         private func performClassification(on pixelBuffer: CVPixelBuffer) {
             let currentTime = CACurrentMediaTime()
-            guard currentTime - lastAnalysisTime >= analysisInterval else { return }
-            lastAnalysisTime = currentTime
+            let shouldRunDetection = (currentTime - lastDetectionTime) >= detectionInterval
+            let shouldRunClassification = (currentTime - lastClassificationTime) >= classificationInterval
+            guard shouldRunDetection || shouldRunClassification else {
+                publishIntermediateStateIfNeeded(now: currentTime)
+                return
+            }
 
             if isAnalyzing { return }
             isAnalyzing = true
+            defer { isAnalyzing = false }
 
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
-            if let det = detectionRequest {
+            if shouldRunDetection, let det = detectionRequest {
+                lastDetectionTime = currentTime
                 do {
                     try handler.perform([det])
                     if let objs = det.results as? [VNRecognizedObjectObservation],
                        let best = objs.max(by: { $0.confidence < $1.confidence }),
-                       let top = best.labels.first {
-                        let label = top.identifier
-                        let conf = top.confidence
-                        DispatchQueue.main.async {
-                            self.state.label = label.prefix(1).uppercased() + label.dropFirst()
-                            self.state.confidence = conf
-                            NotificationCenter.default.post(
-                                name: .liveFoodDetectionUpdate,
-                                object: nil,
-                                userInfo: ["label": self.state.label, "confidence": conf]
-                            )
-                        }
+                       let chosen = chooseBestLabel(from: best.labels) {
+                        applyCandidateLabel(chosen.identifier, confidence: chosen.confidence, now: currentTime)
+                    } else if shouldRunClassification {
+                        lastClassificationTime = currentTime
+                        runFallbackClassification(with: handler)
                     } else {
-                        DispatchQueue.main.async {
-                            self.state.label = "Detecting…"
-                            self.state.confidence = 0
-                            NotificationCenter.default.post(
-                                name: .liveFoodDetectionUpdate,
-                                object: nil,
-                                userInfo: ["label": self.state.label, "confidence": Float(0)]
-                            )
-                        }
+                        applyNoDetection(now: currentTime)
                     }
                 } catch {
-                    runFallbackClassification(with: handler)
+                    if shouldRunClassification {
+                        lastClassificationTime = currentTime
+                        runFallbackClassification(with: handler)
+                    }
                 }
-            } else {
+            } else if shouldRunClassification {
+                lastClassificationTime = currentTime
                 runFallbackClassification(with: handler)
             }
-            isAnalyzing = false
+        }
+
+        private func publishIntermediateStateIfNeeded(now: CFTimeInterval) {
+            guard (now - lastIntermediatePublishTime) >= intermediatePublishInterval else { return }
+            lastIntermediatePublishTime = now
+            let label = state.label
+            let conf = state.confidence
+            guard label != "Scanning food…" || conf > 0 else { return }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .liveFoodDetectionUpdate,
+                    object: nil,
+                    userInfo: ["label": label, "confidence": conf, "intermediate": true]
+                )
+            }
         }
 
         private func runFallbackClassification(with handler: VNImageRequestHandler) {
             let request = VNClassifyImageRequest { [weak self] req, _ in
                 guard let self else { return }
                 let top = (req.results as? [VNClassificationObservation])?.first
-                let label = top?.identifier ?? "Detecting…"
-                let conf = top?.confidence ?? 0.0
-                DispatchQueue.main.async {
-                    self.state.label = label.prefix(1).uppercased() + label.dropFirst()
-                    self.state.confidence = conf
-                    NotificationCenter.default.post(
-                        name: .liveFoodDetectionUpdate,
-                        object: nil,
-                        userInfo: ["label": self.state.label, "confidence": conf]
-                    )
+                let chosen = (req.results as? [VNClassificationObservation])?.first(where: {
+                    self.isCandidateUseful($0.identifier, confidence: $0.confidence)
+                })
+                if let chosen {
+                    self.applyCandidateLabel(chosen.identifier, confidence: chosen.confidence, now: CACurrentMediaTime())
+                } else if top == nil {
+                    self.applyNoDetection(now: CACurrentMediaTime())
+                } else {
+                    self.applyNoDetection(now: CACurrentMediaTime())
                 }
             }
             do {
@@ -253,6 +324,85 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             } catch {
                 AppLog.error(AppLog.vision, "[EnhancedCameraPreview] Fallback classification failed: \(error.localizedDescription)")
             }
+        }
+
+        private func applyCandidateLabel(_ rawLabel: String, confidence: Float, now: CFTimeInterval) {
+            let normalized = formatLabel(rawLabel)
+            guard confidence >= minReliableConfidence else {
+                applyNoDetection(now: now)
+                return
+            }
+
+            if pendingLabel == normalized {
+                pendingCount += 1
+            } else {
+                pendingLabel = normalized
+                pendingCount = 1
+            }
+
+            guard pendingCount >= minStableHits else { return }
+            lastReliableDetectionTime = now
+
+            DispatchQueue.main.async {
+                self.state.label = normalized
+                self.state.confidence = confidence
+                NotificationCenter.default.post(
+                    name: .liveFoodDetectionUpdate,
+                    object: nil,
+                    userInfo: ["label": normalized, "confidence": confidence]
+                )
+            }
+        }
+
+        private func applyNoDetection(now: CFTimeInterval) {
+            // Keep last stable label briefly to avoid rapid flicker.
+            guard (now - lastReliableDetectionTime) > staleResetInterval else { return }
+            pendingLabel = nil
+            pendingCount = 0
+            DispatchQueue.main.async {
+                self.state.label = "Scanning food…"
+                self.state.confidence = 0
+            }
+        }
+
+        private func formatLabel(_ label: String) -> String {
+            let lower = label.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard let first = lower.first else { return "Food" }
+            return first.uppercased() + lower.dropFirst()
+        }
+
+        private func chooseBestLabel(from labels: [VNClassificationObservation]) -> VNClassificationObservation? {
+            for label in labels {
+                if isCandidateUseful(label.identifier, confidence: label.confidence) {
+                    return label
+                }
+            }
+            return nil
+        }
+
+        private func isCandidateUseful(_ identifier: String, confidence: Float) -> Bool {
+            guard confidence >= minReliableConfidence else { return false }
+            let lower = identifier.lowercased()
+            let genericBlocked: Set<String> = [
+                "structure", "building", "object", "artifact", "furniture", "material",
+                "wall", "floor", "ceiling", "indoor", "outdoor", "room"
+            ]
+            if genericBlocked.contains(lower) { return false }
+            if lower.count < 3 { return false }
+            return looksLikeFoodLabel(lower)
+        }
+
+        private func looksLikeFoodLabel(_ lower: String) -> Bool {
+            let foodKeywords: [String] = [
+                "food", "meal", "dish", "plate", "bowl", "snack",
+                "fruit", "vegetable", "salad", "rice", "pasta", "noodle", "soup",
+                "bread", "toast", "cake", "dessert", "cookie", "chocolate",
+                "pizza", "burger", "sandwich", "taco", "burrito", "sushi",
+                "egg", "cheese", "yogurt", "milk", "chicken", "beef", "pork", "fish", "shrimp",
+                "potato", "fries", "bean", "lentil", "avocado", "banana", "apple", "orange",
+                "coffee", "tea", "juice", "smoothie"
+            ]
+            return foodKeywords.contains { lower.contains($0) }
         }
 
         private func captureDepthSnapshot() -> (depth: CVPixelBuffer, intrinsics: simd_float3x3)? {
