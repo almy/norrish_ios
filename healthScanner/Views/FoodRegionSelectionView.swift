@@ -14,7 +14,7 @@ struct FoodRegionSelectionView: View {
     @State private var errorMessage: String?
     @State private var dragStartRects: [UUID: CGRect] = [:]
     @State private var lastMagnification: CGFloat = 1.0
-    @State private var photoLabel: String = "—"
+    @State private var photoLabel: String = "Food"
     @State private var photoConfidence: Float = 0
     @State private var activeRegionID: UUID?
     @State private var baselineSelectedAreaPx: CGFloat = 0
@@ -22,6 +22,8 @@ struct FoodRegionSelectionView: View {
     @State private var baselineMassG: Float?
     @State private var recalcTask: Task<Void, Never>?
     @State private var recalcGeneration: Int = 0
+    @State private var regionCategoryByID: [UUID: (label: String, confidence: Float)] = [:]
+    @State private var yoloDetections: [RegionDetection] = []
 
     struct EditableRegion: Identifiable {
         let id = UUID()
@@ -29,6 +31,12 @@ struct FoodRegionSelectionView: View {
         var confidence: Float
         var isSelected: Bool
         var color: Color
+    }
+
+    struct RegionDetection {
+        let rect: CGRect // in image pixel coordinates
+        let label: String
+        let confidence: Float
     }
 
     var body: some View {
@@ -59,7 +67,6 @@ struct FoodRegionSelectionView: View {
             baselineVolumeML = viewModel.transientVolumeML
             baselineMassG = viewModel.transientMassG
             detect()
-            analyzePhotoLabel()
         }
         .onChange(of: regionsFingerprint) { _, _ in
             scheduleMetadataRefresh()
@@ -175,12 +182,14 @@ private extension FoodRegionSelectionView {
             let area = Int(region.rect.width * region.rect.height)
             let pct = Int(Double(area) / Double(imageArea) * 100)
             let sel = region.isSelected ? "yes" : "no"
+            let category = categoryForRegion(region)
             lines.append(String(format: "r%02d sel:%@ conf:%.2f area:%d (%d%%)",
                                 idx + 1,
                                 sel,
                                 region.confidence,
                                 area,
                                 pct))
+            lines.append("r\(String(format: "%02d", idx + 1)) category: \(category)")
         }
         if let active = activeRegion {
             let activeArea = Int(active.rect.width * active.rect.height)
@@ -372,37 +381,25 @@ private extension FoodRegionSelectionView {
             }
             self.activeRegionID = self.editableRegions.first?.id
             self.baselineSelectedAreaPx = max(1, self.editableRegions.reduce(0) { $0 + ($1.rect.width * $1.rect.height) })
+            await runYOLORegionCategorization()
             self.scheduleMetadataRefresh()
             isLoading = false
-        }
-    }
-
-    func analyzePhotoLabel() {
-        guard let cg = image.cgImage else { return }
-        let request = VNClassifyImageRequest { req, _ in
-            let top = (req.results as? [VNClassificationObservation])?.first
-            let label = top?.identifier ?? "—"
-            let conf = top?.confidence ?? 0
-            DispatchQueue.main.async {
-                self.photoLabel = label
-                self.photoConfidence = conf
-            }
-        }
-        let handler = VNImageRequestHandler(cgImage: cg, orientation: cgImagePropertyOrientation(from: image.imageOrientation), options: [:])
-        DispatchQueue.global(qos: .userInitiated).async {
-            do { try handler.perform([request]) } catch { }
         }
     }
 
     func confirm() {
         let selected = editableRegions.filter { $0.isSelected }
         guard !selected.isEmpty else { return }
-        let results: [ImagePreprocessor.Result] = selected.compactMap { er in
-            guard let cropped = crop(image: image, to: er.rect) else { return nil }
-            let px = Int(cropped.size.width * cropped.size.height)
-            return ImagePreprocessor.Result(image: cropped, boundingBox: er.rect.integral, pixelCount: px, confidence: er.confidence)
+        let categories = selected.enumerated().map { idx, region in
+            regionCategoryByID[region.id]?.label ?? "Food"
         }
+        viewModel.setTransientCategories(categories)
         Task { @MainActor in
+            let results: [ImagePreprocessor.Result] = selected.compactMap { er in
+                guard let cropped = crop(image: image, to: er.rect) else { return nil }
+                let px = Int(cropped.size.width * cropped.size.height)
+                return ImagePreprocessor.Result(image: cropped, boundingBox: er.rect.integral, pixelCount: px, confidence: er.confidence)
+            }
             await viewModel.analyzeSelectedRegions(results, originalImage: image, modelContext: modelContext)
             dismiss()
         }
@@ -481,7 +478,6 @@ private extension FoodRegionSelectionView {
     func scheduleMetadataRefresh() {
         recalcGeneration += 1
         let generation = recalcGeneration
-        let targetRect = activeRegion?.rect
         let selectedRects = editableRegions.filter { $0.isSelected }.map { $0.rect }
         let depthSnapshot = viewModel.transientDepthSnapshot
         let fallbackBaseVolume = baselineVolumeML ?? viewModel.transientVolumeML
@@ -495,7 +491,7 @@ private extension FoodRegionSelectionView {
         recalcTask = Task {
             try? await Task.sleep(nanoseconds: 250_000_000)
             guard !Task.isCancelled else { return }
-            await refreshLabelForCurrentSelection(targetRect: targetRect)
+            refreshLabelForCurrentSelection()
 
             if let depthSnapshot, !selectedRects.isEmpty {
                 let metrics = await computeDepthMetricsAsync(
@@ -532,32 +528,140 @@ private extension FoodRegionSelectionView {
         }
     }
 
-    @MainActor
-    func refreshLabelForCurrentSelection(targetRect: CGRect?) async {
-        guard let target = targetRect, let cropped = crop(image: image, to: target) else { return }
-        guard let cg = cropped.cgImage else { return }
-
-        let result = await classifyImage(cgImage: cg, orientation: cgImagePropertyOrientation(from: cropped.imageOrientation))
-        guard !Task.isCancelled else { return }
-        photoLabel = result.label
-        photoConfidence = result.confidence
+    func refreshLabelForCurrentSelection() {
+        remapDetectionsToEditableRegions()
+        guard let active = activeRegion else {
+            photoLabel = "Food"
+            photoConfidence = 0
+            return
+        }
+        if let category = regionCategoryByID[active.id] {
+            photoLabel = category.label
+            photoConfidence = category.confidence
+        } else {
+            photoLabel = "Food"
+            photoConfidence = 0
+        }
     }
 
-    func classifyImage(cgImage: CGImage, orientation: CGImagePropertyOrientation) async -> (label: String, confidence: Float) {
+    func runYOLORegionCategorization() async {
+        let detections = await detectYOLORegions(in: image)
+        yoloDetections = detections
+        remapDetectionsToEditableRegions()
+        refreshLabelForCurrentSelection()
+    }
+
+    func detectYOLORegions(in image: UIImage) async -> [RegionDetection] {
         await withCheckedContinuation { continuation in
-            let request = VNClassifyImageRequest { req, _ in
-                let top = (req.results as? [VNClassificationObservation])?.first
-                continuation.resume(returning: (top?.identifier ?? "—", top?.confidence ?? 0))
-            }
-            let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
             DispatchQueue.global(qos: .userInitiated).async {
+                guard let cg = image.cgImage,
+                      let model = YOLOModelProvider.load() else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                let request = VNCoreMLRequest(model: model)
+                request.imageCropAndScaleOption = .scaleFill
+                let handler = VNImageRequestHandler(
+                    cgImage: cg,
+                    orientation: cgImagePropertyOrientation(from: image.imageOrientation),
+                    options: [:]
+                )
                 do {
                     try handler.perform([request])
+                    let observations = (request.results as? [VNRecognizedObjectObservation]) ?? []
+                    let imageSize = image.size
+                    let mapped = observations.compactMap { obs -> RegionDetection? in
+                        guard let top = obs.labels.first else { return nil }
+                        let rect = denormalizeVisionRect(obs.boundingBox, imageSize: imageSize)
+                        return RegionDetection(
+                            rect: rect.integral,
+                            label: formattedModelLabel(top.identifier),
+                            confidence: top.confidence
+                        )
+                    }
+                    continuation.resume(returning: mapped)
                 } catch {
-                    continuation.resume(returning: ("—", 0))
+                    continuation.resume(returning: [])
                 }
             }
         }
+    }
+
+    func remapDetectionsToEditableRegions() {
+        var mapped: [UUID: (label: String, confidence: Float)] = [:]
+        for region in editableRegions {
+            let best = yoloDetections
+                .map { detection in
+                    (detection, overlapRatio(region.rect, detection.rect))
+                }
+                .max { lhs, rhs in
+                    if lhs.1 == rhs.1 {
+                        return lhs.0.confidence < rhs.0.confidence
+                    }
+                    return lhs.1 < rhs.1
+                }
+
+            if let best, best.1 > 0.005 {
+                mapped[region.id] = (best.0.label, best.0.confidence)
+                continue
+            }
+
+            if let nearest = nearestDetection(to: region.rect) {
+                mapped[region.id] = (nearest.label, nearest.confidence)
+                continue
+            }
+
+            mapped[region.id] = ("Food", 0)
+        }
+        regionCategoryByID = mapped
+    }
+
+    func nearestDetection(to rect: CGRect) -> RegionDetection? {
+        guard !yoloDetections.isEmpty else { return nil }
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        return yoloDetections.min { lhs, rhs in
+            let ld = squaredDistance(center, CGPoint(x: lhs.rect.midX, y: lhs.rect.midY))
+            let rd = squaredDistance(center, CGPoint(x: rhs.rect.midX, y: rhs.rect.midY))
+            if ld == rd {
+                return lhs.confidence < rhs.confidence
+            }
+            return ld < rd
+        }
+    }
+
+    func squaredDistance(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
+        let dx = a.x - b.x
+        let dy = a.y - b.y
+        return dx * dx + dy * dy
+    }
+
+    func categoryForRegion(_ region: EditableRegion) -> String {
+        regionCategoryByID[region.id]?.label ?? "Food"
+    }
+
+    func overlapRatio(_ a: CGRect, _ b: CGRect) -> CGFloat {
+        let intersection = a.intersection(b)
+        guard !intersection.isNull else { return 0 }
+        let interArea = intersection.width * intersection.height
+        let denom = max(1, min(a.width * a.height, b.width * b.height))
+        return interArea / denom
+    }
+
+    func formattedModelLabel(_ raw: String) -> String {
+        let trimmed = raw
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "_", with: " ")
+        guard let first = trimmed.first else { return "Food" }
+        return first.uppercased() + trimmed.dropFirst()
+    }
+
+    func denormalizeVisionRect(_ rect: CGRect, imageSize: CGSize) -> CGRect {
+        let w = rect.width * imageSize.width
+        let h = rect.height * imageSize.height
+        let x = rect.origin.x * imageSize.width
+        let yFromBottom = rect.origin.y * imageSize.height
+        let y = imageSize.height - yFromBottom - h
+        return CGRect(x: max(0, x), y: max(0, y), width: max(1, w), height: max(1, h))
     }
 
     var activeRegionIndex: Int? {

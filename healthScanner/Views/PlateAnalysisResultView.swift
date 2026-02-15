@@ -254,6 +254,40 @@ struct PlateAnalysisResultView: View {
                 MacroBarRow(title: NSLocalizedString("nutrition.carbs", comment: "Carbohydrates"), label: NSLocalizedString("macro.moderate", comment: "Moderate"), fill: 0.5, accent: primary)
                 MacroBarRow(title: NSLocalizedString("nutrition.fat", comment: "Dietary Fats"), label: NSLocalizedString("macro.minimal", comment: "Minimal"), fill: 0.25, accent: primary)
             }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("feedback.question".localized())
+                    .font(AppFonts.sans(13, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                Text("feedback.help_text".localized())
+                    .font(AppFonts.sans(11, weight: .regular))
+                    .foregroundColor(.nordicSlate)
+                HStack(spacing: 10) {
+                    Button("feedback.yes".localized()) {
+                        saveFeedback(isCorrect: true)
+                    }
+                    .font(AppFonts.sans(12, weight: .semibold))
+                    .foregroundColor(.momentumAmber)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(feedbackGiven ? Color.cardSurface : Color.mossInsight.opacity(0.10))
+                    )
+
+                    Button("feedback.no".localized()) {
+                        saveFeedback(isCorrect: false)
+                    }
+                    .font(AppFonts.sans(12, weight: .semibold))
+                    .foregroundColor(.momentumAmber)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(feedbackGiven ? Color.cardSurface : Color.midnightSpruce.opacity(0.08))
+                    )
+                }
+            }
         }
         .padding(.horizontal, 28)
         .padding(.top, 28)
@@ -585,6 +619,31 @@ private extension PlateAnalysisResultView {
         }
         let m = analysis.macronutrients
         return "Approx. P \(m.protein)g • C \(m.carbs)g • F \(m.fat)g • \(m.calories) kcal"
+    }
+
+    func saveFeedback(isCorrect: Bool) {
+        guard !feedbackGiven else { return }
+        feedbackGiven = true
+        let defaults = UserDefaults.standard
+        var usefulness = defaults.dictionary(forKey: "plateAnalysis.usefulnessByType") as? [String: Double] ?? [:]
+        for insight in analysis.insights {
+            let key = insight.type.rawValue.lowercased()
+            let prev = usefulness[key] ?? 0.5
+            let target = isCorrect ? 1.0 : 0.0
+            usefulness[key] = (0.7 * prev) + (0.3 * target)
+        }
+        defaults.set(usefulness, forKey: "plateAnalysis.usefulnessByType")
+
+        var followed = defaults.stringArray(forKey: "plateAnalysis.followedActions") ?? []
+        if isCorrect {
+            let titles = analysis.insights
+                .filter { $0.type == .suggestion || $0.type == .positive }
+                .map { $0.title }
+            followed.append(contentsOf: titles)
+            let deduped = Array(Set(followed))
+            followed = Array(deduped.suffix(50))
+        }
+        defaults.set(Array(followed), forKey: "plateAnalysis.followedActions")
     }
 }
 

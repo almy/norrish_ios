@@ -51,18 +51,15 @@ final class PlateAnalysisViewModel: ObservableObject {
     private let backendClient: PlateScanAPIClient
     private let aggregatorService: AggregatorServicing
     private let imageCacheService: ImageCacheServicing
-    private let coreMLAnalysisService: CoreMLFoodAnalysisService
 
     init(
         backendClient: PlateScanAPIClient = BackendAPIClient.shared,
         aggregatorService: AggregatorServicing = AggregatorService.shared,
-        imageCacheService: ImageCacheServicing = ImageCacheService.shared,
-        coreMLAnalysisService: CoreMLFoodAnalysisService = .shared
+        imageCacheService: ImageCacheServicing = ImageCacheService.shared
     ) {
         self.backendClient = backendClient
         self.aggregatorService = aggregatorService
         self.imageCacheService = imageCacheService
-        self.coreMLAnalysisService = coreMLAnalysisService
     }
 
     func loadLastAnalysisFromDefaults() {
@@ -149,7 +146,20 @@ final class PlateAnalysisViewModel: ObservableObject {
     }
 
     func analyzeSelectedRegions(_ regions: [ImagePreprocessor.Result], originalImage: UIImage, modelContext: ModelContext) async {
-        guard !regions.isEmpty else { return await handleImageAnalysis(image: originalImage, modelContext: modelContext) }
+        guard !regions.isEmpty else {
+            analysisResult = PlateAnalysis(
+                nutritionScore: 0,
+                description: "No selected region",
+                macronutrients: Macronutrients(protein: 0, carbs: 0, fat: 0, calories: 0),
+                ingredients: [],
+                insights: [
+                    Insight(type: .warning, title: "Selection required", description: "Select at least one food area before analysis.")
+                ],
+                micronutrients: nil,
+                connections: nil
+            )
+            return
+        }
         let imageForUpload = ImagePreprocessor.mosaic(from: regions, columns: 1, spacing: 8, background: .black) ?? regions[0].image
         await analyzePreparedImage(imageForUpload, regions: regions, originalImage: originalImage, modelContext: modelContext)
     }
@@ -187,7 +197,21 @@ final class PlateAnalysisViewModel: ObservableObject {
                 "device": UIDevice.current.model,
                 "method": "Image Analysis"
             ]
-            let coreMLResult = await coreMLAnalysisService.analyzeFood(image: originalImage)
+            let preferences = DietaryPreferencesManager.shared
+            contextPayload["dietary_preferences"] = [
+                "selected_allergies": preferences.selectedAllergies.map { $0.rawValue }.sorted(),
+                "selected_dietary_restrictions": preferences.selectedDietaryRestrictions.map { $0.rawValue }.sorted(),
+                "custom_allergies": preferences.customAllergies,
+                "custom_restrictions": preferences.customRestrictions
+            ]
+            contextPayload["meal_timing"] = currentMealTiming()
+            contextPayload["client_id"] = stableClientID()
+            let (volumeConfidence, massConfidence) = portionConfidenceHints()
+            contextPayload["volume_confidence"] = volumeConfidence
+            contextPayload["mass_confidence"] = massConfidence
+            if let feedback = personalizationFeedbackContext() {
+                contextPayload["personalization_feedback"] = feedback
+            }
             if let volumeML = transientVolumeML {
                 contextPayload["volume_ml"] = volumeML
             }
@@ -213,13 +237,11 @@ final class PlateAnalysisViewModel: ObservableObject {
                 contextPayload["detected_items"] = buildDetectedItems(
                     from: regions,
                     categories: transientCategories,
-                    imageSize: originalImage.size,
-                    coreMLResult: coreMLResult
+                    imageSize: originalImage.size
                 )
                 contextPayload["segmentation_summary"] = buildSegmentationSummary(
                     from: regions,
-                    imageSize: originalImage.size,
-                    coreMLResult: coreMLResult
+                    imageSize: originalImage.size
                 )
             }
             let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
@@ -288,23 +310,15 @@ final class PlateAnalysisViewModel: ObservableObject {
     private func buildDetectedItems(
         from regions: [ImagePreprocessor.Result],
         categories: [String],
-        imageSize: CGSize,
-        coreMLResult: EnhancedFoodAnalysisResult?
+        imageSize: CGSize
     ) -> [[String: Any]] {
         let imageArea = max(1.0, imageSize.width * imageSize.height)
-        let fallbackLabel = coreMLResult?.classification?.label ?? "food"
+        let fallbackLabel = "food"
         return regions.enumerated().map { idx, region in
             let label = idx < categories.count ? categories[idx] : "\(fallbackLabel)_region_\(idx + 1)"
             let bbox = region.boundingBox
             let areaRatio = min(1.0, max(0.0, (bbox.width * bbox.height) / imageArea))
-            let regionConfidence: Float? = {
-                guard let detectedRegions = coreMLResult?.segmentation?.detectedRegions,
-                      idx >= 0, idx < detectedRegions.count else {
-                    return nil
-                }
-                return detectedRegions[idx].confidence
-            }()
-            let confidence = regionConfidence ?? region.confidence
+            let confidence = region.confidence
             return [
                 "name": label,
                 "confidence": confidence,
@@ -322,33 +336,8 @@ final class PlateAnalysisViewModel: ObservableObject {
 
     private func buildSegmentationSummary(
         from regions: [ImagePreprocessor.Result],
-        imageSize: CGSize,
-        coreMLResult: EnhancedFoodAnalysisResult?
+        imageSize: CGSize
     ) -> [String: Any] {
-        if let segmentation = coreMLResult?.segmentation {
-            let imageArea = max(1.0, segmentation.imageSize.width * segmentation.imageSize.height)
-            let foodCoverage = min(1.0, max(0.0, Double(segmentation.totalFoodPixels) / imageArea))
-            let plateCoverage: Double = {
-                guard !segmentation.detectedRegions.isEmpty else { return foodCoverage }
-                let coveredArea = segmentation.detectedRegions.reduce(CGFloat(0)) { partial, region in
-                    partial + (region.boundingBox.width * region.boundingBox.height)
-                }
-                return min(1.0, max(0.0, coveredArea / imageArea))
-            }()
-            let meanConfidence: Double = {
-                guard !segmentation.detectedRegions.isEmpty else { return 0.0 }
-                return segmentation.detectedRegions
-                    .map { Double($0.confidence) }
-                    .reduce(0.0, +) / Double(segmentation.detectedRegions.count)
-            }()
-            return [
-                "food_coverage": foodCoverage,
-                "plate_coverage": plateCoverage,
-                "region_count": segmentation.detectedRegions.count,
-                "mean_confidence": meanConfidence
-            ]
-        }
-
         let imageArea = max(1.0, imageSize.width * imageSize.height)
         let coveredArea = regions.reduce(CGFloat(0)) { partial, region in
             partial + (region.boundingBox.width * region.boundingBox.height)
@@ -362,6 +351,55 @@ final class PlateAnalysisViewModel: ObservableObject {
             "plate_coverage": foodCoverage,
             "region_count": regions.count,
             "mean_confidence": meanConfidence
+        ]
+    }
+
+    private func currentMealTiming(now: Date = Date()) -> String {
+        let hour = Calendar.current.component(.hour, from: now)
+        switch hour {
+        case 5..<11:
+            return "breakfast"
+        case 11..<15:
+            return "lunch"
+        case 15..<18:
+            return "snack"
+        case 18..<23:
+            return "dinner"
+        default:
+            return "late_night"
+        }
+    }
+
+    private func portionConfidenceHints() -> (Double, Double) {
+        if transientDepthSnapshot != nil, transientVolumeML != nil, transientMassG != nil {
+            return (0.85, 0.80)
+        }
+        if transientVolumeML != nil || transientMassG != nil {
+            return (0.55, 0.50)
+        }
+        return (0.25, 0.25)
+    }
+
+    private func stableClientID() -> String {
+        let key = "plateAnalysis.clientID"
+        if let existing = UserDefaults.standard.string(forKey: key), !existing.isEmpty {
+            return existing
+        }
+        let generated = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        UserDefaults.standard.set(generated, forKey: key)
+        return generated
+    }
+
+    private func personalizationFeedbackContext() -> [String: Any]? {
+        let defaults = UserDefaults.standard
+        let followed = defaults.stringArray(forKey: "plateAnalysis.followedActions") ?? []
+        let usefulness = defaults.dictionary(forKey: "plateAnalysis.usefulnessByType") as? [String: Double] ?? [:]
+        if followed.isEmpty && usefulness.isEmpty {
+            return nil
+        }
+        return [
+            "followed_actions": followed,
+            "usefulness_by_type": usefulness
         ]
     }
 
