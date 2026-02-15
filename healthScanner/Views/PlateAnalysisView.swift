@@ -76,8 +76,9 @@ struct PlateAnalysisView: View {
             }
         }
         .fullScreenCover(isPresented: $showingCamera) {
-            EnhancedCameraPreviewView { image in
-                self.viewModel.setTransientScanMetrics(volumeML: nil, massG: nil)
+            EnhancedCameraPreviewView { image, volumeML, massG, depthSnapshot in
+                self.viewModel.setTransientScanMetrics(volumeML: volumeML, massG: massG)
+                self.viewModel.setTransientDepthSnapshot(depthSnapshot)
                 self.selectedImage = image
                 if enhancePhoto {
                     let vibrance: CGFloat

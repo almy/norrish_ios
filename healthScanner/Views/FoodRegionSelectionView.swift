@@ -16,6 +16,12 @@ struct FoodRegionSelectionView: View {
     @State private var lastMagnification: CGFloat = 1.0
     @State private var photoLabel: String = "—"
     @State private var photoConfidence: Float = 0
+    @State private var activeRegionID: UUID?
+    @State private var baselineSelectedAreaPx: CGFloat = 0
+    @State private var baselineVolumeML: Float?
+    @State private var baselineMassG: Float?
+    @State private var recalcTask: Task<Void, Never>?
+    @State private var recalcGeneration: Int = 0
 
     struct EditableRegion: Identifiable {
         let id = UUID()
@@ -26,7 +32,7 @@ struct FoodRegionSelectionView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        ScrollView(showsIndicators: false) {
             VStack(spacing: 16) {
                 titleHeader
 
@@ -39,20 +45,24 @@ struct FoodRegionSelectionView: View {
                 }
 
                 infoPanel
-
                 regionDetailCard
-
-                Spacer(minLength: 0)
             }
             .padding(.horizontal, 20)
             .padding(.top, 24)
-            .background(Color.nordicBone.ignoresSafeArea())
-            .onAppear {
-                detect()
-                analyzePhotoLabel()
-            }
-
+            .padding(.bottom, 24)
+        }
+        .background(Color.nordicBone.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             bottomBar
+        }
+        .onAppear {
+            baselineVolumeML = viewModel.transientVolumeML
+            baselineMassG = viewModel.transientMassG
+            detect()
+            analyzePhotoLabel()
+        }
+        .onChange(of: regionsFingerprint) { _, _ in
+            scheduleMetadataRefresh()
         }
     }
 }
@@ -82,7 +92,10 @@ private extension FoodRegionSelectionView {
                             RegionOverlay(rect: viewRect, color: .momentumAmber, selected: region.isSelected)
                                 .gesture(dragGesture(for: $region, fittedSize: fitted, origin: origin))
                                 .simultaneousGesture(magnifyGesture(for: $region))
-                                .onTapGesture { region.isSelected.toggle() }
+                                .onTapGesture {
+                                    activeRegionID = region.id
+                                    region.isSelected.toggle()
+                                }
                         }
                     }
             }
@@ -169,7 +182,26 @@ private extension FoodRegionSelectionView {
                                 area,
                                 pct))
         }
+        if let active = activeRegion {
+            let activeArea = Int(active.rect.width * active.rect.height)
+            let activePct = Int(Double(activeArea) / Double(imageArea) * 100)
+            lines.append(String(format: "active_region_conf: %.2f", active.confidence))
+            lines.append("active_region_selected: \(active.isSelected ? "yes" : "no")")
+            lines.append("active_region_area_px: \(activeArea) (\(activePct)%)")
+            lines.append("active_region_size_px: \(Int(active.rect.width))x\(Int(active.rect.height))")
+        }
         return lines
+    }
+
+    var regionsFingerprint: String {
+        editableRegions.map { region in
+            let x = Int(region.rect.origin.x.rounded())
+            let y = Int(region.rect.origin.y.rounded())
+            let w = Int(region.rect.size.width.rounded())
+            let h = Int(region.rect.size.height.rounded())
+            return "\(region.id.uuidString.prefix(6)):\(x),\(y),\(w),\(h),\(region.isSelected ? 1 : 0)"
+        }
+        .joined(separator: "|")
     }
 
     func formatMetric(_ value: Float?) -> String {
@@ -289,20 +321,22 @@ private extension FoodRegionSelectionView {
     }
 
     var currentConfidence: Float {
-        editableRegions.first?.confidence ?? 0
+        activeRegion?.confidence ?? editableRegions.first?.confidence ?? 0
     }
 
     var toggle: some View {
-        Toggle("", isOn: bindingForFirstRegion)
+        Toggle("", isOn: bindingForActiveRegion)
             .labelsHidden()
             .toggleStyle(FRPillToggleStyle(onColor: .mossInsight))
     }
 
-    var bindingForFirstRegion: Binding<Bool> {
+    var bindingForActiveRegion: Binding<Bool> {
         Binding(
-            get: { editableRegions.first?.isSelected ?? false },
+            get: { activeRegion?.isSelected ?? editableRegions.first?.isSelected ?? false },
             set: { newValue in
-                if !editableRegions.isEmpty {
+                if let idx = activeRegionIndex {
+                    editableRegions[idx].isSelected = newValue
+                } else if !editableRegions.isEmpty {
                     editableRegions[0].isSelected = newValue
                 }
             }
@@ -321,8 +355,11 @@ private extension FoodRegionSelectionView {
     }
 
     func adjustFirstRegion(scale: CGFloat) {
-        guard !editableRegions.isEmpty else { return }
-        resize(&editableRegions[0], scale: scale)
+        if let idx = activeRegionIndex {
+            resize(&editableRegions[idx], scale: scale)
+        } else if !editableRegions.isEmpty {
+            resize(&editableRegions[0], scale: scale)
+        }
     }
 
     func detect() {
@@ -333,6 +370,9 @@ private extension FoodRegionSelectionView {
             self.editableRegions = results.enumerated().map { idx, r in
                 EditableRegion(rect: r.boundingBox, confidence: r.confidence, isSelected: true, color: colors[idx % colors.count])
             }
+            self.activeRegionID = self.editableRegions.first?.id
+            self.baselineSelectedAreaPx = max(1, self.editableRegions.reduce(0) { $0 + ($1.rect.width * $1.rect.height) })
+            self.scheduleMetadataRefresh()
             isLoading = false
         }
     }
@@ -372,6 +412,7 @@ private extension FoodRegionSelectionView {
         let regionID = region.wrappedValue.id
         return DragGesture()
             .onChanged { value in
+                activeRegionID = regionID
                 if dragStartRects[regionID] == nil {
                     dragStartRects[regionID] = region.wrappedValue.rect
                 }
@@ -389,8 +430,10 @@ private extension FoodRegionSelectionView {
     }
 
     func magnifyGesture(for region: Binding<EditableRegion>) -> some Gesture {
-        MagnificationGesture()
+        let regionID = region.wrappedValue.id
+        return MagnificationGesture()
             .onChanged { value in
+                activeRegionID = regionID
                 let delta = value / max(0.001, lastMagnification)
                 lastMagnification = value
                 var updated = region.wrappedValue
@@ -433,6 +476,98 @@ private extension FoodRegionSelectionView {
         let sx = imageSize.width / fittedSize.width
         let sy = imageSize.height / fittedSize.height
         return CGSize(width: delta.width * sx, height: delta.height * sy)
+    }
+
+    func scheduleMetadataRefresh() {
+        recalcGeneration += 1
+        let generation = recalcGeneration
+        let targetRect = activeRegion?.rect
+        let selectedRects = editableRegions.filter { $0.isSelected }.map { $0.rect }
+        let depthSnapshot = viewModel.transientDepthSnapshot
+        let fallbackBaseVolume = baselineVolumeML ?? viewModel.transientVolumeML
+        let fallbackBaseMass = baselineMassG ?? viewModel.transientMassG
+        let fallbackReferenceArea = max(1, baselineSelectedAreaPx)
+        let currentSelectedArea = editableRegions
+            .filter { $0.isSelected }
+            .reduce(CGFloat(0)) { $0 + ($1.rect.width * $1.rect.height) }
+
+        recalcTask?.cancel()
+        recalcTask = Task {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled else { return }
+            await refreshLabelForCurrentSelection(targetRect: targetRect)
+
+            if let depthSnapshot, !selectedRects.isEmpty {
+                let metrics = await computeDepthMetricsAsync(
+                    snapshot: depthSnapshot,
+                    selectedRects: selectedRects,
+                    label: photoLabel
+                )
+                if recalcGeneration == generation {
+                    viewModel.setTransientScanMetrics(volumeML: metrics.volumeML, massG: metrics.massG)
+                }
+            } else if let baseVolume = fallbackBaseVolume, let baseMass = fallbackBaseMass {
+                let ratio = max(0, min(3, currentSelectedArea / fallbackReferenceArea))
+                let scaledVolume = baseVolume * Float(ratio)
+                let scaledMass = baseMass * Float(ratio)
+                if recalcGeneration == generation {
+                    viewModel.setTransientScanMetrics(volumeML: scaledVolume, massG: scaledMass)
+                }
+            }
+        }
+    }
+
+    func computeDepthMetricsAsync(snapshot: DepthFrameSnapshot,
+                                  selectedRects: [CGRect],
+                                  label: String) async -> (volumeML: Float?, massG: Float?) {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let metrics = EnhancedCaptureMetricsEstimator.compute(
+                    snapshot: snapshot,
+                    selectedRects: selectedRects,
+                    label: label
+                )
+                continuation.resume(returning: metrics)
+            }
+        }
+    }
+
+    @MainActor
+    func refreshLabelForCurrentSelection(targetRect: CGRect?) async {
+        guard let target = targetRect, let cropped = crop(image: image, to: target) else { return }
+        guard let cg = cropped.cgImage else { return }
+
+        let result = await classifyImage(cgImage: cg, orientation: cgImagePropertyOrientation(from: cropped.imageOrientation))
+        guard !Task.isCancelled else { return }
+        photoLabel = result.label
+        photoConfidence = result.confidence
+    }
+
+    func classifyImage(cgImage: CGImage, orientation: CGImagePropertyOrientation) async -> (label: String, confidence: Float) {
+        await withCheckedContinuation { continuation in
+            let request = VNClassifyImageRequest { req, _ in
+                let top = (req.results as? [VNClassificationObservation])?.first
+                continuation.resume(returning: (top?.identifier ?? "—", top?.confidence ?? 0))
+            }
+            let handler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    try handler.perform([request])
+                } catch {
+                    continuation.resume(returning: ("—", 0))
+                }
+            }
+        }
+    }
+
+    var activeRegionIndex: Int? {
+        guard let activeRegionID else { return nil }
+        return editableRegions.firstIndex(where: { $0.id == activeRegionID })
+    }
+
+    var activeRegion: EditableRegion? {
+        guard let idx = activeRegionIndex else { return nil }
+        return editableRegions[idx]
     }
 }
 

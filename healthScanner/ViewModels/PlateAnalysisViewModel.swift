@@ -4,6 +4,7 @@ import SwiftData
 import UIKit
 import Vision
 import CoreGraphics
+import AVFoundation
 
 protocol AggregatorServicing {
     func upsertDaily(for date: Date, modelContext: ModelContext) async
@@ -27,6 +28,7 @@ final class PlateAnalysisViewModel: ObservableObject {
     @Published var transientCategories: [String] = []
     @Published var transientVolumeML: Float?
     @Published var transientMassG: Float?
+    @Published var transientDepthSnapshot: DepthFrameSnapshot?
 
     // Allows UI to pass lightweight, non-persistent category hints from on-device classification
     func setTransientCategories(_ categories: [String]) {
@@ -37,6 +39,10 @@ final class PlateAnalysisViewModel: ObservableObject {
     func setTransientScanMetrics(volumeML: Float?, massG: Float?) {
         self.transientVolumeML = volumeML
         self.transientMassG = massG
+    }
+
+    func setTransientDepthSnapshot(_ snapshot: DepthFrameSnapshot?) {
+        self.transientDepthSnapshot = snapshot
     }
 
     private var currentHistory: PlateAnalysisHistory?
