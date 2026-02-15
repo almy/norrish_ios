@@ -88,18 +88,23 @@ struct OpenAIResponsesTextResponse: Decodable {
 // MARK: - Service
 
 final class OpenAIService {
+    private static let defaultBaseURL = URL(string: "https://api.openai.com/v1") ?? URL(fileURLWithPath: "/")
+    private let maxRetryAttempts = 3
+
     private let apiKey: String
     private let baseURL: URL
     private let modelName: String   // overridable via OPENAI_MODEL
+    private let shouldLogVerbose: Bool
 
     init(
         apiKey: String = ProcessInfo.processInfo.environment["OPENAI_API_KEY"]
             ?? (Bundle.main.object(forInfoDictionaryKey: "OPENAI_API_KEY") as? String ?? ""),
-        baseURL: URL = URL(string: "https://api.openai.com/v1")!,
+        baseURL: URL? = nil,
         defaultModel: OpenAIModel = .gpt4oMini
     ) {
         self.apiKey = apiKey
-        self.baseURL = baseURL
+        self.baseURL = baseURL ?? OpenAIService.defaultBaseURL
+        self.shouldLogVerbose = ProcessInfo.processInfo.environment["OPENAI_DEBUG"] == "1"
         if let override = ProcessInfo.processInfo.environment["OPENAI_MODEL"], !override.isEmpty {
             self.modelName = override
         } else if let override = Bundle.main.object(forInfoDictionaryKey: "OPENAI_MODEL") as? String, !override.isEmpty {
@@ -177,12 +182,7 @@ final class OpenAIService {
         let metadata = renderMetadata(context)
         let fullPrompt = prompt + "\n\n" + metadata
 
-        print("📤 SENDING TO OPENAI - NUTRITION REQUEST:")
-        print("Model: \(modelName)")
-        print("Prompt: \(prompt)")
-        print("Metadata: \(metadata)")
-        print("Image size: \(image.size)")
-        print("---")
+        logRequestStart(kind: "NUTRITION", image: image)
 
         // Build a single user message that contains both TEXT and IMAGE
         let userMessage: [String: Any] = [
@@ -222,12 +222,7 @@ final class OpenAIService {
         let metadata = renderMetadata(context)
         let fullPrompt = prompt + "\n\n" + metadata
 
-        print("📤 SENDING TO OPENAI - TEXT REQUEST:")
-        print("Model: \(modelName)")
-        print("Prompt: \(prompt)")
-        print("Metadata: \(metadata)")
-        print("Image size: \(image.size)")
-        print("---")
+        logRequestStart(kind: "TEXT", image: image)
 
         let userMessage: [String: Any] = [
             "role": "user",
@@ -261,20 +256,77 @@ final class OpenAIService {
         req.timeoutInterval = 120
         req.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
 
-        // Log the JSON payload being sent (sanitized to remove base64 image)
-        if let pretty = try? JSONSerialization.data(withJSONObject: redactBody(body), options: [.prettyPrinted]),
+        // Optional verbose request logs for debugging only.
+        if shouldLogVerbose,
+           let pretty = try? JSONSerialization.data(withJSONObject: redactBody(body), options: [.prettyPrinted]),
            let s = String(data: pretty, encoding: .utf8) {
-            print("📤 JSON payload (sanitized):")
-            print("🔵 OpenAI Request (\(path)):\n\(s)")
+            AppLog.debug(AppLog.network, "📤 JSON payload (sanitized):")
+            AppLog.debug(AppLog.network, "🔵 OpenAI Request (\(path)):\n\(s)")
         }
 
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
-        guard let http = resp as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
-            let txt = String(data: data, encoding: .utf8) ?? "<non-utf8>"
-            throw NSError(domain: "OpenAIService", code: status, userInfo: [NSLocalizedDescriptionKey: "OpenAI error \(status): \(txt)"])
+        for attempt in 1...maxRetryAttempts {
+            do {
+                let (data, resp) = try await URLSession.shared.data(for: req)
+                let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
+                guard let http = resp as? HTTPURLResponse else {
+                    throw NSError(domain: "OpenAIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid response from OpenAI"])
+                }
+                if 200..<300 ~= http.statusCode {
+                    return data
+                }
+
+                let txt = String(data: data, encoding: .utf8) ?? "<non-utf8>"
+                let err = NSError(domain: "OpenAIService", code: status, userInfo: [NSLocalizedDescriptionKey: "OpenAI error \(status): \(txt)"])
+                guard attempt < maxRetryAttempts, shouldRetry(statusCode: status) else {
+                    throw err
+                }
+
+                let delay = retryDelaySeconds(forAttempt: attempt)
+                AppLog.debug(AppLog.network, "Retrying OpenAI request after HTTP \(status) in \(String(format: "%.2f", delay))s (attempt \(attempt + 1)/\(maxRetryAttempts))")
+                try await sleepForRetry(seconds: delay)
+            } catch {
+                guard attempt < maxRetryAttempts, shouldRetry(error: error) else {
+                    throw error
+                }
+                let delay = retryDelaySeconds(forAttempt: attempt)
+                AppLog.debug(AppLog.network, "Retrying OpenAI request after transport error in \(String(format: "%.2f", delay))s (attempt \(attempt + 1)/\(maxRetryAttempts)): \(error.localizedDescription)")
+                try await sleepForRetry(seconds: delay)
+            }
         }
-        return data
+        throw NSError(domain: "OpenAIService", code: -1, userInfo: [NSLocalizedDescriptionKey: "OpenAI request failed after retries"])
+    }
+
+    private func shouldRetry(statusCode: Int) -> Bool {
+        statusCode == 408 || statusCode == 429 || (500...599).contains(statusCode)
+    }
+
+    private func shouldRetry(error: Error) -> Bool {
+        guard let urlError = error as? URLError else { return false }
+        switch urlError.code {
+        case .timedOut, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .notConnectedToInternet, .dnsLookupFailed:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func retryDelaySeconds(forAttempt attempt: Int) -> Double {
+        let base = min(pow(2.0, Double(max(0, attempt - 1))), 8.0)
+        let jitter = Double.random(in: 0...0.25)
+        return base + jitter
+    }
+
+    private func sleepForRetry(seconds: Double) async throws {
+        try Task.checkCancellation()
+        try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+
+    private func logRequestStart(kind: String, image: UIImage) {
+        guard shouldLogVerbose else { return }
+        AppLog.debug(AppLog.network, "📤 SENDING TO OPENAI - \(kind) REQUEST:")
+        AppLog.debug(AppLog.network, "Model: \(modelName)")
+        AppLog.debug(AppLog.network, "Image size: \(image.size)")
+        AppLog.debug(AppLog.network, "---")
     }
 
     // MARK: - Prompts
@@ -408,12 +460,15 @@ private func sanitizeJSONText(_ text: String) -> String {
 }
 
 private func redactBody(_ body: [String: Any]) -> [String: Any] {
-    // Remove base64 payload when logging
+    // Remove base64 payload and prompt text when logging
     var copy = body
     if var msgs = copy["messages"] as? [[String: Any]], !msgs.isEmpty {
         var m0 = msgs[0]
         if var content = m0["content"] as? [[String: Any]] {
             for i in 0..<content.count {
+                if content[i]["type"] as? String == "text" {
+                    content[i]["text"] = "[REDACTED]"
+                }
                 if content[i]["type"] as? String == "image_url",
                    var urlObj = content[i]["image_url"] as? [String: String],
                    urlObj["url"]?.hasPrefix("data:image/jpeg;base64,") == true {
@@ -428,4 +483,3 @@ private func redactBody(_ body: [String: Any]) -> [String: Any] {
     }
     return copy
 }
-

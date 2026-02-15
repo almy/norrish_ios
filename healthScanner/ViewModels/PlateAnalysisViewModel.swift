@@ -5,6 +5,18 @@ import UIKit
 import Vision
 import CoreGraphics
 
+protocol AggregatorServicing {
+    func upsertDaily(for date: Date, modelContext: ModelContext) async
+}
+
+extension AggregatorService: AggregatorServicing {}
+
+protocol ImageCacheServicing {
+    func saveImage(_ image: UIImage, forKey key: String)
+}
+
+extension ImageCacheService: ImageCacheServicing {}
+
 @MainActor
 final class PlateAnalysisViewModel: ObservableObject {
     @Published var isAnalyzing = false
@@ -13,23 +25,55 @@ final class PlateAnalysisViewModel: ObservableObject {
     @Published var lastAnalyzedImage: UIImage?
 
     @Published var transientCategories: [String] = []
+    @Published var transientVolumeML: Float?
+    @Published var transientMassG: Float?
 
     // Allows UI to pass lightweight, non-persistent category hints from on-device classification
     func setTransientCategories(_ categories: [String]) {
         self.transientCategories = categories
     }
 
+    // Allows UI to pass lightweight, non-persistent scan metrics from depth-based scanners.
+    func setTransientScanMetrics(volumeML: Float?, massG: Float?) {
+        self.transientVolumeML = volumeML
+        self.transientMassG = massG
+    }
+
     private var currentHistory: PlateAnalysisHistory?
     private let lastAnalysisKey = "lastPlateAnalysis"
+    private let lastAnalysisImagePathKey = "lastPlateAnalysis_imagePath"
+    private let backendClient: PlateScanAPIClient
+    private let aggregatorService: AggregatorServicing
+    private let imageCacheService: ImageCacheServicing
+
+    init(
+        backendClient: PlateScanAPIClient = BackendAPIClient.shared,
+        aggregatorService: AggregatorServicing = AggregatorService.shared,
+        imageCacheService: ImageCacheServicing = ImageCacheService.shared
+    ) {
+        self.backendClient = backendClient
+        self.aggregatorService = aggregatorService
+        self.imageCacheService = imageCacheService
+    }
 
     func loadLastAnalysisFromDefaults() {
         if let data = UserDefaults.standard.data(forKey: lastAnalysisKey),
            let decoded = try? JSONDecoder().decode(PlateAnalysis.self, from: data) {
             lastAnalysisResult = decoded
         }
-        if let imgData = UserDefaults.standard.data(forKey: "\(lastAnalysisKey)_image"),
+        if let path = UserDefaults.standard.string(forKey: lastAnalysisImagePathKey),
+           let imgData = try? Data(contentsOf: URL(fileURLWithPath: path)),
            let img = UIImage(data: imgData) {
             lastAnalyzedImage = img
+            return
+        }
+
+        // Backward compatibility: migrate legacy image bytes from UserDefaults to file storage.
+        if let legacyData = UserDefaults.standard.data(forKey: "\(lastAnalysisKey)_image"),
+           let img = UIImage(data: legacyData) {
+            lastAnalyzedImage = img
+            persistLastAnalyzedImageToDisk(img)
+            UserDefaults.standard.removeObject(forKey: "\(lastAnalysisKey)_image")
         }
     }
 
@@ -39,9 +83,10 @@ final class PlateAnalysisViewModel: ObservableObject {
         if let encoded = try? JSONEncoder().encode(analysis) {
             UserDefaults.standard.set(encoded, forKey: lastAnalysisKey)
         }
-        if let data = image?.jpegData(compressionQuality: 0.4) {
-            UserDefaults.standard.set(data, forKey: "\(lastAnalysisKey)_image")
+        if let image {
+            persistLastAnalyzedImageToDisk(image)
         }
+        UserDefaults.standard.removeObject(forKey: "\(lastAnalysisKey)_image")
     }
 
     @discardableResult
@@ -76,12 +121,14 @@ final class PlateAnalysisViewModel: ObservableObject {
         modelContext.insert(history)
         
         // Event-driven aggregate update for the plate's analysis day
-        Task {
-            await AggregatorService.shared.upsertDaily(for: history.analyzedDate, modelContext: modelContext)
+        let analyzedDate = history.analyzedDate
+        let aggregatorService = self.aggregatorService
+        Task { @MainActor [analyzedDate, modelContext, aggregatorService] in
+            await aggregatorService.upsertDaily(for: analyzedDate, modelContext: modelContext)
         }
         
         if let img = image {
-            ImageCacheService.shared.saveImage(img, forKey: history.cacheKey)
+            imageCacheService.saveImage(img, forKey: history.cacheKey)
         }
         currentHistory = history
         return history
@@ -131,6 +178,12 @@ final class PlateAnalysisViewModel: ObservableObject {
                 "device": UIDevice.current.model,
                 "method": "Image Analysis"
             ]
+            if let volumeML = transientVolumeML {
+                contextPayload["volume_ml"] = volumeML
+            }
+            if let massG = transientMassG {
+                contextPayload["mass_g_est"] = massG
+            }
             if let regions {
                 let boxes: [[String: Int]] = regions.map { r in
                     [
@@ -151,8 +204,7 @@ final class PlateAnalysisViewModel: ObservableObject {
             let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
             let contextJSON = String(data: contextData, encoding: .utf8)
 
-            let response: BackendPlateScanResponse = try await BackendAPIClient.shared.postMultipart(
-                endpoint: BackendAPIClient.shared.endpoints.scanPlateAI,
+            let response = try await backendClient.postPlateScanAI(
                 imageData: imageData,
                 contextJSON: contextJSON
             )
@@ -274,6 +326,12 @@ final class PlateAnalysisViewModel: ObservableObject {
         }
         history.ingredientsData = (try? JSONEncoder().encode(updatedIngredients)) ?? Data()
         history.insightsData = (try? JSONEncoder().encode(updatedInsights)) ?? Data()
+        history.ingredientEntities = updatedIngredients.enumerated().map { idx, item in
+            PlateIngredientEntity(name: item.name, amount: item.amount, order: idx)
+        }
+        history.insightEntities = updatedInsights.enumerated().map { idx, item in
+            PlateInsightEntity(typeRawValue: item.type.rawValue, title: item.title, detail: item.description, order: idx)
+        }
         if let micronutrients = analysis.micronutrients {
             history.microsData = try? JSONEncoder().encode(micronutrients)
         }
@@ -281,5 +339,23 @@ final class PlateAnalysisViewModel: ObservableObject {
             history.connectionsData = try? JSONEncoder().encode(connections)
         }
     }
-}
 
+    private var lastAnalysisImageURL: URL {
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("LastAnalysis", isDirectory: true)
+        return cacheDir.appendingPathComponent("last-analysis.jpg")
+    }
+
+    private func persistLastAnalyzedImageToDisk(_ image: UIImage) {
+        guard let data = image.jpegData(compressionQuality: 0.4) else { return }
+        let url = lastAnalysisImageURL
+        let dir = url.deletingLastPathComponent()
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: nil)
+            try data.write(to: url, options: .atomic)
+            UserDefaults.standard.set(url.path, forKey: lastAnalysisImagePathKey)
+        } catch {
+            AppLog.error(AppLog.storage, "Failed to persist last analysis image: \(error.localizedDescription)")
+        }
+    }
+}

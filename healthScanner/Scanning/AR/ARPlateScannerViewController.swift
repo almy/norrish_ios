@@ -139,19 +139,19 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
 
         // Check if AR World Tracking is supported at all
         guard ARWorldTrackingConfiguration.isSupported else {
-            print("ARWorldTracking not supported - presenting fallback")
+            AppLog.debug(AppLog.scanner, "ARWorldTracking not supported - presenting fallback")
             presentFallbackScanner()
             return
         }
 
         // If sceneDepth is available, run LiDAR path; otherwise present dual‑camera fallback
         if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-            print("LiDAR device detected - using scene depth")
+            AppLog.debug(AppLog.scanner, "LiDAR device detected - using scene depth")
             config.frameSemantics.insert(.sceneDepth)
             sceneView.session.run(config, options: [.resetTracking, .removeExistingAnchors])
             hud.setStatus("Move slowly around the plate…")
         } else {
-            print("No sceneDepth — presenting DualCameraPlateScannerViewController")
+            AppLog.debug(AppLog.scanner, "No sceneDepth — presenting DualCameraPlateScannerViewController")
             DispatchQueue.main.async { [weak self] in
                 self?.presentFallbackScanner()
             }
@@ -252,7 +252,7 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
     }
     
     public func session(_ session: ARSession, didFailWithError error: Error) {
-        print("AR Session failed with error: \(error)")
+        AppLog.error(AppLog.scanner, "AR Session failed with error: \(error.localizedDescription)")
         hud.setStatus("AR Error: \(error.localizedDescription)")
         
         // Try to recover or fall back
@@ -263,7 +263,7 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
     
     public func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
         let state = camera.trackingState
-        print("AR Tracking state changed: \(state)")
+        AppLog.debug(AppLog.scanner, "AR Tracking state changed: \(state)")
         
         switch state {
         case .normal:
@@ -283,19 +283,19 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
                 hud.setStatus("Limited tracking: \(reason)")
             }
         case .notAvailable:
-            print("AR tracking not available")
+            AppLog.debug(AppLog.scanner, "AR tracking not available")
             hud.setStatus("AR not available")
             presentFallbackScanner()
         }
     }
     
     public func sessionWasInterrupted(_ session: ARSession) {
-        print("AR Session was interrupted")
+        AppLog.debug(AppLog.scanner, "AR Session was interrupted")
         hud.setStatus("Session interrupted")
     }
     
     public func sessionInterruptionEnded(_ session: ARSession) {
-        print("AR Session interruption ended")
+        AppLog.debug(AppLog.scanner, "AR Session interruption ended")
         hud.setStatus("Resuming AR...")
         // Restart the session
         session.run(session.configuration!, options: [.resetTracking, .removeExistingAnchors])
@@ -378,7 +378,9 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
                 if let mask = (seg.results?.first as? VNPixelBufferObservation)?.pixelBuffer {
                     return makeColoredOverlay(fromMask: mask)
                 }
-            } catch { /* ignore and fall through */ }
+            } catch {
+                AppLog.error(AppLog.scanner, "[LiDAR] Segmentation overlay generation failed, falling back to saliency: \(error.localizedDescription)")
+            }
         }
         let saliency = VNGenerateAttentionBasedSaliencyImageRequest()
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
@@ -388,7 +390,9 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
                let boxes = obs.salientObjects, !boxes.isEmpty {
                 return makeOverlayFromBoxes(boxes: boxes, sourceSize: pixelBufferSize(pixelBuffer))
             }
-        } catch { /* ignore */ }
+        } catch {
+            AppLog.error(AppLog.scanner, "[LiDAR] Saliency overlay generation failed: \(error.localizedDescription)")
+        }
         return nil
     }
 
@@ -440,7 +444,7 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         let (mask, label, conf) = runVision(frame: frame)
         guard let plane = currentPlatePlane else { finishWithFallback(image: cropToOverlay(fullImage)); return }
         let volumeML = integrateVolume(depth: depth, mask: mask, intrinsics: frame.camera.intrinsics, resolution: frame.camera.imageResolution, planeWorld: plane, cameraTransform: frame.camera.transform)
-        print("🟢 [LiDAR] volumeML=\(String(format: "%.1f", volumeML))")
+        AppLog.debug(AppLog.scanner, "🟢 [LiDAR] volumeML=\(String(format: "%.1f", volumeML))")
         let density = DensityDB.density(for: label)
         let mass = max(0, volumeML * density)
         let nut = NutritionDB.estimate(for: label, grams: mass)
@@ -493,7 +497,9 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         do {
             if let seg = segmentationRequest { try handler.perform([seg]); mask = (seg.results?.first as? VNPixelBufferObservation)?.pixelBuffer }
             if let cls = classificationRequest { try handler.perform([cls]); if let top = cls.results?.first as? VNClassificationObservation { label = top.identifier; conf = top.confidence } }
-        } catch { }
+        } catch {
+            AppLog.error(AppLog.scanner, "[LiDAR] Vision pipeline failed: \(error.localizedDescription)")
+        }
         return (mask, label, conf)
     }
 
@@ -584,7 +590,10 @@ private extension UIImage {
     convenience init(pixelBuffer: CVPixelBuffer, orientation: UIImage.Orientation) {
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
         let context = CIContext(options: nil)
-        let cgImage = context.createCGImage(ciImage, from: ciImage.extent)!
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+            self.init()
+            return
+        }
         self.init(cgImage: cgImage, scale: 1.0, orientation: orientation)
     }
 }

@@ -16,10 +16,7 @@ extension UIImage {
     }
 
     func safeJPEGData(compressionQuality: CGFloat = 0.8) -> Data? {
-        guard isValid else {
-            print("⚠️ Invalid UIImage - cannot convert to JPEG")
-            return nil
-        }
+        guard isValid else { return nil }
 
         return self.jpegData(compressionQuality: compressionQuality)
     }
@@ -27,6 +24,11 @@ extension UIImage {
 
 class ImageCacheService: ObservableObject {
     static let shared = ImageCacheService()
+    private let shouldLogVerbose = ProcessInfo.processInfo.environment["IMAGE_CACHE_DEBUG"] == "1"
+    private let maxCacheImageDimension: CGFloat = 1280
+    private let cacheJPEGQuality: CGFloat = 0.75
+    private let maxCacheSizeBytes = 100_000_000 // 100 MB
+    private let maxCacheFileCount = 500
     
     private let fileManager = FileManager.default
     private var cacheDirectory: URL {
@@ -37,9 +39,9 @@ class ImageCacheService: ObservableObject {
         if !fileManager.fileExists(atPath: cacheDir.path) {
             do {
                 try fileManager.createDirectory(at: cacheDir, withIntermediateDirectories: true)
-                print("📁 ImageCacheService: Created cache directory at: \(cacheDir.path)")
+                log("📁 ImageCacheService: Created cache directory at: \(cacheDir.path)")
             } catch {
-                print("❌ ImageCacheService: Failed to create cache directory: \(error)")
+                log("❌ ImageCacheService: Failed to create cache directory: \(error)")
             }
         }
         
@@ -47,9 +49,10 @@ class ImageCacheService: ObservableObject {
     }
     
     private init() {
-        print("🎯 ImageCacheService: Singleton initialized")
-        print("📁 ImageCacheService: Cache directory: \(cacheDirectory.path)")
+        log("🎯 ImageCacheService: Singleton initialized")
+        log("📁 ImageCacheService: Cache directory: \(cacheDirectory.path)")
         setupMemoryWarningHandler()
+        enforceQuota()
     }
 
     private func setupMemoryWarningHandler() {
@@ -62,29 +65,12 @@ class ImageCacheService: ObservableObject {
     }
 
     @objc private func handleMemoryWarning() {
-        print("🧠 Memory warning - clearing image cache")
+        log("🧠 Memory warning - clearing image cache")
         clearOldCacheFiles()
     }
 
     private func clearOldCacheFiles() {
-        let cacheDir = cacheDirectory
-        do {
-            let files = try fileManager.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: [.creationDateKey])
-            let sortedFiles = files.sorted { file1, file2 in
-                let date1 = (try? file1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
-                let date2 = (try? file2.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
-                return date1 < date2
-            }
-
-            // Keep only the 10 most recent files
-            let filesToDelete = Array(sortedFiles.dropLast(10))
-            for file in filesToDelete {
-                try? fileManager.removeItem(at: file)
-                print("🗑️ Deleted old cache file: \(file.lastPathComponent)")
-            }
-        } catch {
-            print("❌ Failed to clean cache directory: \(error)")
-        }
+        enforceQuota(targetSizeBytes: maxCacheSizeBytes / 2, targetFileCount: max(50, maxCacheFileCount / 2))
     }
 
     deinit {
@@ -93,50 +79,54 @@ class ImageCacheService: ObservableObject {
     
     // Save image to local cache
     func saveImage(_ image: UIImage, forKey key: String) {
-        print("💾 ImageCacheService: Attempting to save image for key: \(key)")
+        log("💾 ImageCacheService: Attempting to save image for key: \(key)")
 
         // Validate image first
         guard image.isValid else {
-            print("❌ ImageCacheService: Invalid UIImage (no CGImage or invalid dimensions) for key: \(key)")
+            log("❌ ImageCacheService: Invalid UIImage (no CGImage or invalid dimensions) for key: \(key)")
             return
         }
 
-        guard let imageData = image.safeJPEGData() else {
-            print("❌ ImageCacheService: Failed to convert image to JPEG data for key: \(key)")
+        let preparedImage = downscaledImageIfNeeded(image, maxDimension: maxCacheImageDimension)
+        guard let imageData = preparedImage.safeJPEGData(compressionQuality: cacheJPEGQuality) else {
+            log("❌ ImageCacheService: Failed to convert image to JPEG data for key: \(key)")
             return
         }
         let filename = sanitizeFilename(key) + ".jpg"
         let fileURL = cacheDirectory.appendingPathComponent(filename)
         
         do {
-            try imageData.write(to: fileURL)
-            print("✅ ImageCacheService: Successfully saved image to: \(fileURL.path)")
-            print("📊 ImageCacheService: Image size: \(imageData.count) bytes")
+            try imageData.write(to: fileURL, options: .atomic)
+            log("✅ ImageCacheService: Successfully saved image to: \(fileURL.path)")
+            log("📊 ImageCacheService: Image size: \(imageData.count) bytes, dimensions: \(preparedImage.size)")
+            touchAccessDate(for: fileURL)
+            enforceQuota()
         } catch {
-            print("❌ ImageCacheService: Failed to save image: \(error)")
+            log("❌ ImageCacheService: Failed to save image: \(error)")
         }
     }
     
     // Load image from local cache
     func loadImage(forKey key: String) -> UIImage? {
-        print("🔍 ImageCacheService: Attempting to load cached image for key: \(key)")
+        log("🔍 ImageCacheService: Attempting to load cached image for key: \(key)")
         let filename = sanitizeFilename(key) + ".jpg"
         let fileURL = cacheDirectory.appendingPathComponent(filename)
         
-        print("📂 ImageCacheService: Looking for file at: \(fileURL.path)")
+        log("📂 ImageCacheService: Looking for file at: \(fileURL.path)")
         
         guard let imageData = try? Data(contentsOf: fileURL) else {
-            print("❌ ImageCacheService: No cached image found for key: \(key)")
+            log("❌ ImageCacheService: No cached image found for key: \(key)")
             return nil
         }
         
         guard let image = UIImage(data: imageData) else {
-            print("❌ ImageCacheService: Failed to create UIImage from cached data for key: \(key)")
+            log("❌ ImageCacheService: Failed to create UIImage from cached data for key: \(key)")
             return nil
         }
-        
-        print("✅ ImageCacheService: Successfully loaded cached image for key: \(key)")
-        print("📊 ImageCacheService: Loaded image size: \(imageData.count) bytes, dimensions: \(image.size)")
+        touchAccessDate(for: fileURL)
+
+        log("✅ ImageCacheService: Successfully loaded cached image for key: \(key)")
+        log("📊 ImageCacheService: Loaded image size: \(imageData.count) bytes, dimensions: \(image.size)")
         return image
     }
     
@@ -145,63 +135,63 @@ class ImageCacheService: ObservableObject {
         let filename = sanitizeFilename(key) + ".jpg"
         let fileURL = cacheDirectory.appendingPathComponent(filename)
         let exists = fileManager.fileExists(atPath: fileURL.path)
-        print("🔍 ImageCacheService: Image exists check for key '\(key)': \(exists ? "YES" : "NO")")
+        log("🔍 ImageCacheService: Image exists check for key '\(key)': \(exists ? "YES" : "NO")")
         return exists
     }
     
     // Download and cache image from URL
     func downloadAndCacheImage(from urlString: String, forKey key: String) async -> UIImage? {
-        print("🌐 ImageCacheService: Starting download for URL: \(urlString), key: \(key)")
+        log("🌐 ImageCacheService: Starting download for URL: \(urlString), key: \(key)")
         
         // Check if image already exists in cache
         if let cachedImage = loadImage(forKey: key) {
-            print("♻️ ImageCacheService: Found existing cached image for key: \(key)")
+            log("♻️ ImageCacheService: Found existing cached image for key: \(key)")
             return cachedImage
         }
         
-        print("📥 ImageCacheService: No cached image found, downloading from: \(urlString)")
+        log("📥 ImageCacheService: No cached image found, downloading from: \(urlString)")
         
         // Download image from URL
         guard let url = URL(string: urlString) else {
-            print("❌ ImageCacheService: Invalid URL: \(urlString)")
+            log("❌ ImageCacheService: Invalid URL: \(urlString)")
             return nil
         }
         
         do {
-            print("🌐 ImageCacheService: Making network request...")
+            log("🌐 ImageCacheService: Making network request...")
             let (data, response) = try await URLSession.shared.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("📡 ImageCacheService: HTTP response status: \(httpResponse.statusCode)")
-                print("📊 ImageCacheService: Downloaded data size: \(data.count) bytes")
+                log("📡 ImageCacheService: HTTP response status: \(httpResponse.statusCode)")
+                log("📊 ImageCacheService: Downloaded data size: \(data.count) bytes")
             }
             
             guard let image = UIImage(data: data) else {
-                print("❌ ImageCacheService: Failed to create UIImage from downloaded data")
+                log("❌ ImageCacheService: Failed to create UIImage from downloaded data")
                 return nil
             }
             
-            print("✅ ImageCacheService: Successfully created UIImage from downloaded data")
-            print("📊 ImageCacheService: Image dimensions: \(image.size)")
+            log("✅ ImageCacheService: Successfully created UIImage from downloaded data")
+            log("📊 ImageCacheService: Image dimensions: \(image.size)")
             
             // Save to cache
             saveImage(image, forKey: key)
             
             return image
         } catch {
-            print("❌ ImageCacheService: Download failed with error: \(error)")
+            log("❌ ImageCacheService: Download failed with error: \(error)")
             return nil
         }
     }
     
     // Clean up old cached images (optional)
     func clearCache() {
-        print("🗑️ ImageCacheService: Clearing entire cache...")
+        log("🗑️ ImageCacheService: Clearing entire cache...")
         do {
             try fileManager.removeItem(at: cacheDirectory)
-            print("✅ ImageCacheService: Cache cleared successfully")
+            log("✅ ImageCacheService: Cache cleared successfully")
         } catch {
-            print("❌ ImageCacheService: Failed to clear cache: \(error)")
+            log("❌ ImageCacheService: Failed to clear cache: \(error)")
         }
     }
     
@@ -222,7 +212,97 @@ class ImageCacheService: ObservableObject {
     
     private func sanitizeFilename(_ filename: String) -> String {
         let sanitized = filename.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "_", options: .regularExpression)
-        print("🔧 ImageCacheService: Sanitized filename '\(filename)' to '\(sanitized)'")
+        log("🔧 ImageCacheService: Sanitized filename '\(filename)' to '\(sanitized)'")
         return sanitized
+    }
+
+    private func downscaledImageIfNeeded(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
+        let size = image.size
+        let longestSide = max(size.width, size.height)
+        guard longestSide > maxDimension, maxDimension > 0 else { return image }
+
+        let scale = maxDimension / longestSide
+        let targetSize = CGSize(width: size.width * scale, height: size.height * scale)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = false
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+    }
+
+    private struct CacheFileEntry {
+        let url: URL
+        let sizeBytes: Int
+        let lastAccessDate: Date
+    }
+
+    private func enforceQuota(targetSizeBytes: Int? = nil, targetFileCount: Int? = nil) {
+        let targetSize = targetSizeBytes ?? maxCacheSizeBytes
+        let targetCount = targetFileCount ?? maxCacheFileCount
+        let resourceKeys: Set<URLResourceKey> = [
+            .isRegularFileKey,
+            .fileSizeKey,
+            .contentAccessDateKey,
+            .contentModificationDateKey,
+            .creationDateKey
+        ]
+
+        do {
+            let fileURLs = try fileManager.contentsOfDirectory(
+                at: cacheDirectory,
+                includingPropertiesForKeys: Array(resourceKeys),
+                options: [.skipsHiddenFiles]
+            )
+
+            var entries: [CacheFileEntry] = []
+            entries.reserveCapacity(fileURLs.count)
+
+            for fileURL in fileURLs {
+                let values = try fileURL.resourceValues(forKeys: resourceKeys)
+                guard values.isRegularFile == true else { continue }
+                let size = values.fileSize ?? 0
+                let lastAccess = values.contentAccessDate ?? values.contentModificationDate ?? values.creationDate ?? Date.distantPast
+                entries.append(CacheFileEntry(url: fileURL, sizeBytes: size, lastAccessDate: lastAccess))
+            }
+
+            var currentSize = entries.reduce(0) { $0 + $1.sizeBytes }
+            if currentSize <= targetSize && entries.count <= targetCount {
+                return
+            }
+
+            // Most recently used first, eviction from the tail (least recently used).
+            entries.sort { $0.lastAccessDate > $1.lastAccessDate }
+
+            while currentSize > targetSize || entries.count > targetCount {
+                guard let victim = entries.popLast() else { break }
+                do {
+                    try fileManager.removeItem(at: victim.url)
+                    currentSize -= victim.sizeBytes
+                    log("🗑️ Evicted cached image: \(victim.url.lastPathComponent)")
+                } catch {
+                    log("❌ Failed to evict cached image \(victim.url.lastPathComponent): \(error)")
+                }
+            }
+        } catch {
+            log("❌ Failed enforcing image cache quota: \(error)")
+        }
+    }
+
+    private func touchAccessDate(for fileURL: URL) {
+        var values = URLResourceValues()
+        values.contentAccessDate = Date()
+        do {
+            var mutableFileURL = fileURL
+            try mutableFileURL.setResourceValues(values)
+        } catch {
+            log("❌ Failed to update access date for \(fileURL.lastPathComponent): \(error)")
+        }
+    }
+
+    private func log(_ message: @autoclosure () -> String) {
+        guard shouldLogVerbose else { return }
+        AppLog.debug(AppLog.storage, message())
     }
 }

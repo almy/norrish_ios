@@ -27,6 +27,25 @@ enum AppConfig {
         return 30
     }
 
+    static func startupValidationError() -> String? {
+        var issues: [String] = []
+
+        if let baseURL = apiBaseURL, !baseURL.isEmpty {
+            if URL(string: baseURL) == nil {
+                issues.append("API_BASE_URL is not a valid URL.")
+            }
+        } else {
+            issues.append("API_BASE_URL is missing.")
+        }
+
+        if apiKey?.isEmpty != false {
+            issues.append("API_KEY is missing.")
+        }
+
+        guard !issues.isEmpty else { return nil }
+        return issues.joined(separator: "\n")
+    }
+
     private static func stringValue(forKey key: String) -> String? {
         if let envValue = environmentString(forKey: key) {
             return envValue
@@ -67,6 +86,10 @@ enum AppConfig {
     }
 
     private static func configDictionary() -> [String: Any] {
+        cachedConfig
+    }
+
+    private static let cachedConfig: [String: Any] = {
         guard let url = Bundle.main.url(forResource: "AppConfig", withExtension: "plist"),
               let data = try? Data(contentsOf: url),
               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
@@ -74,5 +97,5 @@ enum AppConfig {
         else { return [:] }
 
         return dict
-    }
+    }()
 }

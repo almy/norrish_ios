@@ -25,6 +25,18 @@ class PlateAnalysisHistory {
     var insightsData: Data // JSON encoded insights
     var microsData: Data? // JSON encoded Micronutrients
     var connectionsData: Data? // JSON encoded [String]
+    @Relationship(deleteRule: .cascade, inverse: \PlateIngredientEntity.plate)
+    var ingredientEntities: [PlateIngredientEntity] = []
+    @Relationship(deleteRule: .cascade, inverse: \PlateInsightEntity.plate)
+    var insightEntities: [PlateInsightEntity] = []
+    @Transient private var cachedIngredientsData: Data?
+    @Transient private var cachedIngredients: [PlateIngredient] = []
+    @Transient private var cachedInsightsData: Data?
+    @Transient private var cachedInsights: [PlateInsight] = []
+    @Transient private var cachedMicrosData: Data?
+    @Transient private var cachedMicronutrients: Micronutrients?
+    @Transient private var cachedConnectionsData: Data?
+    @Transient private var cachedConnections: [String] = []
     
     init(name: String, imageData: Data? = nil, nutritionScore: Double, description: String, protein: Int, carbs: Int, fat: Int, calories: Int, ingredients: [PlateIngredient], insights: [PlateInsight], micronutrients: Micronutrients? = nil, connections: [String]? = nil) {
         self.id = UUID()
@@ -41,16 +53,40 @@ class PlateAnalysisHistory {
         // Encode ingredients and insights as JSON
         self.ingredientsData = (try? JSONEncoder().encode(ingredients)) ?? Data()
         self.insightsData = (try? JSONEncoder().encode(insights)) ?? Data()
+        self.ingredientEntities = ingredients.enumerated().map { idx, item in
+            PlateIngredientEntity(name: item.name, amount: item.amount, order: idx)
+        }
+        self.insightEntities = insights.enumerated().map { idx, item in
+            PlateInsightEntity(typeRawValue: item.type.rawValue, title: item.title, detail: item.description, order: idx)
+        }
         if let micronutrients { self.microsData = try? JSONEncoder().encode(micronutrients) }
         if let connections { self.connectionsData = try? JSONEncoder().encode(connections) }
     }
     
     var ingredients: [PlateIngredient] {
-        (try? JSONDecoder().decode([PlateIngredient].self, from: ingredientsData)) ?? []
+        if !ingredientEntities.isEmpty {
+            return ingredientEntities
+                .sorted(by: { $0.order < $1.order })
+                .map { PlateIngredient(name: $0.name, amount: $0.amount) }
+        }
+        if cachedIngredientsData != ingredientsData {
+            cachedIngredients = (try? JSONDecoder().decode([PlateIngredient].self, from: ingredientsData)) ?? []
+            cachedIngredientsData = ingredientsData
+        }
+        return cachedIngredients
     }
     
     var insights: [PlateInsight] {
-        (try? JSONDecoder().decode([PlateInsight].self, from: insightsData)) ?? []
+        if !insightEntities.isEmpty {
+            return insightEntities
+                .sorted(by: { $0.order < $1.order })
+                .map { $0.asPlateInsight }
+        }
+        if cachedInsightsData != insightsData {
+            cachedInsights = (try? JSONDecoder().decode([PlateInsight].self, from: insightsData)) ?? []
+            cachedInsightsData = insightsData
+        }
+        return cachedInsights
     }
     
     var image: UIImage? {
@@ -59,13 +95,27 @@ class PlateAnalysisHistory {
     }
 
     var micronutrients: Micronutrients? {
-        guard let microsData else { return nil }
-        return try? JSONDecoder().decode(Micronutrients.self, from: microsData)
+        if cachedMicrosData != microsData {
+            if let microsData {
+                cachedMicronutrients = try? JSONDecoder().decode(Micronutrients.self, from: microsData)
+            } else {
+                cachedMicronutrients = nil
+            }
+            cachedMicrosData = microsData
+        }
+        return cachedMicronutrients
     }
 
     var connections: [String] {
-        guard let connectionsData else { return [] }
-        return (try? JSONDecoder().decode([String].self, from: connectionsData)) ?? []
+        if cachedConnectionsData != connectionsData {
+            if let connectionsData {
+                cachedConnections = (try? JSONDecoder().decode([String].self, from: connectionsData)) ?? []
+            } else {
+                cachedConnections = []
+            }
+            cachedConnectionsData = connectionsData
+        }
+        return cachedConnections
     }
     
     // Get Nutri-Score letter for this plate analysis
@@ -105,6 +155,47 @@ class PlateAnalysisHistory {
             ingredients: mockIngredients,
             insights: mockInsights
         )
+    }
+}
+
+@Model
+class PlateIngredientEntity {
+    var id: UUID
+    var name: String
+    var amount: String
+    var order: Int
+    var plate: PlateAnalysisHistory?
+
+    init(name: String, amount: String, order: Int, plate: PlateAnalysisHistory? = nil) {
+        self.id = UUID()
+        self.name = name
+        self.amount = amount
+        self.order = order
+        self.plate = plate
+    }
+}
+
+@Model
+class PlateInsightEntity {
+    var id: UUID
+    var typeRawValue: String
+    var title: String
+    var detail: String
+    var order: Int
+    var plate: PlateAnalysisHistory?
+
+    init(typeRawValue: String, title: String, detail: String, order: Int, plate: PlateAnalysisHistory? = nil) {
+        self.id = UUID()
+        self.typeRawValue = typeRawValue
+        self.title = title
+        self.detail = detail
+        self.order = order
+        self.plate = plate
+    }
+
+    var asPlateInsight: PlateInsight {
+        let type = PlateInsight.PlateInsightType(rawValue: typeRawValue) ?? .suggestion
+        return PlateInsight(type: type, title: title, description: detail)
     }
 }
 

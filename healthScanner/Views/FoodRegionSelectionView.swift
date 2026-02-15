@@ -145,6 +145,8 @@ private extension FoodRegionSelectionView {
             "image_px: \(imagePxW)x\(imagePxH)",
             "label: \(photoLabel)",
             String(format: "confidence: %.2f", photoConfidence),
+            "volume_ml: \(formatMetric(viewModel.transientVolumeML))",
+            "mass_g_est: \(formatMetric(viewModel.transientMassG))",
             "plate_coverage: \(selectedPct)%",
             "regions_selected: \(selectedRegions.count) of \(editableRegions.count)",
             String(format: "confidence_avg: %.2f (min %.2f / max %.2f)", confAvg, confMin, confMax),
@@ -168,6 +170,11 @@ private extension FoodRegionSelectionView {
                                 pct))
         }
         return lines
+    }
+
+    func formatMetric(_ value: Float?) -> String {
+        guard let value else { return "n/a" }
+        return String(Int(round(value)))
     }
 
     func combinedBoundingBox(of rects: [CGRect]) -> CGRect {

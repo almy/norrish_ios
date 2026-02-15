@@ -97,19 +97,24 @@ class BarcodeScannerViewController: UIViewController {
             return
         }
         
-        previewLayer = AVCaptureVideoPreviewLayer(session: captureSession!)
-        previewLayer?.frame = view.layer.bounds
-        previewLayer?.videoGravity = .resizeAspectFill
-        view.layer.addSublayer(previewLayer!)
+        guard let captureSession else {
+            failed()
+            return
+        }
+        let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.frame = view.layer.bounds
+        previewLayer.videoGravity = .resizeAspectFill
+        view.layer.addSublayer(previewLayer)
+        self.previewLayer = previewLayer
         
         // Add scanning guide frame overlay
         setupScanningGuide()
     }
     
     private func setupScanningGuide() {
-        // Create the scanning guide frame
-        let frameWidth: CGFloat = 280
-        let frameHeight: CGFloat = 120
+        // Scale guide frame relative to screen size to adapt across devices.
+        let frameWidth: CGFloat = min(max(view.bounds.width * 0.78, 220), 340)
+        let frameHeight: CGFloat = min(max(view.bounds.height * 0.16, 96), 150)
         
         // Position the frame in the center of the screen
         let frameX = (view.bounds.width - frameWidth) / 2

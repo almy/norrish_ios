@@ -128,7 +128,10 @@ public final class SegmentationEnhancer {
             }
             maskCI = makeMask(size: size, boxes: expanded)
         }
-        let softenedMask = maskCI!
+        guard let maskCI else {
+            return simpleGlobalEnhance(image, vibrance: preferredVibrance)
+        }
+        let softenedMask = maskCI
             .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 3.0])
 
         // Prepare base CIImage
@@ -143,7 +146,9 @@ public final class SegmentationEnhancer {
         let background = backgroundBlur.applyingFilter("CIColorControls", parameters: ["inputSaturation": 0.85])
 
         // Composite with mask
-        let blendFilter = CIFilter(name: "CIBlendWithMask")!
+        guard let blendFilter = CIFilter(name: "CIBlendWithMask") else {
+            return image
+        }
         blendFilter.setValue(subject, forKey: kCIInputImageKey)
         blendFilter.setValue(background, forKey: kCIInputBackgroundImageKey)
         blendFilter.setValue(softenedMask, forKey: kCIInputMaskImageKey)
@@ -364,4 +369,3 @@ private func cgImagePropertyOrientation(from orientation: UIImage.Orientation) -
     @unknown default: return .up
     }
 }
-

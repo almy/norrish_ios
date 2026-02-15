@@ -2,6 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    private static let recommendationEngine = OnDeviceNutritionRecommendationEngine()
+
     @Environment(\.modelContext) private var modelContext
     @Query private var products: [Product]
     @Query private var plates: [PlateAnalysisHistory]
@@ -10,11 +12,10 @@ struct HomeView: View {
     @State private var selectedProduct: Product?
 
     private var insights: [PersonalizedInsight] {
-        let engine = OnDeviceNutritionRecommendationEngine()
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date.distantPast
         let recentPlates = plates.filter { $0.analyzedDate >= cutoff }
         let recentProducts = products.filter { $0.scannedDate >= cutoff }
-        let recs = engine.generateAdaptiveTrendInsights(plates: recentPlates, products: recentProducts)
+        let recs = Self.recommendationEngine.generateAdaptiveTrendInsights(plates: recentPlates, products: recentProducts)
         return recs.prefix(5).map { r in
             let icon: String
             let color: Color

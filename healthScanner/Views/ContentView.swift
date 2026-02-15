@@ -23,36 +23,92 @@ enum ProductFilter: CaseIterable {
     }
 }
 
+private enum HistoryFilterEngine {
+    static func filterItems(
+        products: [Product],
+        plates: [PlateAnalysisHistory],
+        historyType: ContentView.HistoryType,
+        filter: ProductFilter,
+        searchText: String,
+        sort: ContentView.SortOption
+    ) -> [HistoryItemType] {
+        var allItems: [HistoryItemType] = []
+
+        if historyType == .all || historyType == .products {
+            let filteredProducts = products.filter { product in
+                let matchesSearchText = searchText.isEmpty || product.name.localizedCaseInsensitiveContains(searchText)
+                return matchesSearchText && matches(filter: filter, letter: product.nutriScoreLetter)
+            }
+            allItems.append(contentsOf: filteredProducts.map { .product($0) })
+        }
+
+        if historyType == .all || historyType == .plates {
+            let filteredPlates = plates.filter { plate in
+                let matchesSearchText = searchText.isEmpty || plate.name.localizedCaseInsensitiveContains(searchText)
+                return matchesSearchText && matches(filter: filter, letter: plate.nutriScoreLetter)
+            }
+            allItems.append(contentsOf: filteredPlates.map { .plate($0) })
+        }
+
+        switch sort {
+        case .date:
+            return allItems.sorted { $0.date > $1.date }
+        case .nutri:
+            return allItems.sorted { nutriRank(for: $0) > nutriRank(for: $1) }
+        }
+    }
+
+    private static func matches(filter: ProductFilter, letter: NutriScoreLetter) -> Bool {
+        switch filter {
+        case .all: return true
+        case .gradeA: return letter == .A
+        case .gradeB: return letter == .B
+        case .gradeC: return letter == .C
+        case .gradeD: return letter == .D
+        case .gradeE: return letter == .E
+        }
+    }
+
+    private static func nutriRank(for item: HistoryItemType) -> Int {
+        switch item.nutriScoreLetter {
+        case .A: return 5
+        case .B: return 4
+        case .C: return 3
+        case .D: return 2
+        case .E: return 1
+        }
+    }
+}
+
 struct ContentView: View {
+    private static let recommendationEngine = OnDeviceNutritionRecommendationEngine()
+
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var localizationManager: LocalizationManager
     @Query private var products: [Product]
     @Query private var plateAnalyses: [PlateAnalysisHistory]
-    @StateObject private var productService = ProductService()
     @StateObject private var barcodeScanVM = BarcodeScannerViewModel()
-    @StateObject private var insightService = InsightDataService.shared
-    
+
     @State private var showingScanner = false
     @State private var scannedCode: String?
     @State private var isScanning = false
     @State private var selectedProduct: Product?
     @State private var selectedPlateAnalysis: PlateAnalysisHistory?
-    @State private var showingProductDetail = false
     @State private var showingQuickAdd = false
     @State private var showingPlateScan = false
     @State private var showingPlateUpload = false
     @State private var selectedTab = 0
-    
-    // New state properties for history tab
+
     @State private var searchText = ""
     @State private var selectedFilter: ProductFilter = .all
     @State private var selectedHistoryType: HistoryType = .all
     @State private var selectedSort: SortOption = .date
     @State private var historyDigestIndex = 0
-    
+    @State private var didRunPlateHistoryMigration = false
+
     enum HistoryType: CaseIterable {
         case all, products, plates
-        
+
         var title: String {
             switch self {
             case .all: return NSLocalizedString("history_type.all", comment: "History type filter for all items")
@@ -61,7 +117,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     enum SortOption: CaseIterable {
         case date, nutri
 
@@ -72,15 +128,12 @@ struct ContentView: View {
             }
         }
     }
-    
-    // Adaptive insights banner for History tab
+
     private var historyTrendInsights: [PersonalizedInsight] {
-        let engine = OnDeviceNutritionRecommendationEngine()
-        // Use SwiftData queries already present: products, plateAnalyses
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date.distantPast
         let recentPlates = plateAnalyses.filter { $0.analyzedDate >= cutoff }
         let recentProducts = products.filter { $0.scannedDate >= cutoff }
-        let recs = engine.generateAdaptiveTrendInsights(plates: recentPlates, products: recentProducts)
+        let recs = Self.recommendationEngine.generateAdaptiveTrendInsights(plates: recentPlates, products: recentProducts)
 
         return recs.prefix(3).map { r in
             let icon: String
@@ -91,273 +144,65 @@ struct ContentView: View {
             return PersonalizedInsight(icon: icon, iconColor: color, title: r.title, message: r.message, category: .health, reason: r.reason, evidence: r.evidence, tags: r.tags)
         }
     }
-    
-    // Computed property for combined and filtered history items
-    var filteredHistoryItems: [HistoryItemType] {
-        var allItems: [HistoryItemType] = []
-        
-        // Add products to the list based on filter
-        if selectedHistoryType == .all || selectedHistoryType == .products {
-            let filteredProducts = products.filter { product in
-                let matchesSearchText = searchText.isEmpty || product.name.localizedCaseInsensitiveContains(searchText)
-                let matchesFilter: Bool
-                switch selectedFilter {
-                case .all:
-                    matchesFilter = true
-                case .gradeA:
-                    matchesFilter = product.nutriScoreLetter == .A
-                case .gradeB:
-                    matchesFilter = product.nutriScoreLetter == .B
-                case .gradeC:
-                    matchesFilter = product.nutriScoreLetter == .C
-                case .gradeD:
-                    matchesFilter = product.nutriScoreLetter == .D
-                case .gradeE:
-                    matchesFilter = product.nutriScoreLetter == .E
-                }
-                return matchesSearchText && matchesFilter
-            }
-            allItems.append(contentsOf: filteredProducts.map { .product($0) })
-        }
-        
-        // Add plate analyses to the list based on filter
-        if selectedHistoryType == .all || selectedHistoryType == .plates {
-            let filteredPlates = plateAnalyses.filter { plate in
-                let matchesSearchText = searchText.isEmpty || plate.name.localizedCaseInsensitiveContains(searchText)
-                let matchesFilter: Bool
-                switch selectedFilter {
-                case .all:
-                    matchesFilter = true
-                case .gradeA:
-                    matchesFilter = plate.nutriScoreLetter == .A
-                case .gradeB:
-                    matchesFilter = plate.nutriScoreLetter == .B
-                case .gradeC:
-                    matchesFilter = plate.nutriScoreLetter == .C
-                case .gradeD:
-                    matchesFilter = plate.nutriScoreLetter == .D
-                case .gradeE:
-                    matchesFilter = plate.nutriScoreLetter == .E
-                }
-                return matchesSearchText && matchesFilter
-            }
-            allItems.append(contentsOf: filteredPlates.map { .plate($0) })
-        }
-        
-        // Sort
-        switch selectedSort {
-        case .date:
-            return allItems.sorted { $0.date > $1.date }
-        case .nutri:
-            return allItems.sorted { nutriRank(for: $0) > nutriRank(for: $1) }
-        }
-    }
-    
-    private func nutriRank(for item: HistoryItemType) -> Int {
-        let letter = item.nutriScoreLetter
-        switch letter {
-        case .A: return 5
-        case .B: return 4
-        case .C: return 3
-        case .D: return 2
-        case .E: return 1
-        }
+
+    private var filteredHistoryItems: [HistoryItemType] {
+        HistoryFilterEngine.filterItems(
+            products: products,
+            plates: plateAnalyses,
+            historyType: selectedHistoryType,
+            filter: selectedFilter,
+            searchText: searchText,
+            sort: selectedSort
+        )
     }
 
-    private var historyJournalView: some View {
-        List {
-            Section {
-                historyHeader
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-
-                if !historyTrendInsights.isEmpty {
-                    digestSection
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+    var body: some View {
+        PromptOverlayHost {
+            TabView(selection: $selectedTab) {
+                TabWithFloatingAddButton(onAdd: { showingQuickAdd = true }) {
+                    HomeView()
                 }
-            }
+                .tabItem {
+                    VStack {
+                        Image(systemName: "house")
+                        Text(NSLocalizedString("home.title", comment: "Home tab title"))
+                    }
+                }
+                .tag(0)
 
-            ForEach(historySections) { section in
-                Section(header: sectionHeader(for: section.date)) {
-                    ForEach(section.items) { item in
-                        HistoryTimelineCard(item: item) {
+                TabWithFloatingAddButton(onAdd: { showingQuickAdd = true }) {
+                    HistoryTabView(
+                        filteredHistoryItems: filteredHistoryItems,
+                        historyTrendInsights: historyTrendInsights,
+                        historyDigestIndex: $historyDigestIndex,
+                        onSelectItem: { item in
                             switch item {
                             case .product(let product):
                                 selectedProduct = product
                             case .plate(let plate):
                                 selectedPlateAnalysis = plate
                             }
+                        },
+                        onDeleteItem: { item in
+                            deleteHistoryItem(item)
                         }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                deleteHistoryItem(item)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                deleteHistoryItem(item)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 16, trailing: 20))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+                    )
+                }
+                .tabItem {
+                    VStack {
+                        Image(systemName: "clock")
+                        Text("tab.history".localized())
                     }
                 }
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color.nordicBone)
-        .padding(.bottom, 0)
-    }
-
-    private var historyHeader: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(NSLocalizedString("history.story_label", comment: "History header label"))
-                    .font(AppFonts.label)
-                    .kerning(2.5)
-                    .foregroundColor(.nordicSlate)
-                    .textCase(.uppercase)
-                Text(NSLocalizedString("history.journal_title", comment: "History journal title"))
-                    .font(AppFonts.serif(30, weight: .bold))
-                    .foregroundColor(.midnightSpruce)
-            }
-            Spacer()
-            Image(systemName: "book")
-                .font(.system(size: 20))
-                .foregroundColor(.momentumAmber)
-                .padding(8)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
-    }
-
-    private var digestSection: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text(NSLocalizedString("history.digest_title", comment: "Digest title"))
-                    .font(AppFonts.serif(20, weight: .bold))
-                    .foregroundColor(.midnightSpruce)
-                Spacer()
-                Button(action: {}) {
-                    HStack(spacing: 4) {
-                        Text(NSLocalizedString("history.digest_action", comment: "Digest action"))
-                            .font(AppFonts.sans(11, weight: .bold))
-                            .kerning(1.2)
-                            .textCase(.uppercase)
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12))
-                    }
-                    .foregroundColor(.momentumAmber)
-                }
-            }
-            .padding(.horizontal, 20)
-
-            VStack(spacing: 10) {
-                TabView(selection: $historyDigestIndex) {
-                    ForEach(Array(historyTrendInsights.enumerated()), id: \.offset) { idx, insight in
-                        HistoryDigestCard(insight: insight)
-                            .tag(idx)
-                            .padding(.horizontal, 4)
-                    }
-                }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .frame(height: 150)
-
-                HStack(spacing: 6) {
-                    ForEach(0..<historyTrendInsights.count, id: \.self) { idx in
-                        Circle()
-                            .fill(idx == historyDigestIndex ? Color.momentumAmber : Color.nordicSlate.opacity(0.3))
-                            .frame(width: 6, height: 6)
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-        }
-        .padding(.top, 8)
-    }
-
-    private var historySections: [HistorySection] {
-        let grouped = Dictionary(grouping: filteredHistoryItems) { item in
-            Calendar.current.startOfDay(for: item.date)
-        }
-        return grouped.keys.sorted(by: >).map { key in
-            let items = grouped[key]?.sorted { $0.date > $1.date } ?? []
-            return HistorySection(date: key, items: items)
-        }
-    }
-
-    private func sectionTitle(for date: Date) -> String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            let label = NSLocalizedString("history.today", comment: "Today label")
-            return "\(label) • \(date.formatted(date: .abbreviated, time: .omitted))"
-        }
-        if calendar.isDateInYesterday(date) {
-            let label = NSLocalizedString("history.yesterday", comment: "Yesterday label")
-            return "\(label) • \(date.formatted(date: .abbreviated, time: .omitted))"
-        }
-        return date.formatted(date: .abbreviated, time: .omitted)
-    }
-
-    private func sectionHeader(for date: Date) -> some View {
-        Text(sectionTitle(for: date))
-            .font(AppFonts.label)
-            .kerning(2.5)
-            .foregroundColor(.nordicSlate)
-            .textCase(.uppercase)
-            .padding(.leading, 24)
-            .padding(.top, 8)
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-    }
-
-    private func deleteHistoryItem(_ item: HistoryItemType) {
-        switch item {
-        case .plate(let plate):
-            ImageCacheService.shared.deleteImage(forKey: plate.cacheKey)
-            modelContext.delete(plate)
-        case .product(let product):
-            if let localPath = product.localImagePath, FileManager.default.fileExists(atPath: localPath) {
-                try? FileManager.default.removeItem(atPath: localPath)
-            }
-            modelContext.delete(product)
-        }
-    }
-    
-    var body: some View {
-        PromptOverlayHost {
-            TabView(selection: $selectedTab) {
-                // Home Tab
-                ZStack {
-                    HomeView()
-                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.nordicBone).padding() }.background(Color.midnightSpruce).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
-                }
-                .tabItem { VStack { Image(systemName: "house"); Text(NSLocalizedString("home.title", comment: "Home tab title")) } }
-                .tag(0)
-
-                // History Tab
-                ZStack {
-                    historyJournalView
-
-                    // Floating + button (matches Home)
-                    VStack { Spacer() ; HStack { Spacer() ; Button(action: { showingQuickAdd = true }) { Image(systemName: "plus").font(.title2).foregroundColor(.nordicBone).padding() }.background(Color.midnightSpruce).clipShape(Circle()).shadow(radius: 4).padding(.trailing, 20).padding(.bottom, 20) } }
-                }
-                .tabItem { VStack { Image(systemName: "clock"); Text("tab.history".localized()) } }
                 .tag(1)
 
-                // Profile Tab
                 ProfileView()
-                    .tabItem { VStack { Image(systemName: "person"); Text("tab.profile".localized()) } }
+                    .tabItem {
+                        VStack {
+                            Image(systemName: "person")
+                            Text("tab.profile".localized())
+                        }
+                    }
                     .tag(2)
             }
             .accentColor(.momentumAmber)
@@ -383,45 +228,20 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingQuickAdd) {
-                VStack(spacing: 12) {
-                    Text(NSLocalizedString("home.section.suggestions", comment: "Quick actions title"))
-                        .font(AppFonts.serif(18, weight: .semibold))
-                        .foregroundColor(.midnightSpruce)
-                        .padding(.top, 16)
-                    Button { showingScanner = true ; showingQuickAdd = false } label: {
-                        HStack { Image(systemName: "barcode.viewfinder"); Text("tab.scan".localized()) }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.midnightSpruce)
-                            .foregroundColor(.nordicBone)
-                            .cornerRadius(12)
+                QuickAddSheetView(
+                    onScanBarcode: {
+                        showingScanner = true
+                        showingQuickAdd = false
+                    },
+                    onScanPlate: {
+                        showingPlateScan = true
+                        showingQuickAdd = false
+                    },
+                    onUploadPlate: {
+                        showingPlateUpload = true
+                        showingQuickAdd = false
                     }
-                    Button { showingPlateScan = true ; showingQuickAdd = false } label: {
-                        HStack { Image(systemName: "fork.knife"); Text("tab.plate".localized()) }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.cardSurface)
-                            .foregroundColor(.midnightSpruce)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.cardBorder, lineWidth: 1)
-                            )
-                    }
-                    Button { showingPlateUpload = true ; showingQuickAdd = false } label: {
-                        HStack { Image(systemName: "photo"); Text(NSLocalizedString("plate.upload_photo", comment: "Upload photo")) }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.cardSurface)
-                            .foregroundColor(.midnightSpruce)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.cardBorder, lineWidth: 1)
-                            )
-                    }
-                    Spacer()
-                }
-                .padding(20)
-                .presentationDetents([.height(220)])
+                )
             }
             .onChange(of: scannedCode) { _, newValue in
                 guard let code = newValue else { return }
@@ -431,31 +251,24 @@ struct ContentView: View {
                     }
                 }
             }
+            .task {
+                guard !didRunPlateHistoryMigration else { return }
+                didRunPlateHistoryMigration = true
+                await PlateHistoryMigrationService.shared.migrateIfNeeded(modelContext: modelContext)
+            }
         }
     }
-}
 
-// Filter Button Component
-struct FilterButton: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(AppFonts.sans(12, weight: isSelected ? .semibold : .medium))
-                .foregroundColor(isSelected ? .nordicBone : .midnightSpruce)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isSelected ? Color.midnightSpruce : Color.cardSurface)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.cardBorder, lineWidth: isSelected ? 0 : 1)
-                )
+    private func deleteHistoryItem(_ item: HistoryItemType) {
+        switch item {
+        case .plate(let plate):
+            ImageCacheService.shared.deleteImage(forKey: plate.cacheKey)
+            modelContext.delete(plate)
+        case .product(let product):
+            if let localPath = product.localImagePath, FileManager.default.fileExists(atPath: localPath) {
+                try? FileManager.default.removeItem(atPath: localPath)
+            }
+            modelContext.delete(product)
         }
     }
 }
@@ -475,191 +288,6 @@ private struct QuickBarcodeScanView: View {
             isScanning = true
         }
         .ignoresSafeArea()
-    }
-}
-
-private struct HistorySection: Identifiable {
-    let date: Date
-    let items: [HistoryItemType]
-    var id: Date { date }
-}
-
-private struct HistoryDigestCard: View {
-    let insight: PersonalizedInsight
-
-    private var accent: Color {
-        switch insight.category {
-        case .health: return .mossInsight
-        case .habit: return .momentumAmber
-        case .preference: return .nordicSlate
-        case .recommendation: return .momentumAmber
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
-                Circle()
-                    .fill(accent.opacity(0.12))
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Image(systemName: insight.icon)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(accent)
-                    )
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(insight.title)
-                        .font(AppFonts.serif(16, weight: .semibold))
-                        .foregroundColor(.midnightSpruce)
-                    Text(insight.message)
-                        .font(AppFonts.sans(12, weight: .regular))
-                        .foregroundColor(.nordicSlate)
-                }
-                Spacer()
-            }
-        }
-        .padding(16)
-        .background(Color.cardSurface)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.cardBorder, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 6)
-    }
-}
-
-private struct HistoryTimelineCard: View {
-    let item: HistoryItemType
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 12) {
-                imageView
-                    .frame(width: 80, height: 80)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(item.name)
-                            .font(AppFonts.serif(16, weight: .semibold))
-                            .foregroundColor(.midnightSpruce)
-                            .lineLimit(1)
-                        Spacer()
-                        nutriBadge
-                    }
-                    HStack(spacing: 8) {
-                        let kcal = NSLocalizedString("unit.kilocalories", comment: "Kilocalories unit")
-                        Text("\(caloriesText) \(kcal)")
-                            .font(AppFonts.sans(10, weight: .bold))
-                            .foregroundColor(.nordicSlate)
-                        Text(macroText)
-                            .font(AppFonts.sans(10, weight: .medium))
-                            .foregroundColor(.nordicSlate.opacity(0.85))
-                    }
-                    if let note = noteText {
-                        Text("“\(note)”")
-                            .font(AppFonts.sans(11, weight: .regular))
-                            .foregroundColor(.nordicSlate.opacity(0.7))
-                            .italic()
-                            .lineLimit(2)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(12)
-            .background(Color.cardSurface)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color.cardBorder, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private var imageView: some View {
-        switch item {
-        case .plate(let plate):
-            if let cached = ImageCacheService.shared.loadImage(forKey: plate.cacheKey) {
-                Image(uiImage: cached).resizable().scaledToFill()
-            } else if let image = plate.image {
-                Image(uiImage: image).resizable().scaledToFill()
-            } else {
-                Color.nordicBone.opacity(0.8)
-                    .overlay(
-                        Image(systemName: "fork.knife")
-                            .font(.system(size: 18))
-                            .foregroundColor(.nordicSlate)
-                    )
-            }
-        case .product(let product):
-            if let localPath = product.localImagePath,
-               FileManager.default.fileExists(atPath: localPath),
-               let uiImage = UIImage(contentsOfFile: localPath) {
-                Image(uiImage: uiImage).resizable().scaledToFill()
-            } else if let url = product.imageURL, !url.isEmpty {
-                CachedAsyncImage(urlString: url, cacheKey: product.barcode)
-                    .scaledToFill()
-            } else {
-                Color.nordicBone.opacity(0.8)
-                    .overlay(
-                        Image(systemName: "cart")
-                            .font(.system(size: 18))
-                            .foregroundColor(.nordicSlate)
-                    )
-            }
-        }
-    }
-
-    private var nutriBadge: some View {
-        let rgb = item.nutriScoreLetter.color
-        let color = Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
-        return Text(item.nutriScoreLetter.rawValue)
-            .font(AppFonts.sans(10, weight: .bold))
-            .foregroundColor(color)
-            .frame(width: 22, height: 22)
-            .background(color.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-    }
-
-    private var caloriesText: String {
-        switch item {
-        case .plate(let plate):
-            return "\(plate.calories)"
-        case .product(let product):
-            return String(format: "%.0f", product.nutritionData.calories)
-        }
-    }
-
-    private var macroText: String {
-        switch item {
-        case .plate(let plate):
-            return "\(plate.protein)g P • \(plate.carbs)g C • \(plate.fat)g F"
-        case .product(let product):
-            let protein = String(format: "%.0f", product.nutritionData.protein)
-            let carbs = String(format: "%.0f", product.nutritionData.carbohydrates)
-            let fat = String(format: "%.0f", product.nutritionData.fat)
-            return "\(protein)g P • \(carbs)g C • \(fat)g F"
-        }
-    }
-
-    private var noteText: String? {
-        switch item {
-        case .plate(let plate):
-            return plate.insights.first?.description ?? plate.analysisDescription
-        case .product(let product):
-            if let ingredients = product.ingredients?.trimmingCharacters(in: .whitespacesAndNewlines), !ingredients.isEmpty {
-                return ingredients.components(separatedBy: CharacterSet(charactersIn: ",;•|/")).first
-            }
-            if !product.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return product.brand
-            }
-            return nil
-        }
     }
 }
 

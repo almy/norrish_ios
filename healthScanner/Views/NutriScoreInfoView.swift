@@ -3,6 +3,8 @@ import SwiftUI
 struct NutriScoreInfoView: View {
     let productBreakdown: NutriScoreBreakdown?
     let plateScore: Double?
+    private let officialNutriScoreURL = URL(string: "https://www.santepubliquefrance.fr/en/nutri-score")
+    private let openFoodFactsNutriScoreURL = URL(string: "https://world.openfoodfacts.org/nutriscore")
 
     var body: some View {
         NavigationView {
@@ -152,8 +154,12 @@ struct NutriScoreInfoView: View {
                 .font(AppFonts.serif(16, weight: .semibold))
                 .foregroundColor(.midnightSpruce)
             VStack(alignment: .leading, spacing: 6) {
-                Link("Official Nutri‑Score (France)", destination: URL(string: "https://www.santepubliquefrance.fr/en/nutri-score")!)
-                Link("Open Food Facts Nutri‑Score", destination: URL(string: "https://world.openfoodfacts.org/nutriscore")!)
+                if let officialNutriScoreURL {
+                    Link("Official Nutri‑Score (France)", destination: officialNutriScoreURL)
+                }
+                if let openFoodFactsNutriScoreURL {
+                    Link("Open Food Facts Nutri‑Score", destination: openFoodFactsNutriScoreURL)
+                }
             }
             .font(AppFonts.sans(12, weight: .regular))
             .foregroundColor(.momentumAmber)

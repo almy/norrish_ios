@@ -88,8 +88,8 @@ This document explains the overall architecture of the norrish app, what each ma
 ## Real-time Feedback (Optional)
 
 - `EnhancedCameraPreviewView` (SwiftUI):
-  - Wraps `CameraPreviewView` to show an “AI Status” overlay and run an async analysis task on capture.
-  - Listens to `.mlDetectionUpdate` notifications for real-time label/confidence hints if you choose to enable it.
+  - Uses an embedded camera controller with Vision-based YOLO detection for live label/confidence hints.
+  - Captures a photo and runs async backend analysis for final plate insights.
 
 - Why: Real-time hints guide the user to hold steady, frame the plate, or retake a photo — improving reliability without heavy UI.
 
@@ -192,7 +192,7 @@ This document explains the overall architecture of the norrish app, what each ma
 
 - Use `CameraPreviewView` to capture a photo.
 - Call `ImagePreprocessor.preprocessFoodImage` to crop the salient region.
-- Call `CoreMLFoodAnalysisService.shared.analyzeFood(image:)`.
+- Call `PlateAnalysisService.analyze(image:)`.
 - Save a `PlateAnalysisHistory` record and send a compact payload to the backend.
 
 This “simple mode” avoids AR and real-time overlays, keeping the path to shipping short and maintainable.
@@ -243,5 +243,4 @@ flowchart TD
 
     G2 --> L[Backend (Compact Payload)]
     K --> L
-
 

@@ -19,14 +19,14 @@ fileprivate final class DetectionModelProvider {
     private var completions: [(VNCoreMLRequest?) -> Void] = []
 
     func preload() {
-        print("🔸 [Vision] Prewarm requested")
+        AppLog.debug(AppLog.scanner, "🔸 [Vision] Prewarm requested")
         getDetectionRequest { _ in }
     }
 
     func getDetectionRequest(completion: @escaping (VNCoreMLRequest?) -> Void) {
         queue.async {
             if let req = self.detectionRequest {
-                print("⚡️ [Vision] Using cached detection request")
+                AppLog.debug(AppLog.scanner, "⚡️ [Vision] Using cached detection request")
                 DispatchQueue.main.async { completion(req) }
                 return
             }
@@ -37,7 +37,7 @@ fileprivate final class DetectionModelProvider {
             let req = self.loadDetectionRequest()
             self.detectionRequest = req
             let ms = Int((CACurrentMediaTime() - start) * 1000)
-            print("✅ [Vision] Prewarm complete in \(ms) ms (success: \(req != nil))")
+            AppLog.debug(AppLog.scanner, "✅ [Vision] Prewarm complete in \(ms) ms (success: \(req != nil))")
             let callbacks = self.completions
             self.completions.removeAll()
             self.loading = false
@@ -49,7 +49,7 @@ fileprivate final class DetectionModelProvider {
 
     private func loadDetectionRequest() -> VNCoreMLRequest? {
         guard let url = findModelURL(named: "yolov8x-oiv7") else {
-            print("ℹ️ [Vision] YOLOv8 model not available")
+            AppLog.debug(AppLog.scanner, "ℹ️ [Vision] YOLOv8 model not available")
             logBundleModels()
             return nil
         }
@@ -59,13 +59,13 @@ fileprivate final class DetectionModelProvider {
             if let vn = try? VNCoreMLModel(for: ml) {
                 let req = VNCoreMLRequest(model: vn)
                 req.imageCropAndScaleOption = .scaleFill
-                print("✅ [Vision] YOLOv8 detection model enabled (\(url.pathExtension)) [prewarmed]")
+                AppLog.debug(AppLog.scanner, "✅ [Vision] YOLOv8 detection model enabled (\(url.pathExtension)) [prewarmed]")
                 return req
             } else {
-                print("⚠️ [Vision] Could not wrap model in VNCoreMLModel")
+                AppLog.debug(AppLog.scanner, "⚠️ [Vision] Could not wrap model in VNCoreMLModel")
             }
         } catch {
-            print("⚠️ [Vision] Failed to load YOLOv8 model: \(error)")
+            AppLog.debug(AppLog.scanner, "⚠️ [Vision] Failed to load YOLOv8 model: \(error)")
         }
         logBundleModels()
         return nil
@@ -82,13 +82,13 @@ fileprivate final class DetectionModelProvider {
     private func logBundleModels() {
         let compiled = Bundle.main.paths(forResourcesOfType: "mlmodelc", inDirectory: nil)
         if !compiled.isEmpty {
-            print("📦 .mlmodelc in bundle:")
-            compiled.forEach { print("  - \($0)") }
+            AppLog.debug(AppLog.scanner, "📦 .mlmodelc in bundle:")
+            compiled.forEach { AppLog.debug(AppLog.scanner, "  - \($0)") }
         }
         let packages = Bundle.main.paths(forResourcesOfType: "mlpackage", inDirectory: nil)
         if !packages.isEmpty {
-            print("📦 .mlpackage in bundle:")
-            packages.forEach { print("  - \($0)") }
+            AppLog.debug(AppLog.scanner, "📦 .mlpackage in bundle:")
+            packages.forEach { AppLog.debug(AppLog.scanner, "  - \($0)") }
         }
     }
 }
@@ -179,6 +179,9 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     //Overaly
     private let hudModel = ScanHUDModel()
     private lazy var ringOverlayHost = UIHostingController(rootView: PlateProgressRingView(model: hudModel))
+    private let ringGeometryQueue = DispatchQueue(label: "dualcam.ring.geometry")
+    private var ringCenterSnapshot: CGPoint = .zero
+    private var ringSizeSnapshot: CGFloat = 0
 
     // Normalized fallback crop if ring size isn't ready (x,y,w,h) in 0..1
     private let fallbackCropNormalized = CGRect(x: 0.15, y: 0.15, width: 0.70, height: 0.70)
@@ -199,6 +202,9 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     // Content gating
     private var contentStableCount: Int = 0
     private let requiredContentStableFrames: Int = 8 // ~0.5s at ~15fps
+    private var lastTextureCheckTime: CFTimeInterval = 0
+    private var cachedTextureOK = false
+    private let textureCheckInterval: CFTimeInterval = 0.2
 
     // No local nutrition DB here; AI handles nutrition downstream
 
@@ -227,6 +233,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         self.previewSize = self.view.bounds.size
+        setRingGeometrySnapshot(center: hudModel.ringCenter, size: hudModel.ringSize)
     }
 
     // MARK: UI
@@ -346,6 +353,20 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         // default ring position: center
         hudModel.ringCenter = CGPoint(x: view.bounds.midX, y: view.bounds.midY)
         hudModel.ringSize = min(view.bounds.width, view.bounds.height) * 0.48
+        setRingGeometrySnapshot(center: hudModel.ringCenter, size: hudModel.ringSize)
+    }
+
+    private func setRingGeometrySnapshot(center: CGPoint, size: CGFloat) {
+        ringGeometryQueue.sync {
+            ringCenterSnapshot = center
+            ringSizeSnapshot = size
+        }
+    }
+
+    private func currentRingGeometry() -> (center: CGPoint, size: CGFloat) {
+        ringGeometryQueue.sync {
+            (ringCenterSnapshot, ringSizeSnapshot)
+        }
     }
 
 
@@ -360,11 +381,29 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             guard let self else { return }
             self.detectionRequest = req
             let detAvailable = (req != nil) ? "YES" : "NO"
-            print("🔎 [Vision] Detection model available: \(detAvailable)")
+            AppLog.debug(AppLog.scanner, "🔎 [Vision] Detection model available: \(detAvailable)")
             if req != nil {
-                print("🔧 [Vision] Detection request configured; verifying observation type on first inference…")
+                AppLog.debug(AppLog.scanner, "🔧 [Vision] Detection request configured; verifying observation type on first inference…")
             }
         }
+    }
+
+    private func logDetectionResultTypesIfNeeded(_ results: [Any]?) {
+        guard !didLogDetectionResultType else { return }
+        let types = (results ?? []).map { String(describing: type(of: $0)) }
+        if let first = results?.first {
+            if first is VNRecognizedObjectObservation {
+                AppLog.debug(AppLog.scanner, "✅ [YOLO] Vision is returning VNRecognizedObjectObservation – object detector mode ENABLED")
+            } else if first is VNCoreMLFeatureValueObservation {
+                AppLog.debug(AppLog.scanner, "⚠️ [YOLO] Vision returned VNCoreMLFeatureValueObservation – manual decoding required (object detector mode NOT enabled)")
+            } else {
+                AppLog.debug(AppLog.scanner, "ℹ️ [YOLO] Vision results types: \(types)")
+            }
+        } else {
+            AppLog.debug(AppLog.scanner, "ℹ️ [YOLO] Vision results types: \(types)")
+        }
+        AppLog.debug(AppLog.scanner, "[YOLO] VNCoreMLRequest results types: \(types)")
+        didLogDetectionResultType = true
     }
 
     // Removed iconForLabel(_:) method as per instructions
@@ -418,7 +457,9 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
             device.isSubjectAreaChangeMonitoringEnabled = true
             device.unlockForConfiguration()
-        } catch { /* ignore */ }
+        } catch {
+            AppLog.error(AppLog.scanner, "[DualCam] Focus/exposure configuration failed: \(error.localizedDescription)")
+        }
 
         session.commitConfiguration()
     }
@@ -454,18 +495,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         do {
             if let det = detectionRequest {
                 try handler.perform([det])
-                if !didLogDetectionResultType {
-                    let types = (det.results ?? []).map { String(describing: type(of: $0)) }
-                    if let _ = det.results?.first as? VNRecognizedObjectObservation {
-                        print("✅ [YOLO] Vision is returning VNRecognizedObjectObservation – object detector mode ENABLED")
-                    } else if let _ = det.results?.first as? VNCoreMLFeatureValueObservation {
-                        print("⚠️ [YOLO] Vision returned VNCoreMLFeatureValueObservation – manual decoding required (object detector mode NOT enabled)")
-                    } else {
-                        print("ℹ️ [YOLO] Vision results types: \(types)")
-                    }
-                    print("[YOLO] VNCoreMLRequest results types: \(types)")
-                    didLogDetectionResultType = true
-                }
+                logDetectionResultTypesIfNeeded(det.results)
                 let objs = det.results as? [VNRecognizedObjectObservation] ?? []
                 detections = objs
                 if let best = objs.max(by: { $0.confidence < $1.confidence }),
@@ -474,7 +504,9 @@ public final class DualCameraPlateScannerViewController: UIViewController,
                     conf = top.confidence
                 }
             }
-        } catch { /* ignore */ }
+        } catch {
+            AppLog.error(AppLog.scanner, "[DualCam] Vision detection request failed: \(error.localizedDescription)")
+        }
         
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
@@ -531,12 +563,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         let displayedH = pbSize.height * scale
         let offsetX = (viewSize.width - displayedW) * 0.5
         let offsetY = (viewSize.height - displayedH) * 0.5
-        var ringCenter = CGPoint.zero
-        var ringSize: CGFloat = 0
-        DispatchQueue.main.sync {
-            ringCenter = self.hudModel.ringCenter
-            ringSize = self.hudModel.ringSize
-        }
+        let (ringCenter, ringSize) = currentRingGeometry()
         let padFactor: CGFloat = 1.0
         let ringRectView = CGRect(x: ringCenter.x - (ringSize*padFactor)/2,
                                   y: ringCenter.y - (ringSize*padFactor)/2,
@@ -564,20 +591,28 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             }
         }
 
-        // Texture/edge-density veto on the cropped ring image
-        var textureOK = false
-        do {
-            // Build a temporary UIImage from the current pixelBuffer and crop to ring
-            if let full = UIImage(pixelBuffer: pixelBuffer, orientation: .right) {
-                let ringCropped = self.cropToRing(full)
-                let density = edgeDensity(in: ringCropped)
-                textureOK = density > 0.10 // tune threshold as needed
-            }
-        }
-
         // Combine gating: require coverage, ring overlap, and texture
         let coverageOK = coverage > 0.20
         let ringOK = ringCoverage > 0.50
+        let now = CACurrentMediaTime()
+        let shouldRefreshTexture = (now - lastTextureCheckTime) >= textureCheckInterval
+        let textureOK: Bool
+        if coverageOK && ringOK {
+            if shouldRefreshTexture {
+                lastTextureCheckTime = now
+                if let full = UIImage(pixelBuffer: pixelBuffer, orientation: .right) {
+                    let ringCropped = self.cropToRing(full)
+                    let density = edgeDensity(in: ringCropped)
+                    cachedTextureOK = density > 0.10 // tune threshold as needed
+                } else {
+                    cachedTextureOK = false
+                }
+            }
+            textureOK = cachedTextureOK
+        } else {
+            cachedTextureOK = false
+            textureOK = false
+        }
         let contentOK = coverageOK && ringOK && textureOK
         if contentOK { contentStableCount += 1 } else { contentStableCount = 0 }
 
@@ -595,9 +630,9 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         let r = readiness(depth: effectiveDepth, planeHistory: planeHistory)
 
         // Update ring progress; if no depth, advance a time-based fallback
-        let now = CACurrentMediaTime()
-        let dt = now - lastProgressTick
-        lastProgressTick = now
+        let nowProgress = CACurrentMediaTime()
+        let dt = nowProgress - lastProgressTick
+        lastProgressTick = nowProgress
         var ready = r.ready
         var progress = r.score
         // Advance a time-based fallback so progress completes even without perfect depth
@@ -668,7 +703,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             hapticLevel = 2
         }
         // Debug progress
-        if Int(progress*100) % 10 == 0 { print("🔵 [DualCam] progress=\(String(format: "%.2f", progress)) ready=\(ready) depth=\(effectiveDepth != nil)") }
+        if Int(progress*100) % 10 == 0 { AppLog.debug(AppLog.scanner, "🔵 [DualCam] progress=\(String(format: "%.2f", progress)) ready=\(ready) depth=\(effectiveDepth != nil)") }
 
         // Update capture button state based on readiness and content gating
         let enableCapture = ready
@@ -689,7 +724,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         }
         let croppedImage = cropToRing(fullImage)
         let volML = Self.integrateVolume(depth: effectiveDepth, mask: nil, intrinsics: latestIntrinsics, plane: planeHistory.last)
-        print("🟢 [DualCam] depth=\(effectiveDepth != nil ? "yes" : "no"), volumeML=\(String(format: "%.1f", volML))")
+        AppLog.debug(AppLog.scanner, "🟢 [DualCam] depth=\(effectiveDepth != nil ? "yes" : "no"), volumeML=\(String(format: "%.1f", volML))")
         let mass: Float = 0
 
         DispatchQueue.main.async { [weak self] in
@@ -738,7 +773,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             }
             let w = CVPixelBufferGetWidth(currentMap)
             let h = CVPixelBufferGetHeight(currentMap)
-            print("🟢 [DualCam] depth map received (no fusion): \(w)x\(h)")
+            AppLog.debug(AppLog.scanner, "🟢 [DualCam] depth map received (no fusion): \(w)x\(h)")
             return
         }
 
@@ -753,7 +788,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         }
         let w = CVPixelBufferGetWidth(fusedPB)
         let h = CVPixelBufferGetHeight(fusedPB)
-        print("🟢 [DualCam] fused depth map: \(w)x\(h)")
+        AppLog.debug(AppLog.scanner, "🟢 [DualCam] fused depth map: \(w)x\(h)")
     }
 
     // MARK: Readiness
@@ -803,22 +838,13 @@ public final class DualCameraPlateScannerViewController: UIViewController,
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
             do {
                 try handler.perform([det])
-                if !didLogDetectionResultType {
-                    let types = (det.results ?? []).map { String(describing: type(of: $0)) }
-                    if let _ = det.results?.first as? VNRecognizedObjectObservation {
-                        print("✅ [YOLO] Vision is returning VNRecognizedObjectObservation – object detector mode ENABLED")
-                    } else if let _ = det.results?.first as? VNCoreMLFeatureValueObservation {
-                        print("⚠️ [YOLO] Vision returned VNCoreMLFeatureValueObservation – manual decoding required (object detector mode NOT enabled)")
-                    } else {
-                        print("ℹ️ [YOLO] Vision results types: \(types)")
-                    }
-                    print("[YOLO] VNCoreMLRequest results types: \(types)")
-                    didLogDetectionResultType = true
-                }
+                logDetectionResultTypesIfNeeded(det.results)
                 if let objs = det.results as? [VNRecognizedObjectObservation], !objs.isEmpty {
                     return makeOverlayFromDetections(objs: objs, sourceSize: pixelBufferSize(pixelBuffer))
                 }
-            } catch { /* ignore and fall through */ }
+            } catch {
+                AppLog.error(AppLog.scanner, "[DualCam] Overlay detection failed, falling back to saliency: \(error.localizedDescription)")
+            }
         }
         // Saliency fallback (attention-based first, then objectness-based)
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
@@ -837,7 +863,9 @@ public final class DualCameraPlateScannerViewController: UIViewController,
                let boxes2 = obs2.salientObjects, !boxes2.isEmpty {
                 return makeOverlayFromBoxes(boxes: boxes2, sourceSize: pixelBufferSize(pixelBuffer))
             }
-        } catch { /* ignore */ }
+        } catch {
+            AppLog.error(AppLog.scanner, "[DualCam] Saliency overlay generation failed: \(error.localizedDescription)")
+        }
         return nil
     }
 
@@ -866,7 +894,10 @@ public final class DualCameraPlateScannerViewController: UIViewController,
     private func makeOverlayFromBoxes(boxes: [VNRectangleObservation], sourceSize: CGSize) -> UIImage? {
         let size = sourceSize
         UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
-        let ctx = UIGraphicsGetCurrentContext()!
+        guard let ctx = UIGraphicsGetCurrentContext() else {
+            UIGraphicsEndImageContext()
+            return nil
+        }
         ctx.setFillColor(UIColor.clear.cgColor)
         ctx.fill(CGRect(origin: .zero, size: size))
         ctx.setStrokeColor(UIColor(red: 0.310, green: 0.475, blue: 0.259, alpha: 0.9).cgColor)
@@ -1175,12 +1206,7 @@ private extension DualCameraPlateScannerViewController {
         let imgW = CGFloat(cg.width)
         let imgH = CGFloat(cg.height)
         // Obtain ring geometry (on main thread)
-        var ringCenter = CGPoint.zero
-        var ringSize: CGFloat = 0
-        DispatchQueue.main.sync { // safe since captureOutput not on main
-            ringCenter = hudModel.ringCenter
-            ringSize = hudModel.ringSize
-        }
+        let (ringCenter, ringSize) = currentRingGeometry()
         if ringSize <= 2 { // fallback normalized square
             return cropFallback(src, imgW: imgW, imgH: imgH)
         }

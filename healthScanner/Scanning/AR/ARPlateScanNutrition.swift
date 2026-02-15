@@ -152,7 +152,8 @@ public struct ARPlateScannerView: View {
                 carbs: 85,
                 fat: 14
             )
-            let image = UIImage(systemName: "fork.knife")!.withTintColor(.white, renderingMode: .alwaysOriginal)
+            let image = (UIImage(systemName: "fork.knife") ?? UIImage())
+                .withTintColor(.white, renderingMode: .alwaysOriginal)
             onResult(scan, image)
             dismiss()
         }

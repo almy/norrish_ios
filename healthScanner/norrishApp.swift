@@ -13,22 +13,52 @@ import UIKit
 // TypeAlias to ensure PlateAnalysisHistory is explicitly referenced
 typealias PlateHistoryType = PlateAnalysisHistory
 
+enum NorrishSchemaV2: VersionedSchema {
+    static var versionIdentifier: Schema.Version { Schema.Version(2, 1, 0) }
+
+    static var models: [any PersistentModel.Type] {
+        [
+            Product.self,
+            PlateAnalysisHistory.self,
+            PlateIngredientEntity.self,
+            PlateInsightEntity.self,
+            Item.self,
+            DailyNutritionAggregateEntity.self,
+            ScanEventEntity.self
+        ]
+    }
+}
+
+enum NorrishMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] { [NorrishSchemaV2.self] }
+    static var stages: [MigrationStage] { [] }
+}
+
 @main
 struct norrishApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var localizationManager = LocalizationManager.shared
     @State private var showSplash = true
+    @State private var startupConfigError: String?
 
     init() {
         // Kick off Core ML model prewarm at app launch (guaranteed entry point)
-        print("🚀 [Prewarm] Launch prewarm from norrishApp.init()")
         DualCameraPlateScannerViewController.prewarmModels()
     }
 
     var sharedModelContainer: ModelContainer = {
         do {
             // Explicitly list models to build the container schema
-            return try ModelContainer(for: Product.self, PlateAnalysisHistory.self, Item.self, DailyNutritionAggregateEntity.self, ScanEventEntity.self)
+            return try ModelContainer(
+                for: Product.self,
+                PlateAnalysisHistory.self,
+                PlateIngredientEntity.self,
+                PlateInsightEntity.self,
+                Item.self,
+                DailyNutritionAggregateEntity.self,
+                ScanEventEntity.self,
+                migrationPlan: NorrishMigrationPlan.self
+            )
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
@@ -50,11 +80,22 @@ struct norrishApp: App {
                 }
             }
             .onAppear {
+                if startupConfigError == nil {
+                    startupConfigError = AppConfig.startupValidationError()
+                }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                     withAnimation(.easeOut(duration: 0.45)) {
                         showSplash = false
                     }
                 }
+            }
+            .alert("Configuration Error", isPresented: Binding(
+                get: { startupConfigError != nil },
+                set: { if !$0 { startupConfigError = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(startupConfigError ?? "Missing API configuration.")
             }
         }
         .modelContainer(sharedModelContainer)

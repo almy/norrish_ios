@@ -85,7 +85,11 @@ final class AggregatorService {
             modelContext.insert(agg)
         }
 
-        do { try modelContext.save() } catch { /* ignore save errors to avoid blocking UI */ }
+        do {
+            try modelContext.save()
+        } catch {
+            AppLog.error(AppLog.storage, "AggregatorService.save failed: \(error.localizedDescription)")
+        }
     }
 
     // Ensure aggregates exist for the last `limit` days (including today)
@@ -97,6 +101,59 @@ final class AggregatorService {
             if let day = cal.date(byAdding: .day, value: -i, to: today) {
                 await upsertDaily(for: day, modelContext: modelContext)
             }
+        }
+    }
+}
+
+@MainActor
+final class PlateHistoryMigrationService {
+    static let shared = PlateHistoryMigrationService()
+
+    private let migrationFlagKey = "plate_history_relational_migration_v1_complete"
+
+    private init() {}
+
+    func migrateIfNeeded(modelContext: ModelContext) async {
+        if UserDefaults.standard.bool(forKey: migrationFlagKey) {
+            return
+        }
+
+        do {
+            let histories = try modelContext.fetch(FetchDescriptor<PlateAnalysisHistory>())
+            var changed = false
+
+            for history in histories {
+                if history.ingredientEntities.isEmpty {
+                    let decodedIngredients = (try? JSONDecoder().decode([PlateIngredient].self, from: history.ingredientsData)) ?? []
+                    if !decodedIngredients.isEmpty {
+                        history.ingredientEntities = decodedIngredients.enumerated().map { idx, item in
+                            PlateIngredientEntity(name: item.name, amount: item.amount, order: idx)
+                        }
+                        changed = true
+                    }
+                }
+
+                if history.insightEntities.isEmpty {
+                    let decodedInsights = (try? JSONDecoder().decode([PlateInsight].self, from: history.insightsData)) ?? []
+                    if !decodedInsights.isEmpty {
+                        history.insightEntities = decodedInsights.enumerated().map { idx, item in
+                            PlateInsightEntity(typeRawValue: item.type.rawValue, title: item.title, detail: item.description, order: idx)
+                        }
+                        changed = true
+                    }
+                }
+            }
+
+            if changed {
+                try modelContext.save()
+                AppLog.debug(AppLog.storage, "Plate history relational migration completed with updates.")
+            } else {
+                AppLog.debug(AppLog.storage, "Plate history relational migration skipped (no updates needed).")
+            }
+
+            UserDefaults.standard.set(true, forKey: migrationFlagKey)
+        } catch {
+            AppLog.error(AppLog.storage, "Plate history relational migration failed: \(error.localizedDescription)")
         }
     }
 }

@@ -162,9 +162,15 @@ struct CameraPreviewView: View {
         let size = CGSize(width: 300, height: 400)
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
 
-        let context = UIGraphicsGetCurrentContext()!
+        guard let context = UIGraphicsGetCurrentContext() else {
+            UIGraphicsEndImageContext()
+            return UIImage()
+        }
         let colors = [UIColor(Color.momentumAmber).cgColor, UIColor(Color.midnightSpruce).cgColor]
-        let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: nil)!
+        guard let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors as CFArray, locations: nil) else {
+            UIGraphicsEndImageContext()
+            return UIImage()
+        }
         context.drawLinearGradient(gradient, start: .zero, end: CGPoint(x: size.width, y: size.height), options: [])
 
         let text = "placeholder.camera.sample_text".localized
@@ -180,7 +186,7 @@ struct CameraPreviewView: View {
         let textRect = CGRect(x: 20, y: size.height / 2 - 60, width: size.width - 40, height: 120)
         text.draw(in: textRect, withAttributes: attributes)
 
-        let image = UIGraphicsGetImageFromCurrentImageContext()!
+        let image = UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
         UIGraphicsEndImageContext()
 
         return image
@@ -500,7 +506,6 @@ extension CameraPreviewViewController: AVCaptureVideoDataOutputSampleBufferDeleg
             }
         }
 
-        // CoreMLFoodAnalysisService.shared.performRealtimeInference(on: pixelBuffer)
     }
 }
 
