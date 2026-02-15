@@ -56,6 +56,16 @@ public struct ImagePreprocessor {
         }
     }
 
+    public static func prewarmSegmentationModel() {
+        YOLOSegmentationModelProvider.preload()
+    }
+
+    public static func prewarmSegmentationModel(completion: @escaping (Bool) -> Void) {
+        YOLOSegmentationModelProvider.getModel { model in
+            completion(model != nil)
+        }
+    }
+
     public static func mosaic(from results: [Result], columns: Int = 1, spacing: CGFloat = 8, background: UIColor = .black) -> UIImage? {
         guard !results.isEmpty else { return nil }
         let cols = max(1, columns)
@@ -118,6 +128,36 @@ public struct ImagePreprocessor {
 
 private enum YOLOSegmentationModelProvider {
     private static var cached: VNCoreMLModel?
+    private static let queue = DispatchQueue(label: "segmentation.model.loader")
+    private static var loading = false
+    private static var completions: [(VNCoreMLModel?) -> Void] = []
+
+    static func preload() {
+        AppLog.debug(AppLog.vision, "🔸 [ImagePreprocessor] Segmentation prewarm requested")
+        getModel { _ in }
+    }
+
+    static func getModel(completion: @escaping (VNCoreMLModel?) -> Void) {
+        queue.async {
+            if let cached {
+                DispatchQueue.main.async { completion(cached) }
+                return
+            }
+            completions.append(completion)
+            if loading { return }
+            loading = true
+            let start = CFAbsoluteTimeGetCurrent()
+            let loaded = load()
+            let elapsedMS = Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
+            AppLog.debug(AppLog.vision, "✅ [ImagePreprocessor] Seg prewarm complete in \(elapsedMS) ms (success: \(loaded != nil))")
+            let callbacks = completions
+            completions.removeAll()
+            loading = false
+            for cb in callbacks {
+                DispatchQueue.main.async { cb(loaded) }
+            }
+        }
+    }
 
     static func load() -> VNCoreMLModel? {
         if let cached {

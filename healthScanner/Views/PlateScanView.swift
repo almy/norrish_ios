@@ -99,6 +99,7 @@ struct PlateScanView: View {
         }
         .onChange(of: capturedImage) { _, newValue in
             guard let image = newValue else { return }
+            guard !awaitingAnalysisResult else { return }
             showCamera = false
             showPhotoPicker = false
             onImagePicked(image)
@@ -112,6 +113,7 @@ struct PlateScanView: View {
             if let result = newValue {
                 resultAnalysis = result
                 capturedImage = img
+                pendingImage = nil
                 showResult = true
             } else {
                 dismiss()
