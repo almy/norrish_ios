@@ -51,15 +51,18 @@ final class PlateAnalysisViewModel: ObservableObject {
     private let backendClient: PlateScanAPIClient
     private let aggregatorService: AggregatorServicing
     private let imageCacheService: ImageCacheServicing
+    private let coreMLAnalysisService: CoreMLFoodAnalysisService
 
     init(
         backendClient: PlateScanAPIClient = BackendAPIClient.shared,
         aggregatorService: AggregatorServicing = AggregatorService.shared,
-        imageCacheService: ImageCacheServicing = ImageCacheService.shared
+        imageCacheService: ImageCacheServicing = ImageCacheService.shared,
+        coreMLAnalysisService: CoreMLFoodAnalysisService = .shared
     ) {
         self.backendClient = backendClient
         self.aggregatorService = aggregatorService
         self.imageCacheService = imageCacheService
+        self.coreMLAnalysisService = coreMLAnalysisService
     }
 
     func loadLastAnalysisFromDefaults() {
@@ -184,6 +187,7 @@ final class PlateAnalysisViewModel: ObservableObject {
                 "device": UIDevice.current.model,
                 "method": "Image Analysis"
             ]
+            let coreMLResult = await coreMLAnalysisService.analyzeFood(image: originalImage)
             if let volumeML = transientVolumeML {
                 contextPayload["volume_ml"] = volumeML
             }
@@ -206,6 +210,17 @@ final class PlateAnalysisViewModel: ObservableObject {
                     "pixels": pixels,
                     "confidences": confidences
                 ]
+                contextPayload["detected_items"] = buildDetectedItems(
+                    from: regions,
+                    categories: transientCategories,
+                    imageSize: originalImage.size,
+                    coreMLResult: coreMLResult
+                )
+                contextPayload["segmentation_summary"] = buildSegmentationSummary(
+                    from: regions,
+                    imageSize: originalImage.size,
+                    coreMLResult: coreMLResult
+                )
             }
             let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
             let contextJSON = String(data: contextData, encoding: .utf8)
@@ -268,6 +283,86 @@ final class PlateAnalysisViewModel: ObservableObject {
         return renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: newSize))
         }
+    }
+
+    private func buildDetectedItems(
+        from regions: [ImagePreprocessor.Result],
+        categories: [String],
+        imageSize: CGSize,
+        coreMLResult: EnhancedFoodAnalysisResult?
+    ) -> [[String: Any]] {
+        let imageArea = max(1.0, imageSize.width * imageSize.height)
+        let fallbackLabel = coreMLResult?.classification?.label ?? "food"
+        return regions.enumerated().map { idx, region in
+            let label = idx < categories.count ? categories[idx] : "\(fallbackLabel)_region_\(idx + 1)"
+            let bbox = region.boundingBox
+            let areaRatio = min(1.0, max(0.0, (bbox.width * bbox.height) / imageArea))
+            let regionConfidence: Float? = {
+                guard let detectedRegions = coreMLResult?.segmentation?.detectedRegions,
+                      idx >= 0, idx < detectedRegions.count else {
+                    return nil
+                }
+                return detectedRegions[idx].confidence
+            }()
+            let confidence = regionConfidence ?? region.confidence
+            return [
+                "name": label,
+                "confidence": confidence,
+                "bbox": [
+                    "x": Int(bbox.origin.x),
+                    "y": Int(bbox.origin.y),
+                    "width": Int(bbox.width),
+                    "height": Int(bbox.height)
+                ],
+                "area_ratio": areaRatio,
+                "pixel_count": region.pixelCount
+            ]
+        }
+    }
+
+    private func buildSegmentationSummary(
+        from regions: [ImagePreprocessor.Result],
+        imageSize: CGSize,
+        coreMLResult: EnhancedFoodAnalysisResult?
+    ) -> [String: Any] {
+        if let segmentation = coreMLResult?.segmentation {
+            let imageArea = max(1.0, segmentation.imageSize.width * segmentation.imageSize.height)
+            let foodCoverage = min(1.0, max(0.0, Double(segmentation.totalFoodPixels) / imageArea))
+            let plateCoverage: Double = {
+                guard !segmentation.detectedRegions.isEmpty else { return foodCoverage }
+                let coveredArea = segmentation.detectedRegions.reduce(CGFloat(0)) { partial, region in
+                    partial + (region.boundingBox.width * region.boundingBox.height)
+                }
+                return min(1.0, max(0.0, coveredArea / imageArea))
+            }()
+            let meanConfidence: Double = {
+                guard !segmentation.detectedRegions.isEmpty else { return 0.0 }
+                return segmentation.detectedRegions
+                    .map { Double($0.confidence) }
+                    .reduce(0.0, +) / Double(segmentation.detectedRegions.count)
+            }()
+            return [
+                "food_coverage": foodCoverage,
+                "plate_coverage": plateCoverage,
+                "region_count": segmentation.detectedRegions.count,
+                "mean_confidence": meanConfidence
+            ]
+        }
+
+        let imageArea = max(1.0, imageSize.width * imageSize.height)
+        let coveredArea = regions.reduce(CGFloat(0)) { partial, region in
+            partial + (region.boundingBox.width * region.boundingBox.height)
+        }
+        let foodCoverage = min(1.0, max(0.0, coveredArea / imageArea))
+        let meanConfidence = regions.isEmpty
+            ? 0.0
+            : regions.map { Double($0.confidence) }.reduce(0.0, +) / Double(regions.count)
+        return [
+            "food_coverage": foodCoverage,
+            "plate_coverage": foodCoverage,
+            "region_count": regions.count,
+            "mean_confidence": meanConfidence
+        ]
     }
 
 

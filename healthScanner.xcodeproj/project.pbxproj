@@ -8,8 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */; };
-		1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42784632A507491D970BC129 /* ProductService.swift */; };
-		25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */; };
+			1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42784632A507491D970BC129 /* ProductService.swift */; };
+			1D58B9102829457C892B5917 /* CoreMLFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D58B90F2829457C892B5917 /* CoreMLFoodAnalysisService.swift */; };
+			25603B0C3162495A98A16C21 /* CameraBarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */; };
 		29A1F3A42E7D001F0086689E /* ARPlateScanNutrition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F39F2E7D001F0086689E /* ARPlateScanNutrition.swift */; };
 		29A1F3A52E7D00200086689E /* ARPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F3A02E7D00200086689E /* ARPlateScannerViewController.swift */; };
 		29A1F3A62E7D00210086689E /* DualCameraPlateScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29A1F3A12E7D00210086689E /* DualCameraPlateScannerViewController.swift */; };
@@ -753,7 +754,8 @@
 					D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */,
 					A91D10032F3C000100AAA001 /* MediaPickers.swift in Sources */,
 					B798BDB59DD74C6683177ABA /* ImageCacheService.swift in Sources */,
-				1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */,
+					1D58B9102829457C892B5917 /* CoreMLFoodAnalysisService.swift in Sources */,
+					1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */,
 				CE5335E82E79DDB40086689E /* LocalizationDebug.swift in Sources */,
 				8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */,
 				A7C41F1B9D6E4E53A1230002 /* HistoryTabView.swift in Sources */,
