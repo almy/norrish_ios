@@ -130,11 +130,13 @@ private enum YOLOSegmentationModelProvider {
     private static var cached: VNCoreMLModel?
     private static let queue = DispatchQueue(label: "segmentation.model.loader")
     private static var loading = false
+    private static var warmingUp = false
+    private static var didWarmupInference = false
     private static var completions: [(VNCoreMLModel?) -> Void] = []
 
     static func preload() {
         AppLog.debug(AppLog.vision, "🔸 [ImagePreprocessor] Segmentation prewarm requested")
-        getModel { _ in }
+        getRequest { _ in }
     }
 
     static func getModel(completion: @escaping (VNCoreMLModel?) -> Void) {
@@ -156,6 +158,27 @@ private enum YOLOSegmentationModelProvider {
             for cb in callbacks {
                 DispatchQueue.main.async { cb(loaded) }
             }
+        }
+    }
+
+    static func getRequest(completion: @escaping (VNCoreMLRequest?) -> Void) {
+        getModel { model in
+            guard let model else {
+                completion(nil)
+                return
+            }
+            let request = VNCoreMLRequest(model: model)
+            request.imageCropAndScaleOption = .scaleFill
+            completion(request)
+            queue.async { self.ensureWarmupInference() }
+        }
+    }
+
+    static func syncModel() -> VNCoreMLModel? {
+        queue.sync {
+            let model = load()
+            ensureWarmupInference()
+            return model
         }
     }
 
@@ -190,11 +213,69 @@ private enum YOLOSegmentationModelProvider {
         AppLog.debug(AppLog.vision, "ℹ️ [ImagePreprocessor] YOLO26X-seg model not found; falling back to saliency")
         return nil
     }
+
+    private static func ensureWarmupInference() {
+        guard !didWarmupInference, !warmingUp else { return }
+        guard let model = cached else { return }
+        warmingUp = true
+        queue.async {
+            defer { warmingUp = false }
+            guard !didWarmupInference else { return }
+            guard let cg = warmupImageCG() else { return }
+            let request = VNCoreMLRequest(model: model)
+            request.imageCropAndScaleOption = .scaleFill
+            let handler = VNImageRequestHandler(cgImage: cg, orientation: .up, options: [:])
+            let start = CFAbsoluteTimeGetCurrent()
+            do {
+                try handler.perform([request])
+                didWarmupInference = true
+                let elapsedMS = Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
+                AppLog.debug(AppLog.vision, "✅ [ImagePreprocessor] Seg inference warmup complete in \(elapsedMS) ms")
+            } catch {
+                AppLog.debug(AppLog.vision, "⚠️ [ImagePreprocessor] Seg inference warmup failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private static func warmupImageCG() -> CGImage? {
+        let size = CGSize(width: 64, height: 64)
+        let renderer = UIGraphicsImageRenderer(size: size)
+        let image = renderer.image { ctx in
+            UIColor.black.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+        }
+        return image.cgImage
+    }
+}
+
+private enum SegmentationStartupMetrics {
+    private static let lock = NSLock()
+    private static var firstAttemptStart: CFAbsoluteTime?
+    private static var hasLoggedFirstReady = false
+
+    static func markAttemptStartIfNeeded() {
+        lock.lock()
+        defer { lock.unlock() }
+        if firstAttemptStart == nil {
+            firstAttemptStart = CFAbsoluteTimeGetCurrent()
+            AppLog.debug(AppLog.vision, "⏱️ [ImagePreprocessor] First segmentation attempt started")
+        }
+    }
+
+    static func logFirstReadyIfNeeded(path: String, regionCount: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !hasLoggedFirstReady, let start = firstAttemptStart else { return }
+        hasLoggedFirstReady = true
+        let elapsedMS = Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
+        AppLog.debug(AppLog.vision, "⏱️ [ImagePreprocessor] First segmentation result ready in \(elapsedMS) ms (\(path), regions: \(regionCount))")
+    }
 }
 
 private func segmentedFoodRegions(_ image: UIImage, maxRegions: Int, padding: CGFloat) -> [ImagePreprocessor.Result]? {
+    SegmentationStartupMetrics.markAttemptStartIfNeeded()
     guard let cg = cgImage(from: image),
-          let model = YOLOSegmentationModelProvider.load() else {
+          let model = YOLOSegmentationModelProvider.syncModel() else {
         return nil
     }
 
@@ -212,6 +293,7 @@ private func segmentedFoodRegions(_ image: UIImage, maxRegions: Int, padding: CG
     if let mask = maskBuffer(from: observations) {
         let regions = regionsFromMask(mask, image: image, maxRegions: maxRegions, padding: padding)
         if !regions.isEmpty {
+            SegmentationStartupMetrics.logFirstReadyIfNeeded(path: "mask", regionCount: regions.count)
             return regions
         }
     }
@@ -233,6 +315,7 @@ private func segmentedFoodRegions(_ image: UIImage, maxRegions: Int, padding: CG
         }
         if !outputs.isEmpty {
             AppLog.debug(AppLog.vision, "ℹ️ [ImagePreprocessor] Seg model returned detections but no mask; using box regions")
+            SegmentationStartupMetrics.logFirstReadyIfNeeded(path: "boxes", regionCount: outputs.count)
             return outputs
         }
     }

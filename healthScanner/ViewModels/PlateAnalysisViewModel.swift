@@ -188,7 +188,7 @@ final class PlateAnalysisViewModel: ObservableObject {
         let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: originalImage, modelContext: modelContext)
 
         do {
-            let resized = resizedImage(uploadImage, maxSide: 1024)
+            let resized = resizedImage(uploadImage, maxSide: 896)
             guard let imageData = resized.jpegData(compressionQuality: 0.75) else {
                 throw BackendAPIError.encodingFailed
             }

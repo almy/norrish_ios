@@ -42,6 +42,8 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         private var classificationRequest: VNClassifyImageRequest!
         private var detectionRequest: VNCoreMLRequest?
         private var isAnalyzing = false
+        private var cameraOpenRequestedAt: CFAbsoluteTime?
+        private var hasLoggedFirstFrame = false
         private var lastReliableDetectionTime: CFTimeInterval = 0
         private var pendingLabel: String?
         private var pendingCount: Int = 0
@@ -90,11 +92,12 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
 
             setupButtons()
 
-            if let vn = YOLOModelProvider.load() {
+            YOLOModelProvider.getModel { [weak self] vn in
+                guard let self, let vn else { return }
                 let req = VNCoreMLRequest(model: vn)
                 req.imageCropAndScaleOption = .scaleFill
-                req.regionOfInterest = roiRectNormalized
-                detectionRequest = req
+                req.regionOfInterest = self.roiRectNormalized
+                self.detectionRequest = req
             }
         }
 
@@ -106,6 +109,9 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
 
         override func viewWillAppear(_ animated: Bool) {
             super.viewWillAppear(animated)
+            cameraOpenRequestedAt = CFAbsoluteTimeGetCurrent()
+            hasLoggedFirstFrame = false
+            AppLog.debug(AppLog.vision, "⏱️ [EnhancedCamera] Open requested")
             if !session.isRunning {
                 DispatchQueue.global(qos: .userInitiated).async {
                     self.session.startRunning()
@@ -435,6 +441,27 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             return DepthFrameSnapshot(depthMap: copiedDepth, intrinsics: snapshot.intrinsics, imageSize: imageSize)
         }
 
+        private func cropCapturedImageToROI(_ image: UIImage) -> UIImage {
+            guard let cg = image.cgImage else { return image }
+            let pixelWidth = CGFloat(cg.width)
+            let pixelHeight = CGFloat(cg.height)
+            guard pixelWidth > 1, pixelHeight > 1 else { return image }
+
+            let normalized = roiRectNormalized
+            let cropRect = CGRect(
+                x: normalized.minX * pixelWidth,
+                y: normalized.minY * pixelHeight,
+                width: normalized.width * pixelWidth,
+                height: normalized.height * pixelHeight
+            ).integral.intersection(CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight))
+
+            guard cropRect.width > 1, cropRect.height > 1,
+                  let croppedCG = cg.cropping(to: cropRect) else {
+                return image
+            }
+            return UIImage(cgImage: croppedCG, scale: image.scale, orientation: image.imageOrientation)
+        }
+
         private static func copyDepthMap(_ source: CVPixelBuffer) -> CVPixelBuffer? {
             let width = CVPixelBufferGetWidth(source)
             let height = CVPixelBufferGetHeight(source)
@@ -475,6 +502,15 @@ extension CameraControllerRepresentable.CameraViewController: AVCaptureVideoData
                        didOutput sampleBuffer: CMSampleBuffer,
                        from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        if !hasLoggedFirstFrame {
+            hasLoggedFirstFrame = true
+            if let start = cameraOpenRequestedAt {
+                let elapsedMS = Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
+                AppLog.debug(AppLog.vision, "⏱️ [EnhancedCamera] First frame visible in \(elapsedMS) ms")
+            } else {
+                AppLog.debug(AppLog.vision, "⏱️ [EnhancedCamera] First frame visible")
+            }
+        }
         performClassification(on: pixelBuffer)
     }
 }
@@ -486,10 +522,12 @@ extension CameraControllerRepresentable.CameraViewController: AVCapturePhotoCapt
         guard error == nil,
               let data = photo.fileDataRepresentation(),
               let image = UIImage(data: data) else { return }
+        let croppedImage = cropCapturedImageToROI(image)
         let metrics = computeCaptureMetrics()
-        let depthSnapshot = makeDepthSnapshot(imageSize: image.size)
+        // Depth snapshot maps to full sensor image coordinates; skip passing it with cropped imagery.
+        let depthSnapshot: DepthFrameSnapshot? = nil
         DispatchQueue.main.async {
-            self.onCaptured(image, metrics.volumeML, metrics.massG, depthSnapshot)
+            self.onCaptured(croppedImage, metrics.volumeML, metrics.massG, depthSnapshot)
         }
     }
 }

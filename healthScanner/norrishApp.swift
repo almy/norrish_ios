@@ -44,6 +44,7 @@ struct norrishApp: App {
     init() {
         // Kick off Core ML model prewarm at app launch (guaranteed entry point)
         DualCameraPlateScannerViewController.prewarmModels()
+        YOLOModelProvider.preload()
         ImagePreprocessor.prewarmSegmentationModel()
     }
 
