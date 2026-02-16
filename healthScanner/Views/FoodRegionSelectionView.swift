@@ -8,6 +8,9 @@ struct FoodRegionSelectionView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: PlateAnalysisViewModel
     @Environment(\.dismiss) private var dismiss
+    let dismissOnConfirm: Bool
+    let onCloseRequested: (() -> Void)?
+    let onRetakeRequested: (() -> Void)?
 
     @State private var editableRegions: [EditableRegion] = []
     @State private var isLoading = true
@@ -37,6 +40,20 @@ struct FoodRegionSelectionView: View {
         let rect: CGRect // in image pixel coordinates
         let label: String
         let confidence: Float
+    }
+
+    init(
+        image: UIImage,
+        viewModel: PlateAnalysisViewModel,
+        dismissOnConfirm: Bool = true,
+        onCloseRequested: (() -> Void)? = nil,
+        onRetakeRequested: (() -> Void)? = nil
+    ) {
+        self.image = image
+        self.viewModel = viewModel
+        self.dismissOnConfirm = dismissOnConfirm
+        self.onCloseRequested = onCloseRequested
+        self.onRetakeRequested = onRetakeRequested
     }
 
     var body: some View {
@@ -303,19 +320,36 @@ private extension FoodRegionSelectionView {
             )
             .frame(height: 30)
             HStack(spacing: 12) {
-                Button("Retake") { dismiss() }
+                Button("Retake") {
+                    if let onRetakeRequested {
+                        onRetakeRequested()
+                    } else {
+                        dismiss()
+                    }
+                }
                     .buttonStyle(FRNeutralOutlineButtonStyle())
                     .frame(maxWidth: .infinity)
 
                 Button("Close") {
                     NotificationCenter.default.post(name: .closePlateScanFlow, object: nil)
-                    dismiss()
+                    if let onCloseRequested {
+                        onCloseRequested()
+                    } else {
+                        dismiss()
+                    }
                 }
                 .buttonStyle(FRNeutralOutlineButtonStyle())
                 .frame(maxWidth: .infinity)
 
                 Button(action: confirm) {
-                    if viewModel.isAnalyzing { ProgressView() } else { Text("Analyze") }
+                    if viewModel.isAnalyzing {
+                        HStack(spacing: 8) {
+                            AppInlineSpinner(size: 14)
+                            Text("Analyzing…")
+                        }
+                    } else {
+                        Text("Analyze")
+                    }
                 }
                 .buttonStyle(FRPrimaryButtonStyle())
                 .frame(maxWidth: .infinity)
@@ -373,17 +407,27 @@ private extension FoodRegionSelectionView {
 
     func detect() {
         isLoading = true
-        Task { @MainActor in
-            let results = viewModel.detectFoodRegions(in: image, maxRegions: 5)
-            let colors: [Color] = [.momentumAmber, .mossInsight, .midnightSpruce, .nordicSlate, .momentumAmber.opacity(0.7), .mossInsight.opacity(0.7)]
-            self.editableRegions = results.enumerated().map { idx, r in
-                EditableRegion(rect: r.boundingBox, confidence: r.confidence, isSelected: true, color: colors[idx % colors.count])
+        Task {
+            let results: [ImagePreprocessor.Result] = await withCheckedContinuation { continuation in
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let computed = viewModel.detectFoodRegions(in: image, maxRegions: 5)
+                    continuation.resume(returning: computed)
+                }
             }
-            self.activeRegionID = self.editableRegions.first?.id
-            self.baselineSelectedAreaPx = max(1, self.editableRegions.reduce(0) { $0 + ($1.rect.width * $1.rect.height) })
+            guard !Task.isCancelled else { return }
+            let colors: [Color] = [.momentumAmber, .mossInsight, .midnightSpruce, .nordicSlate, .momentumAmber.opacity(0.7), .mossInsight.opacity(0.7)]
+            await MainActor.run {
+                self.editableRegions = results.enumerated().map { idx, r in
+                    EditableRegion(rect: r.boundingBox, confidence: r.confidence, isSelected: true, color: colors[idx % colors.count])
+                }
+                self.activeRegionID = self.editableRegions.first?.id
+                self.baselineSelectedAreaPx = max(1, self.editableRegions.reduce(0) { $0 + ($1.rect.width * $1.rect.height) })
+            }
             await runYOLORegionCategorization()
-            self.scheduleMetadataRefresh()
-            isLoading = false
+            await MainActor.run {
+                self.scheduleMetadataRefresh()
+                self.isLoading = false
+            }
         }
     }
 
@@ -401,7 +445,9 @@ private extension FoodRegionSelectionView {
                 return ImagePreprocessor.Result(image: cropped, boundingBox: er.rect.integral, pixelCount: px, confidence: er.confidence)
             }
             await viewModel.analyzeSelectedRegions(results, originalImage: image, modelContext: modelContext)
-            dismiss()
+            if dismissOnConfirm {
+                dismiss()
+            }
         }
     }
 

@@ -97,6 +97,7 @@ struct ContentView: View {
     @State private var showingQuickAdd = false
     @State private var showingPlateScan = false
     @State private var showingPlateUpload = false
+    @State private var quickPlateCapturePayload: QuickPlateCapturePayload?
     @State private var selectedTab = 0
 
     @State private var searchText = ""
@@ -214,10 +215,21 @@ struct ContentView: View {
                 )
             }
             .fullScreenCover(isPresented: $showingPlateScan) {
-                PlateQuickScanView(mode: .camera)
+                PlateQuickScanView(
+                    mode: .camera,
+                    onCameraCaptured: { payload in
+                        showingPlateScan = false
+                        DispatchQueue.main.async {
+                            quickPlateCapturePayload = payload
+                        }
+                    }
+                )
             }
             .fullScreenCover(isPresented: $showingPlateUpload) {
                 PlateQuickScanView(mode: .photo)
+            }
+            .fullScreenCover(item: $quickPlateCapturePayload) { payload in
+                PlateQuickPostCaptureFlowView(capture: payload)
             }
             .sheet(item: $selectedProduct) { product in
                 ProductDetailView(product: product)
