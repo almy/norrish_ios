@@ -5,7 +5,7 @@ import Vision
 
 struct CameraControllerRepresentable: UIViewControllerRepresentable {
     @ObservedObject var state: LiveClassificationState
-    let onCaptured: (UIImage, Float?, Float?, DepthFrameSnapshot?) -> Void
+    let onCaptured: (UIImage, Float?, Float?, DepthFrameSnapshot?, String?, Float?) -> Void
     let onCancel: () -> Void
 
     func makeUIViewController(context: Context) -> CameraViewController {
@@ -16,7 +16,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
 
     final class CameraViewController: UIViewController {
         private let state: LiveClassificationState
-        private let onCaptured: (UIImage, Float?, Float?, DepthFrameSnapshot?) -> Void
+        private let onCaptured: (UIImage, Float?, Float?, DepthFrameSnapshot?, String?, Float?) -> Void
         private let onCancel: () -> Void
 
         private let session = AVCaptureSession()
@@ -29,6 +29,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         private var previewLayer: AVCaptureVideoPreviewLayer!
         private let focusMaskLayer = CAShapeLayer()
         private let focusBoxLayer = CAShapeLayer()
+        private let focusCrosshairLayer = CAShapeLayer()
         private let focusLabel = CATextLayer()
         private let roiRectNormalized = CGRect(x: 0.2, y: 0.2, width: 0.6, height: 0.6)
 
@@ -44,6 +45,8 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         private var isAnalyzing = false
         private var cameraOpenRequestedAt: CFAbsoluteTime?
         private var hasLoggedFirstFrame = false
+        private var frozenCaptureLabel: String?
+        private var frozenCaptureConfidence: Float?
         private var lastReliableDetectionTime: CFTimeInterval = 0
         private var pendingLabel: String?
         private var pendingCount: Int = 0
@@ -62,7 +65,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             return m
         }()
 
-        init(state: LiveClassificationState, onCaptured: @escaping (UIImage, Float?, Float?, DepthFrameSnapshot?) -> Void, onCancel: @escaping () -> Void) {
+        init(state: LiveClassificationState, onCaptured: @escaping (UIImage, Float?, Float?, DepthFrameSnapshot?, String?, Float?) -> Void, onCancel: @escaping () -> Void) {
             self.state = state
             self.onCaptured = onCaptured
             self.onCancel = onCancel
@@ -209,7 +212,13 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             focusBoxLayer.lineDashPattern = [6, 4]
             previewLayer.addSublayer(focusBoxLayer)
 
-            focusLabel.string = "Center food here"
+            focusCrosshairLayer.strokeColor = UIColor.white.withAlphaComponent(0.9).cgColor
+            focusCrosshairLayer.fillColor = UIColor.clear.cgColor
+            focusCrosshairLayer.lineWidth = 2
+            focusCrosshairLayer.lineCap = .round
+            previewLayer.addSublayer(focusCrosshairLayer)
+
+            focusLabel.string = "Scanning food..."
             focusLabel.fontSize = 11
             focusLabel.alignmentMode = .center
             focusLabel.foregroundColor = UIColor.white.withAlphaComponent(0.85).cgColor
@@ -225,10 +234,25 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             outer.append(cutout)
             focusMaskLayer.path = outer.cgPath
             focusBoxLayer.path = UIBezierPath(roundedRect: rect, cornerRadius: 12).cgPath
+
+            let crossPath = UIBezierPath()
+            let center = CGPoint(x: rect.midX, y: rect.midY)
+            let arm: CGFloat = 10
+            let gap: CGFloat = 4
+            crossPath.move(to: CGPoint(x: center.x - arm, y: center.y))
+            crossPath.addLine(to: CGPoint(x: center.x - gap, y: center.y))
+            crossPath.move(to: CGPoint(x: center.x + gap, y: center.y))
+            crossPath.addLine(to: CGPoint(x: center.x + arm, y: center.y))
+            crossPath.move(to: CGPoint(x: center.x, y: center.y - arm))
+            crossPath.addLine(to: CGPoint(x: center.x, y: center.y - gap))
+            crossPath.move(to: CGPoint(x: center.x, y: center.y + gap))
+            crossPath.addLine(to: CGPoint(x: center.x, y: center.y + arm))
+            focusCrosshairLayer.path = crossPath.cgPath
+
             let labelHeight: CGFloat = 16
             focusLabel.frame = CGRect(
                 x: rect.minX,
-                y: max(0, rect.minY - labelHeight - 6),
+                y: rect.minY + 6,
                 width: rect.width,
                 height: labelHeight
             )
@@ -246,6 +270,8 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         }
 
         @objc private func shutterTapped() {
+            frozenCaptureLabel = state.label
+            frozenCaptureConfidence = state.confidence
             let settings = AVCapturePhotoSettings()
             settings.flashMode = .off
             photoOutput.capturePhoto(with: settings, delegate: self)
@@ -274,9 +300,8 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 do {
                     try handler.perform([det])
                     if let objs = det.results as? [VNRecognizedObjectObservation],
-                       let best = objs.max(by: { $0.confidence < $1.confidence }),
-                       let chosen = chooseBestLabel(from: best.labels) {
-                        applyCandidateLabel(chosen.identifier, confidence: chosen.confidence, now: currentTime)
+                       let focused = focusedDetectionLabel(from: objs) {
+                        applyCandidateLabel(focused.identifier, confidence: focused.confidence, now: currentTime)
                     } else if shouldRunClassification {
                         lastClassificationTime = currentTime
                         runFallbackClassification(with: handler)
@@ -352,6 +377,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             DispatchQueue.main.async {
                 self.state.label = normalized
                 self.state.confidence = confidence
+                self.focusLabel.string = "Focus: \(normalized) \(Int(confidence * 100))%"
                 NotificationCenter.default.post(
                     name: .liveFoodDetectionUpdate,
                     object: nil,
@@ -368,6 +394,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             DispatchQueue.main.async {
                 self.state.label = "Scanning food…"
                 self.state.confidence = 0
+                self.focusLabel.string = "Scanning food..."
             }
         }
 
@@ -384,6 +411,30 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 }
             }
             return nil
+        }
+
+        private func focusedDetectionLabel(from observations: [VNRecognizedObjectObservation]) -> (identifier: String, confidence: Float)? {
+            let focus = CGPoint(x: roiRectNormalized.midX, y: roiRectNormalized.midY)
+            typealias Candidate = (label: VNClassificationObservation, distance: CGFloat, containsFocus: Bool)
+            let candidates: [Candidate] = observations.compactMap { obs in
+                guard let label = chooseBestLabel(from: obs.labels) else { return nil }
+                let center = CGPoint(x: obs.boundingBox.midX, y: obs.boundingBox.midY)
+                let dx = center.x - focus.x
+                let dy = center.y - focus.y
+                let distance = (dx * dx + dy * dy).squareRoot()
+                return (label: label, distance: distance, containsFocus: obs.boundingBox.contains(focus))
+            }
+            guard !candidates.isEmpty else { return nil }
+            let prioritized = candidates.filter { $0.containsFocus }
+            let source = prioritized.isEmpty ? candidates : prioritized
+            let best = source.sorted {
+                if $0.distance == $1.distance {
+                    return $0.label.confidence > $1.label.confidence
+                }
+                return $0.distance < $1.distance
+            }.first
+            guard let best else { return nil }
+            return (identifier: best.label.identifier, confidence: best.label.confidence)
         }
 
         private func isCandidateUseful(_ identifier: String, confidence: Float) -> Bool {
@@ -442,24 +493,29 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         }
 
         private func cropCapturedImageToROI(_ image: UIImage) -> UIImage {
-            guard let cg = image.cgImage else { return image }
-            let pixelWidth = CGFloat(cg.width)
-            let pixelHeight = CGFloat(cg.height)
-            guard pixelWidth > 1, pixelHeight > 1 else { return image }
+            // Match the visible ROI by converting through preview-layer metadata mapping (aspect-fill aware).
+            let upright = image.normalizedUpOrientation()
+            guard let cg = upright.cgImage else { return image }
+            let pixelSize = CGSize(width: CGFloat(cg.width), height: CGFloat(cg.height))
+            guard pixelSize.width > 1, pixelSize.height > 1 else { return image }
 
-            let normalized = roiRectNormalized
-            let cropRect = CGRect(
-                x: normalized.minX * pixelWidth,
-                y: normalized.minY * pixelHeight,
-                width: normalized.width * pixelWidth,
-                height: normalized.height * pixelHeight
-            ).integral.intersection(CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight))
+            // ROI as shown on-screen.
+            let roiInLayer = previewLayer.layerRectConverted(fromMetadataOutputRect: roiRectNormalized)
+            // Convert visible layer rect back to normalized metadata space.
+            let metadataRect = previewLayer.metadataOutputRectConverted(fromLayerRect: roiInLayer)
+            // Map normalized metadata rect to image pixels.
+            let pixelRect = CGRect(
+                x: metadataRect.origin.x * pixelSize.width,
+                y: metadataRect.origin.y * pixelSize.height,
+                width: metadataRect.size.width * pixelSize.width,
+                height: metadataRect.size.height * pixelSize.height
+            ).integral.intersection(CGRect(origin: .zero, size: pixelSize))
 
-            guard cropRect.width > 1, cropRect.height > 1,
-                  let croppedCG = cg.cropping(to: cropRect) else {
+            guard pixelRect.width > 1, pixelRect.height > 1,
+                  let cropped = cg.cropping(to: pixelRect) else {
                 return image
             }
-            return UIImage(cgImage: croppedCG, scale: image.scale, orientation: image.imageOrientation)
+            return UIImage(cgImage: cropped, scale: upright.scale, orientation: .up)
         }
 
         private static func copyDepthMap(_ source: CVPixelBuffer) -> CVPixelBuffer? {
@@ -497,6 +553,18 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
     }
 }
 
+private extension UIImage {
+    func normalizedUpOrientation() -> UIImage {
+        guard imageOrientation != .up else { return self }
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = scale
+        format.opaque = false
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
+}
+
 extension CameraControllerRepresentable.CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput,
                        didOutput sampleBuffer: CMSampleBuffer,
@@ -526,8 +594,12 @@ extension CameraControllerRepresentable.CameraViewController: AVCapturePhotoCapt
         let metrics = computeCaptureMetrics()
         // Depth snapshot maps to full sensor image coordinates; skip passing it with cropped imagery.
         let depthSnapshot: DepthFrameSnapshot? = nil
+        let capturedLabel = frozenCaptureLabel ?? self.state.label
+        let capturedConfidence = frozenCaptureConfidence ?? self.state.confidence
+        frozenCaptureLabel = nil
+        frozenCaptureConfidence = nil
         DispatchQueue.main.async {
-            self.onCaptured(croppedImage, metrics.volumeML, metrics.massG, depthSnapshot)
+            self.onCaptured(croppedImage, metrics.volumeML, metrics.massG, depthSnapshot, capturedLabel, capturedConfidence)
         }
     }
 }
