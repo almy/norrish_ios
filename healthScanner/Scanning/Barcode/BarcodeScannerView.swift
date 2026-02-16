@@ -149,20 +149,7 @@ struct BarcodeScannerView: View {
                     // Loading overlay
                     Group {
                         if viewModel.isLoading {
-                            Color.black.opacity(0.3)
-                                .ignoresSafeArea()
-                                .overlay(
-                                    VStack(spacing: 16) {
-                                        ProgressView()
-                                            .scaleEffect(1.5)
-                                        Text("Fetching product information...")
-                                            .font(.headline)
-                                            .foregroundColor(.white)
-                                    }
-                                    .padding(24)
-                                    .background(Color.black.opacity(0.8))
-                                    .cornerRadius(12)
-                                )
+                            AppLoadingOverlay(title: "Fetching product information...")
                         }
                     }
                 )

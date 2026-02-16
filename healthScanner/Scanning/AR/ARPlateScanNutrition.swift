@@ -11,7 +11,6 @@
 //
 // Requirements:
 //  - Keep the companion files in your target:
-//      "AR Plate Scanner – Full Integration for PlateAnalysisView.swift"
 //      "DualCameraPlateScanner (Non‑LiDAR Fallback) – AVCapture Depth Module"
 //  - Info.plist: NSCameraUsageDescription
 
@@ -120,9 +119,12 @@ public struct ARPlateScannerView: View {
                 Text("(Simulator – placeholder)").foregroundColor(.white.opacity(0.55)).font(.footnote)
                 Spacer()
                 if isSimulating {
-                    ProgressView("Analyzing…")
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .foregroundColor(.white)
+                    VStack(spacing: 10) {
+                        AppInlineSpinner(size: 30)
+                        Text("Analyzing…")
+                            .font(AppFonts.sans(13, weight: .semibold))
+                            .foregroundColor(.nordicBone)
+                    }
                 } else {
                     Button(action: simulateScan) {
                         HStack { Image(systemName: "sparkles"); Text("Simulate Scan") }

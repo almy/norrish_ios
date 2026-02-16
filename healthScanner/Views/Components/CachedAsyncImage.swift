@@ -19,8 +19,7 @@ struct CachedAsyncImage: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color.nordicBone.opacity(0.8))
                     .overlay(
-                        ProgressView()
-                            .scaleEffect(1.2)
+                        AppInlineSpinner(size: 22)
                     )
             } else {
                 RoundedRectangle(cornerRadius: 16)

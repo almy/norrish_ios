@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */; };
+			03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */; };
+			A91D10082F3C000100AAA001 /* AppLoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91D10182F3C000100AAA001 /* AppLoadingOverlay.swift */; };
 			1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42784632A507491D970BC129 /* ProductService.swift */; };
 			1D58B9102829457C892B5917 /* CoreMLFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D58B90F2829457C892B5917 /* CoreMLFoodAnalysisService.swift */; };
 			A91D10072F3C000100AAA001 /* YOLO26X-seg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */; };
@@ -36,7 +37,6 @@
 		A7C41F1B9D6E4E53A1230001 /* QuickAddSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C41F1B9D6E4E53A1230011 /* QuickAddSheetView.swift */; };
 		A7C41F1B9D6E4E53A1230002 /* HistoryTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C41F1B9D6E4E53A1230012 /* HistoryTabView.swift */; };
 		A7C41F1B9D6E4E53A1230003 /* TabWithFloatingAddButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C41F1B9D6E4E53A1230013 /* TabWithFloatingAddButton.swift */; };
-		A98444C891C84C63914AF615 /* PlateAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EADA9EE431344B85A11DF249 /* PlateAnalysisView.swift */; };
 		AA4E74354E3F4D09AEB43BCC /* PlateAnalysisHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC72322DD2E4453A4C2D888 /* PlateAnalysisHistory.swift */; };
 		B1C2D3E4F5061728394A5B6C /* BackendAPIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1D2C3B4A5968778695A4B3C /* BackendAPIModels.swift */; };
 		B798BDB59DD74C6683177ABA /* ImageCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82DFF5309F184C0FB1325862 /* ImageCacheService.swift */; };
@@ -58,7 +58,6 @@
 		CE5335E72E79DDB40086689E /* DietaryPreferences+Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335E32E79DDB40086689E /* DietaryPreferences+Utilities.swift */; };
 		CE5335E82E79DDB40086689E /* LocalizationDebug.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335E42E79DDB40086689E /* LocalizationDebug.swift */; };
 		CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335E52E79DDB40086689E /* String+Localization.swift */; };
-		CE5335F32E7AB1A00086689E /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335F22E7AB1A00086689E /* CameraPreviewView.swift */; };
 		CE5335FD2E7AEBE60086689E /* NutritionRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335FC2E7AEBE60086689E /* NutritionRecommendationEngine.swift */; };
 		CE5335FF2E7AEBFF0086689E /* NutritionRecommendation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5335FE2E7AEBFF0086689E /* NutritionRecommendation.swift */; };
 		CE5336012E7AEC1C0086689E /* Recommendation+Insight.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5336002E7AEC1C0086689E /* Recommendation+Insight.swift */; };
@@ -68,7 +67,6 @@
 		CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FFD0EA8EF747698BE82BC6 /* PlateAnalysis.swift */; };
 		CEA6620B2F2620A8002A7EA2 /* ImagePreprocessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */; };
 		CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */; };
-		CEA662112F2624FE002A7EA2 /* PlateAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */; };
 		CED6D9E92E6F09A4006C1A7A /* LaunchScreenV2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */; };
 		CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */; };
 		CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */; };
@@ -78,7 +76,6 @@
 		CEF23E622E6C5F67002B903F /* healthScannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E612E6C5F67002B903F /* healthScannerTests.swift */; };
 		CEF23E6C2E6C5F67002B903F /* healthScannerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */; };
 		CEF23E6E2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */; };
-		CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */; };
 		CEF4FE5B2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */; };
 		CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */; };
 		CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */ = {isa = PBXBuildFile; fileRef = CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */; };
@@ -151,6 +148,7 @@
 			A91D10152F3C000100AAA001 /* YOLOModelProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOLOModelProvider.swift; sourceTree = "<group>"; };
 			A91D10162F3C000100AAA001 /* EnhancedCaptureMetricsEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCaptureMetricsEstimator.swift; sourceTree = "<group>"; };
 			A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "YOLO26X-seg.mlpackage"; sourceTree = "<group>"; };
+			A91D10182F3C000100AAA001 /* AppLoadingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLoadingOverlay.swift; sourceTree = "<group>"; };
 			ABE9DF8501314CD2902886EE /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
 		AC1F6370882F47499FF0ED7A /* PlateAnalysisResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisResultView.swift; sourceTree = "<group>"; };
 		AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraBarcodeScannerView.swift; sourceTree = "<group>"; };
@@ -169,7 +167,6 @@
 		CE5335E32E79DDB40086689E /* DietaryPreferences+Utilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "DietaryPreferences+Utilities.swift"; sourceTree = "<group>"; };
 		CE5335E42E79DDB40086689E /* LocalizationDebug.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalizationDebug.swift; sourceTree = "<group>"; };
 		CE5335E52E79DDB40086689E /* String+Localization.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+Localization.swift"; sourceTree = "<group>"; };
-		CE5335F22E7AB1A00086689E /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		CE5335FC2E7AEBE60086689E /* NutritionRecommendationEngine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NutritionRecommendationEngine.swift; sourceTree = "<group>"; };
 		CE5335FE2E7AEBFF0086689E /* NutritionRecommendation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NutritionRecommendation.swift; sourceTree = "<group>"; };
 		CE5336002E7AEC1C0086689E /* Recommendation+Insight.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Recommendation+Insight.swift"; sourceTree = "<group>"; };
@@ -178,7 +175,6 @@
 		CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalRecommendationML.swift; sourceTree = "<group>"; };
 		CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreprocessor.swift; sourceTree = "<group>"; };
 		CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodRegionSelectionView.swift; sourceTree = "<group>"; };
-		CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisService.swift; sourceTree = "<group>"; };
 		CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreenV2.storyboard; sourceTree = "<group>"; };
 		CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationEnhancer.swift; sourceTree = "<group>"; };
 		CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateScanView.swift; sourceTree = "<group>"; };
@@ -191,7 +187,6 @@
 		CEF23E672E6C5F67002B903F /* healthScannerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = healthScannerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CEF23E6B2E6C5F67002B903F /* healthScannerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITests.swift; sourceTree = "<group>"; };
 		CEF23E6D2E6C5F67002B903F /* healthScannerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = healthScannerUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedPlateScannerView.swift; sourceTree = "<group>"; };
 		CEF4FE5A2F2A499A009FAA35 /* yolov8x-oiv7.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "yolov8x-oiv7.mlpackage"; sourceTree = "<group>"; };
 		CEF4FE5C2F2A6A53009FAA35 /* IconMapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconMapper.swift; sourceTree = "<group>"; };
 		CEF4FE5E2F2A6A68009FAA35 /* IconMapping.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = IconMapping.json; sourceTree = "<group>"; };
@@ -208,7 +203,6 @@
 		E1D2C3B4A5968778695A4B3C /* BackendAPIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPIModels.swift; sourceTree = "<group>"; };
 		E2F3A405162738495A6B7C8D /* RecommendationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationService.swift; sourceTree = "<group>"; };
 		E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Resources/AppConfig.plist; sourceTree = "<group>"; };
-		EADA9EE431344B85A11DF249 /* PlateAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisView.swift; sourceTree = "<group>"; };
 		F0A1B2C3D4E5F67890123456 /* Resources/Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources/Fonts; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F708192A3B4C /* BackendAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPIClient.swift; sourceTree = "<group>"; };
 		F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateProgressRingView.swift; sourceTree = "<group>"; };
@@ -270,15 +264,16 @@
 			path = AR;
 			sourceTree = "<group>";
 		};
-		2E144E98C5B141AF9F71E5C3 /* Components */ = {
-			isa = PBXGroup;
-			children = (
-				CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */,
-				FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */,
-				0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */,
-				00BC128FAFB74C179A5E9536 /* NutritionCard.swift */,
-				81B5F38D5DE44326AF954F94 /* RecentScanRow.swift */,
-			);
+			2E144E98C5B141AF9F71E5C3 /* Components */ = {
+				isa = PBXGroup;
+				children = (
+					CE5336052E7AEDA90086689E /* DashboardInsightsView.swift */,
+					FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */,
+					A91D10182F3C000100AAA001 /* AppLoadingOverlay.swift */,
+					0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */,
+					00BC128FAFB74C179A5E9536 /* NutritionCard.swift */,
+					81B5F38D5DE44326AF954F94 /* RecentScanRow.swift */,
+				);
 			path = Components;
 			sourceTree = "<group>";
 		};
@@ -292,7 +287,6 @@
 				CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */,
 				82DFF5309F184C0FB1325862 /* ImageCacheService.swift */,
 				ABE9DF8501314CD2902886EE /* OpenAIService.swift */,
-				CEA662102F2624FE002A7EA2 /* PlateAnalysisService.swift */,
 				F1A2B3C4D5E6F708192A3B4C /* BackendAPIClient.swift */,
 				E1D2C3B4A5968778695A4B3C /* BackendAPIModels.swift */,
 				E2F3A405162738495A6B7C8D /* RecommendationService.swift */,
@@ -416,7 +410,6 @@
 		CE5335F12E7AB19A0086689E /* Common */ = {
 			isa = PBXGroup;
 			children = (
-				CE5335F22E7AB1A00086689E /* CameraPreviewView.swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
@@ -536,11 +529,9 @@
 				8D82777BB76B4E8F8A90C702 /* NutriScoreInfoView.swift */,
 				58DB4B9574E54E82BEBE4FB4 /* PersonalizedInsightCarousel.swift */,
 				AC1F6370882F47499FF0ED7A /* PlateAnalysisResultView.swift */,
-				EADA9EE431344B85A11DF249 /* PlateAnalysisView.swift */,
 				D636EC943F04417B920D1E0E /* PlateDetailView.swift */,
 				59FF2D5BB40F44EA9634238C /* PlateHistoryDetailView.swift */,
 				BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */,
-				CEF4FE522F28CF43009FAA35 /* UnifiedPlateScannerView.swift */,
 				CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */,
 				CEF4FE6C2F32784B009FAA35 /* HomeView.swift */,
 				CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */,
@@ -689,7 +680,6 @@
 				29A1F3A52E7D00200086689E /* ARPlateScannerViewController.swift in Sources */,
 				29A1F3A62E7D00210086689E /* DualCameraPlateScannerViewController.swift in Sources */,
 				CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */,
-				CE5335F32E7AB1A00086689E /* CameraPreviewView.swift in Sources */,
 				CEF4FE6D2F32784B009FAA35 /* HomeView.swift in Sources */,
 				CEF4FE672F3103E8009FAA35 /* AggregatorService.swift in Sources */,
 				CE5335D82E79D2350086689E /* AppStyles.swift in Sources */,
@@ -724,7 +714,6 @@
 				BF23ACB8A4C64D57B38B7E93 /* PlateAnalysisViewModel.swift in Sources */,
 				A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */,
 				CEA6620B2F2620A8002A7EA2 /* ImagePreprocessor.swift in Sources */,
-				CEF4FE532F28CF43009FAA35 /* UnifiedPlateScannerView.swift in Sources */,
 				CEF4FE632F3102D7009FAA35 /* DailyNutritionAggregateEntity.swift in Sources */,
 				03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */,
 				CE5335E92E79DDB40086689E /* String+Localization.swift in Sources */,
@@ -739,10 +728,8 @@
 				CEF4FE6B2F310465009FAA35 /* PromptOverlayHost.swift in Sources */,
 				32E8B7B641224A8C9040BE0B /* PersonalizedInsightCarousel.swift in Sources */,
 				413BC6B4A94B42A8B165E381 /* PlateAnalysisResultView.swift in Sources */,
-				A98444C891C84C63914AF615 /* PlateAnalysisView.swift in Sources */,
 				C358554B9C544942B6474322 /* PlateDetailView.swift in Sources */,
 				E45217E8CD9A4B21B4152004 /* PlateHistoryDetailView.swift in Sources */,
-				CEA662112F2624FE002A7EA2 /* PlateAnalysisService.swift in Sources */,
 					CE5335E22E79DD800086689E /* DietaryPreferencesView.swift in Sources */,
 					30F0AD1B8C354DABA92020EB /* Item.swift in Sources */,
 					A91D10012F3C000100AAA001 /* EnhancedCameraPreviewView.swift in Sources */,
@@ -751,6 +738,7 @@
 					CBB558377628423593EC12D3 /* Product.swift in Sources */,
 					CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */,
 					A91D10022F3C000100AAA001 /* EnhancedCameraController.swift in Sources */,
+					A91D10082F3C000100AAA001 /* AppLoadingOverlay.swift in Sources */,
 					D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */,
 					A91D10032F3C000100AAA001 /* MediaPickers.swift in Sources */,
 					B798BDB59DD74C6683177ABA /* ImageCacheService.swift in Sources */,
