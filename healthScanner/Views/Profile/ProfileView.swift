@@ -19,12 +19,27 @@ final class ProfileIdentityStore: ObservableObject {
     private let defaults = UserDefaults.standard
     private let nameKey = "profile.displayName"
     private let avatarPathKey = "profile.avatarPath"
+    private let avatarDataKey = "profile.avatarData"
 
     private init() {
         let savedName = defaults.string(forKey: nameKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let effectiveName = (savedName?.isEmpty == false) ? savedName! : "Sophia Bennett"
         self.displayName = effectiveName
-        self.avatarPath = defaults.string(forKey: avatarPathKey)
+        let savedPath = defaults.string(forKey: avatarPathKey)
+        if let savedPath, FileManager.default.fileExists(atPath: savedPath) {
+            self.avatarPath = savedPath
+        } else if let fallbackData = defaults.data(forKey: avatarDataKey) {
+            let fileURL = avatarFileURL()
+            do {
+                try fallbackData.write(to: fileURL, options: .atomic)
+                self.avatarPath = fileURL.path
+                defaults.set(fileURL.path, forKey: avatarPathKey)
+            } catch {
+                self.avatarPath = nil
+            }
+        } else {
+            self.avatarPath = nil
+        }
     }
 
     func updateDisplayName(_ newValue: String) {
@@ -35,12 +50,15 @@ final class ProfileIdentityStore: ObservableObject {
     }
 
     func updateAvatar(_ image: UIImage) {
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        guard let data = encodedAvatarData(from: image) else { return }
         let fileURL = avatarFileURL()
         do {
+            let directory = fileURL.deletingLastPathComponent()
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try data.write(to: fileURL, options: .atomic)
             avatarPath = fileURL.path
             defaults.set(fileURL.path, forKey: avatarPathKey)
+            defaults.set(data, forKey: avatarDataKey)
         } catch {
             return
         }
@@ -52,17 +70,58 @@ final class ProfileIdentityStore: ObservableObject {
         }
         self.avatarPath = nil
         defaults.removeObject(forKey: avatarPathKey)
+        defaults.removeObject(forKey: avatarDataKey)
     }
 
     func avatarImage() -> UIImage? {
-        guard let avatarPath else { return nil }
-        return UIImage(contentsOfFile: avatarPath)
+        if let avatarPath, let image = UIImage(contentsOfFile: avatarPath) {
+            return image
+        }
+        if let data = defaults.data(forKey: avatarDataKey), let image = UIImage(data: data) {
+            if avatarPath == nil {
+                let fileURL = avatarFileURL()
+                do {
+                    try data.write(to: fileURL, options: .atomic)
+                    self.avatarPath = fileURL.path
+                    defaults.set(fileURL.path, forKey: avatarPathKey)
+                } catch {
+                    // Keep in-memory fallback from defaults data.
+                }
+            }
+            return image
+        }
+        return nil
     }
 
     private func avatarFileURL() -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        return docs.appendingPathComponent("profile_avatar.jpg")
+        return appSupport
+            .appendingPathComponent("ProfileIdentity", isDirectory: true)
+            .appendingPathComponent("profile_avatar.jpg")
+    }
+
+    private func encodedAvatarData(from image: UIImage) -> Data? {
+        let prepared = image.normalizedAndDownsampled(maxDimension: 1200)
+        return prepared.jpegData(compressionQuality: 0.82) ?? prepared.pngData()
+    }
+}
+
+private extension UIImage {
+    func normalizedAndDownsampled(maxDimension: CGFloat) -> UIImage {
+        let size = self.size
+        guard size.width > 0, size.height > 0 else { return self }
+
+        let maxSide = max(size.width, size.height)
+        let scaleRatio = min(1.0, maxDimension / maxSide)
+        let targetSize = CGSize(width: size.width * scaleRatio, height: size.height * scaleRatio)
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
     }
 }
 

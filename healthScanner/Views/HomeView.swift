@@ -5,6 +5,7 @@ struct HomeView: View {
     private static let recommendationEngine = OnDeviceNutritionRecommendationEngine()
 
     @Environment(\.modelContext) private var modelContext
+    @StateObject private var profileIdentity = ProfileIdentityStore.shared
     @Query private var products: [Product]
     @Query private var plates: [PlateAnalysisHistory]
     @State private var showingScanner = false
@@ -48,14 +49,21 @@ struct HomeView: View {
                                     .tracking(0.2)
                             }
                             Spacer()
-                            // Avatar placeholder
+                            // Persisted profile avatar
                             ZStack {
-                                Circle().stroke(Color.black.opacity(0.08))
-                                Image(systemName: "person.crop.circle")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(.nordicSlate)
-                                    .padding(6)
+                                Circle().stroke(Color.black.opacity(0.08), lineWidth: 1)
+                                Group {
+                                    if let avatar = profileIdentity.avatarImage() {
+                                        Image(uiImage: avatar)
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        Image("profile_avatar")
+                                            .resizable()
+                                            .scaledToFill()
+                                    }
+                                }
+                                .clipShape(Circle())
                             }
                             .frame(width: 48, height: 48)
                         }

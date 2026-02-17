@@ -209,6 +209,17 @@ struct ContentView: View {
                     .tag(2)
             }
             .accentColor(.momentumAmber)
+            .overlay {
+                if barcodeScanVM.isLoading {
+                    AppLoadingOverlay(
+                        title: "Fetching product information...",
+                        subtitle: "Looking up barcode details"
+                    )
+                    .transition(.opacity)
+                    .zIndex(1000)
+                }
+            }
+            .animation(.easeInOut(duration: 0.22), value: barcodeScanVM.isLoading)
             .fullScreenCover(isPresented: $showingScanner) {
                 QuickBarcodeScanView(
                     scannedCode: $scannedCode,
@@ -263,8 +274,16 @@ struct ContentView: View {
             }
             .onChange(of: scannedCode) { _, newValue in
                 guard let code = newValue else { return }
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    barcodeScanVM.isLoading = true
+                }
                 Task {
-                    if let product = try? await barcodeScanVM.fetchProduct(barcode: code, existing: products, modelContext: modelContext) {
+                    defer { scannedCode = nil }
+                    if let product = try? await barcodeScanVM.fetchProduct(
+                        barcode: code,
+                        existing: products,
+                        modelContext: modelContext
+                    ) {
                         selectedProduct = product
                     }
                 }
