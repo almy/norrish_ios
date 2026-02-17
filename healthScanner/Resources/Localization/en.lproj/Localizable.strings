@@ -8,6 +8,7 @@
 "plate.upload_photo" = "Upload Photo";
 "recent.activity" = "Recent Activity";
 "recent.activity.archive" = "Archive";
+"home.section.suggestions" = "Quick Actions";
 
 /* Filter and Sort */
 "filter.all" = "All";
@@ -111,10 +112,12 @@
 "profile.download_report" = "Download Nutritional Report";
 "profile.goal.balance" = "Balanced";
 "profile.days" = "Days";
+"profile.version" = "Version 1.0.0";
 
 /* Scanning Status */
 "scanning.scanned_on" = "Scanned %@";
 "scanning.analyzed_on" = "Analyzed %@";
+"scan.status.fetching" = "Fetching analysis...";
 
 /* Picker Labels */
 "picker.history_type" = "History Type";

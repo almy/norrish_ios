@@ -8,6 +8,7 @@
 "plate.upload_photo" = "Ladda Upp Foto";
 "recent.activity" = "Senaste Aktivitet";
 "recent.activity.archive" = "Arkiv";
+"home.section.suggestions" = "Snabbåtgärder";
 
 /* Filter and Sort */
 "filter.all" = "Alla";
@@ -111,6 +112,7 @@
 "profile.download_report" = "Ladda Ned Näringsrapport";
 "profile.goal.balance" = "Balanserad";
 "profile.days" = "Dagar";
+"profile.version" = "Version 1.0.0";
 "profile.tagline" = "Gör hälsosamma val enklare";
 "profile.membership" = "Premium Medlem • Gick med 2021";
 "profile.dietary_preferences" = "Dietpreferenser";
@@ -140,6 +142,7 @@
 /* Scanning Status */
 "scanning.scanned_on" = "Skannad %@";
 "scanning.analyzed_on" = "Analyserad %@";
+"scan.status.fetching" = "Hämtar analys...";
 
 /* Picker Labels */
 "picker.history_type" = "Historiktyp";
@@ -149,6 +152,24 @@
 "unit.grams" = "g";
 "unit.milligrams" = "mg";
 "unit.kilocalories" = "kcal";
+
+/* Settings */
+"settings.title" = "Inställningar";
+"settings.appearance" = "Utseende";
+"settings.appearance_header" = "Utseende";
+"settings.theme" = "Tema";
+"settings.version" = "Version";
+"settings.about" = "Om";
+"settings.privacy" = "Integritet";
+"settings.local_only" = "Endast lokalt";
+"settings.app_info_header" = "Appinformation";
+"settings.privacy_header" = "Integritet och data";
+"settings.privacy_footer" = "All din data lagras lokalt på din enhet. Ingenting delas med tredje part.";
+
+/* Theme Options */
+"theme.system" = "System";
+"theme.light" = "Ljust";
+"theme.dark" = "Mörkt";
 
 /* Dietary Preferences */
 "preferences.your_preferences" = "Dina Preferenser";
