@@ -7,11 +7,70 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
+
+@MainActor
+final class ProfileIdentityStore: ObservableObject {
+    static let shared = ProfileIdentityStore()
+
+    @Published private(set) var displayName: String
+    @Published private(set) var avatarPath: String?
+
+    private let defaults = UserDefaults.standard
+    private let nameKey = "profile.displayName"
+    private let avatarPathKey = "profile.avatarPath"
+
+    private init() {
+        let savedName = defaults.string(forKey: nameKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let effectiveName = (savedName?.isEmpty == false) ? savedName! : "Sophia Bennett"
+        self.displayName = effectiveName
+        self.avatarPath = defaults.string(forKey: avatarPathKey)
+    }
+
+    func updateDisplayName(_ newValue: String) {
+        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        displayName = trimmed
+        defaults.set(trimmed, forKey: nameKey)
+    }
+
+    func updateAvatar(_ image: UIImage) {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
+        let fileURL = avatarFileURL()
+        do {
+            try data.write(to: fileURL, options: .atomic)
+            avatarPath = fileURL.path
+            defaults.set(fileURL.path, forKey: avatarPathKey)
+        } catch {
+            return
+        }
+    }
+
+    func removeAvatar() {
+        if let avatarPath {
+            try? FileManager.default.removeItem(atPath: avatarPath)
+        }
+        self.avatarPath = nil
+        defaults.removeObject(forKey: avatarPathKey)
+    }
+
+    func avatarImage() -> UIImage? {
+        guard let avatarPath else { return nil }
+        return UIImage(contentsOfFile: avatarPath)
+    }
+
+    private func avatarFileURL() -> URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        return docs.appendingPathComponent("profile_avatar.jpg")
+    }
+}
 
 struct ProfileView: View {
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var localizationManager = LocalizationManager.shared
     @StateObject private var preferencesManager = DietaryPreferencesManager.shared
+    @StateObject private var profileIdentity = ProfileIdentityStore.shared
     @State private var mealRemindersEnabled = false
     @State private var promotionalUpdatesEnabled = false
     @State private var showingLogoutAlert = false
@@ -20,6 +79,12 @@ struct ProfileView: View {
     @State private var showingPrivacy = false
     @State private var showingDietaryPreferences = false
     @State private var showingManageAccount = false
+    @State private var showingEditNameSheet = false
+    @State private var draftDisplayName = ""
+    @State private var showingAvatarSourceDialog = false
+    @State private var showingAvatarCamera = false
+    @State private var showingAvatarLibrary = false
+    @State private var selectedAvatarImage: UIImage?
     @Query private var plates: [PlateAnalysisHistory]
     @Query private var products: [Product]
 
@@ -59,6 +124,34 @@ struct ProfileView: View {
         .sheet(isPresented: $showingDietaryPreferences) {
             DietaryPreferencesView()
         }
+        .sheet(isPresented: $showingEditNameSheet) {
+            editNameSheet
+        }
+        .fullScreenCover(isPresented: $showingAvatarCamera) {
+            CameraCaptureView(image: $selectedAvatarImage)
+                .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $showingAvatarLibrary) {
+            PhotoLibraryPickerView(image: $selectedAvatarImage)
+                .ignoresSafeArea()
+        }
+        .confirmationDialog("Edit Photo", isPresented: $showingAvatarSourceDialog, titleVisibility: .visible) {
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                Button("Take Photo") { showingAvatarCamera = true }
+            }
+            Button("Choose from Library") { showingAvatarLibrary = true }
+            if profileIdentity.avatarImage() != nil {
+                Button("Remove Photo", role: .destructive) {
+                    profileIdentity.removeAvatar()
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+        .onChange(of: selectedAvatarImage) { _, newValue in
+            guard let image = newValue else { return }
+            profileIdentity.updateAvatar(image)
+            selectedAvatarImage = nil
+        }
     }
 }
 
@@ -92,12 +185,23 @@ private extension ProfileView {
     var profileHeader: some View {
         VStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                Image("profile_avatar")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 96, height: 96)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.momentumAmber.opacity(0.2), lineWidth: 1))
+                Group {
+                    if let avatarImage = profileIdentity.avatarImage() {
+                        Image(uiImage: avatarImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        Image("profile_avatar")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
+                }
+                .frame(width: 96, height: 96)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.momentumAmber.opacity(0.2), lineWidth: 1))
+                .onTapGesture {
+                    showingAvatarSourceDialog = true
+                }
 
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 14))
@@ -108,15 +212,26 @@ private extension ProfileView {
             }
 
             VStack(spacing: 6) {
-                Text("Sophia Bennett")
+                Text(profileIdentity.displayName)
                     .font(AppFonts.serif(32, weight: .semibold))
                     .foregroundColor(.midnightSpruce)
+                    .onTapGesture {
+                        draftDisplayName = profileIdentity.displayName
+                        showingEditNameSheet = true
+                    }
                 Text("profile.membership".localized())
                     .font(AppFonts.sans(11, weight: .medium))
                     .kerning(2)
                     .foregroundColor(.nordicSlate)
                     .textCase(.uppercase)
             }
+
+            Button("Edit profile") {
+                draftDisplayName = profileIdentity.displayName
+                showingEditNameSheet = true
+            }
+            .font(AppFonts.sans(12, weight: .semibold))
+            .foregroundColor(.midnightSpruce)
         }
         .padding(.horizontal, 20)
     }
@@ -213,7 +328,16 @@ private extension ProfileView {
                     title: "profile.manage_account".localized(),
                     icon: "person.crop.circle",
                     trailing: .chevron
-                ) { showingManageAccount = true }
+                ) {
+                    draftDisplayName = profileIdentity.displayName
+                    showingEditNameSheet = true
+                }
+
+                ProfileListRow(
+                    title: "profile.privacy".localized(),
+                    icon: "hand.raised",
+                    trailing: .chevron
+                ) { showingPrivacy = true }
 
                 ProfileListRow(
                     title: "profile.logout".localized(),
@@ -229,24 +353,6 @@ private extension ProfileView {
 
     var footerActions: some View {
         VStack(spacing: 12) {
-            Button(action: { showingAbout = true }) {
-                HStack(spacing: 8) {
-                    Text("profile.download_report".localized())
-                        .font(AppFonts.serif(16, weight: .medium))
-                    Image(systemName: "arrow.down.circle")
-                        .font(.system(size: 16))
-                }
-                .foregroundColor(.midnightSpruce)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.cardSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 999)
-                        .stroke(Color.cardBorder, lineWidth: 1)
-                )
-                .clipShape(Capsule())
-            }
-
             Text("profile.version".localized())
                 .font(AppFonts.label)
                 .kerning(2.5)
@@ -285,6 +391,32 @@ private extension ProfileView {
         guard !plates.isEmpty else { return nil }
         let total = plates.map { $0.nutritionScore }.reduce(0, +)
         return total / Double(plates.count)
+    }
+
+    var editNameSheet: some View {
+        NavigationView {
+            Form {
+                Section("Profile Name") {
+                    TextField("Enter your name", text: $draftDisplayName)
+                        .textInputAutocapitalization(.words)
+                        .autocorrectionDisabled()
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { showingEditNameSheet = false }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        profileIdentity.updateDisplayName(draftDisplayName)
+                        showingEditNameSheet = false
+                    }
+                    .disabled(draftDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
     }
 }
 
