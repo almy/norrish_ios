@@ -18,6 +18,7 @@ struct BarcodeScannerView: View {
         @State private var selectedProduct: Product?
         @State private var showingProductDetail = false
         @State private var showingCamera = false
+        @State private var showingProductNotFound = false
     
     var body: some View {
         NavigationView {
@@ -171,6 +172,24 @@ struct BarcodeScannerView: View {
                     isPresented: $showingCamera
                 )
             }
+            .fullScreenCover(isPresented: $showingProductNotFound) {
+                ProductNotFoundView(
+                    onBack: { showingProductNotFound = false },
+                    onScanAgain: {
+                        showingProductNotFound = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                            showingCamera = true
+                            isScanning = true
+                        }
+                    },
+                    onAddManually: {
+                        showingProductNotFound = false
+                    },
+                    onReport: {
+                        showingProductNotFound = false
+                    }
+                )
+            }
             .onChange(of: showingCamera) { old, new in
                 if new == false { isScanning = false }
             }
@@ -182,9 +201,18 @@ struct BarcodeScannerView: View {
                 Task {
                     viewModel.isLoading = true
                     defer { viewModel.isLoading = false }
-                    if let product = try? await viewModel.fetchProduct(barcode: code, existing: products, modelContext: modelContext) {
+                    do {
+                        let product = try await viewModel.fetchProduct(
+                            barcode: code,
+                            existing: products,
+                            modelContext: modelContext
+                        )
                         selectedProduct = product
                         showingProductDetail = true
+                    } catch {
+                        if isNotFoundError(error) {
+                            showingProductNotFound = true
+                        }
                     }
                     viewModel.loadRecentScans(from: products)
                 }
@@ -194,6 +222,14 @@ struct BarcodeScannerView: View {
     
     @Query(sort: \Product.scannedDate, order: .reverse) private var products: [Product]
     // Intentionally left without local fetch/load logic; handled by ViewModel
+
+    private func isNotFoundError(_ error: Error) -> Bool {
+        if case BackendAPIError.httpError(let statusCode, _) = error {
+            return statusCode == 404
+        }
+        let normalized = error.localizedDescription.lowercased()
+        return normalized.contains("404") || normalized.contains("not found")
+    }
 }
 // RecentScan and RecentScanRow moved to Models/RecentScan.swift and Views/Components/RecentScanRow.swift
 

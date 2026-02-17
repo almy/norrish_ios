@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 
+// Shared grade filter used by History presentation controls.
 enum ProductFilter: CaseIterable {
     case all, gradeA, gradeB, gradeC, gradeD, gradeE
 
@@ -23,6 +24,8 @@ enum ProductFilter: CaseIterable {
     }
 }
 
+// Pure helper that merges product + plate history and applies UI-selected
+// filtering/sorting rules before the list is rendered.
 private enum HistoryFilterEngine {
     static func filterItems(
         products: [Product],
@@ -89,6 +92,7 @@ struct ContentView: View {
     @Query private var plateAnalyses: [PlateAnalysisHistory]
     @StateObject private var barcodeScanVM = BarcodeScannerViewModel()
 
+    // Global navigation/sheet state for scan and detail flows.
     @State private var showingScanner = false
     @State private var scannedCode: String?
     @State private var isScanning = false
@@ -97,9 +101,11 @@ struct ContentView: View {
     @State private var showingQuickAdd = false
     @State private var showingPlateScan = false
     @State private var showingPlateUpload = false
+    @State private var showingProductNotFound = false
     @State private var quickPlateCapturePayload: QuickPlateCapturePayload?
     @State private var selectedTab = 0
 
+    // History controls (query-like UI state).
     @State private var searchText = ""
     @State private var selectedFilter: ProductFilter = .all
     @State private var selectedHistoryType: HistoryType = .all
@@ -107,6 +113,7 @@ struct ContentView: View {
     @State private var historyDigestIndex = 0
     @State private var didRunPlateHistoryMigration = false
 
+    // Segment control for which domain to show in History.
     enum HistoryType: CaseIterable {
         case all, products, plates
 
@@ -119,6 +126,7 @@ struct ContentView: View {
         }
     }
 
+    // Sort mode used by the history feed.
     enum SortOption: CaseIterable {
         case date, nutri
 
@@ -130,6 +138,7 @@ struct ContentView: View {
         }
     }
 
+    // Lightweight insight feed for the History screen header/cards.
     private var historyTrendInsights: [PersonalizedInsight] {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date.distantPast
         let recentPlates = plateAnalyses.filter { $0.analyzedDate >= cutoff }
@@ -146,6 +155,7 @@ struct ContentView: View {
         }
     }
 
+    // Final data source for HistoryTabView after search/filter/sort is applied.
     private var filteredHistoryItems: [HistoryItemType] {
         HistoryFilterEngine.filterItems(
             products: products,
@@ -159,6 +169,7 @@ struct ContentView: View {
 
     var body: some View {
         PromptOverlayHost {
+            // Main app shell with Home / History / Profile tabs.
             TabView(selection: $selectedTab) {
                 TabWithFloatingAddButton(onAdd: { showingQuickAdd = true }) {
                     HomeView(onViewAllHistory: {
@@ -209,6 +220,7 @@ struct ContentView: View {
                     .tag(2)
             }
             .accentColor(.momentumAmber)
+            // Global product-fetch overlay used right after barcode scan returns.
             .overlay {
                 if barcodeScanVM.isLoading {
                     AppLoadingOverlay(
@@ -220,6 +232,7 @@ struct ContentView: View {
                 }
             }
             .animation(.easeInOut(duration: 0.22), value: barcodeScanVM.isLoading)
+            // Full-screen camera barcode scanner entry point.
             .fullScreenCover(isPresented: $showingScanner) {
                 QuickBarcodeScanView(
                     scannedCode: $scannedCode,
@@ -227,6 +240,7 @@ struct ContentView: View {
                     isPresented: $showingScanner
                 )
             }
+            // Plate scan quick flow (camera path).
             .fullScreenCover(isPresented: $showingPlateScan) {
                 PlateQuickScanView(
                     mode: .camera,
@@ -238,24 +252,49 @@ struct ContentView: View {
                     }
                 )
             }
+            // Plate scan quick flow (photo-library path).
             .fullScreenCover(isPresented: $showingPlateUpload) {
                 PlateQuickScanView(mode: .photo)
             }
+            // Not-found UX when backend cannot resolve scanned barcode.
+            .fullScreenCover(isPresented: $showingProductNotFound) {
+                ProductNotFoundView(
+                    onBack: { showingProductNotFound = false },
+                    onScanAgain: {
+                        showingProductNotFound = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                            showingScanner = true
+                        }
+                    },
+                    onAddManually: {
+                        showingProductNotFound = false
+                        showingQuickAdd = true
+                    },
+                    onReport: {
+                        showingProductNotFound = false
+                    }
+                )
+            }
+            // Continuation flow after quick plate capture.
             .fullScreenCover(item: $quickPlateCapturePayload) { payload in
                 PlateQuickPostCaptureFlowView(capture: payload)
             }
+            // External event hook to restart plate retake flow.
             .onReceive(NotificationCenter.default.publisher(for: .retakePlateScanFlow)) { _ in
                 quickPlateCapturePayload = nil
                 showingPlateScan = true
             }
+            // Product details route.
             .sheet(item: $selectedProduct) { product in
                 ProductDetailView(product: product)
             }
+            // Plate details route.
             .sheet(item: $selectedPlateAnalysis) { plateAnalysis in
                 PlateDetailView(plateAnalysis: plateAnalysis) {
                     selectedPlateAnalysis = nil
                 }
             }
+            // Main "Quick Add" launcher for barcode / plate actions.
             .sheet(isPresented: $showingQuickAdd) {
                 QuickAddSheetView(
                     onScanBarcode: {
@@ -272,6 +311,7 @@ struct ContentView: View {
                     }
                 )
             }
+            // Barcode handoff: fetch product, then route to detail or not-found UX.
             .onChange(of: scannedCode) { _, newValue in
                 guard let code = newValue else { return }
                 withAnimation(.easeInOut(duration: 0.22)) {
@@ -279,15 +319,21 @@ struct ContentView: View {
                 }
                 Task {
                     defer { scannedCode = nil }
-                    if let product = try? await barcodeScanVM.fetchProduct(
-                        barcode: code,
-                        existing: products,
-                        modelContext: modelContext
-                    ) {
+                    do {
+                        let product = try await barcodeScanVM.fetchProduct(
+                            barcode: code,
+                            existing: products,
+                            modelContext: modelContext
+                        )
                         selectedProduct = product
+                    } catch {
+                        if isNotFoundError(error) {
+                            showingProductNotFound = true
+                        }
                     }
                 }
             }
+            // One-time startup data migration for older plate history records.
             .task {
                 guard !didRunPlateHistoryMigration else { return }
                 didRunPlateHistoryMigration = true
@@ -296,6 +342,7 @@ struct ContentView: View {
         }
     }
 
+    // Deletes the selected history entity and cleans related cached media.
     private func deleteHistoryItem(_ item: HistoryItemType) {
         switch item {
         case .plate(let plate):
@@ -308,8 +355,18 @@ struct ContentView: View {
             modelContext.delete(product)
         }
     }
+
+    // Detects backend "product not found" responses and similar variants.
+    private func isNotFoundError(_ error: Error) -> Bool {
+        if case BackendAPIError.httpError(let statusCode, _) = error {
+            return statusCode == 404
+        }
+        let normalized = error.localizedDescription.lowercased()
+        return normalized.contains("404") || normalized.contains("not found")
+    }
 }
 
+// Minimal wrapper around scanner overlay used by the full-screen cover.
 private struct QuickBarcodeScanView: View {
     @Binding var scannedCode: String?
     @Binding var isScanning: Bool

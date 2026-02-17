@@ -24,6 +24,7 @@
 		413BC6B4A94B42A8B165E381 /* PlateAnalysisResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1F6370882F47499FF0ED7A /* PlateAnalysisResultView.swift */; };
 		5066ECD1C42A429BBA1B96B3 /* OpenAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABE9DF8501314CD2902886EE /* OpenAIService.swift */; };
 		882BF269549A4DCD812F01D5 /* ProductDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */; };
+		882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDDB990BA3B8419AA37FB08A /* ProductNotFoundView.swift */; };
 		8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81035EE2844A4F00BBF876A6 /* ContentView.swift */; };
 			95AEB268BBD64AF48958000C /* BarcodeScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A536FD72F7B241AD82F63CC6 /* BarcodeScannerViewModel.swift */; };
 			A91D10012F3C000100AAA001 /* EnhancedCameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91D10112F3C000100AAA001 /* EnhancedCameraPreviewView.swift */; };
@@ -156,6 +157,7 @@
 		AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraBarcodeScannerView.swift; sourceTree = "<group>"; };
 		BA631B3A21A84D5FAA0C7ABB /* BarcodeScannerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerViewController.swift; sourceTree = "<group>"; };
 		BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductDetailView.swift; sourceTree = "<group>"; };
+		BDDB990BA3B8419AA37FB08A /* ProductNotFoundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductNotFoundView.swift; sourceTree = "<group>"; };
 		CE2042512F25012B004E0BBD /* healthScanner.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = healthScanner.xctestplan; sourceTree = "<group>"; };
 		CE5335CD2E79CD2F0086689E /* Styles */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Styles; sourceTree = "<group>"; };
 		CE5335CF2E79D1AE0086689E /* ThemeManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
@@ -535,6 +537,7 @@
 				D636EC943F04417B920D1E0E /* PlateDetailView.swift */,
 				59FF2D5BB40F44EA9634238C /* PlateHistoryDetailView.swift */,
 				BDDB990BA3B8419AA37FB089 /* ProductDetailView.swift */,
+				BDDB990BA3B8419AA37FB08A /* ProductNotFoundView.swift */,
 				CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */,
 				CEF4FE6C2F32784B009FAA35 /* HomeView.swift */,
 				CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */,
@@ -752,6 +755,7 @@
 				8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */,
 				A7C41F1B9D6E4E53A1230002 /* HistoryTabView.swift in Sources */,
 				882BF269549A4DCD812F01D5 /* ProductDetailView.swift in Sources */,
+				882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */,
 				A7C41F1B9D6E4E53A1230001 /* QuickAddSheetView.swift in Sources */,
 				FF8408BD6B2A4F06801E3EB2 /* norrishApp.swift in Sources */,
 				A7C41F1B9D6E4E53A1230003 /* TabWithFloatingAddButton.swift in Sources */,
