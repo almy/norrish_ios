@@ -4,6 +4,7 @@ import UIKit
 
 extension Notification.Name {
     static let closePlateScanFlow = Notification.Name("closePlateScanFlow")
+    static let retakePlateScanFlow = Notification.Name("retakePlateScanFlow")
 }
 
 struct PlateQuickScanView: View {
@@ -20,6 +21,8 @@ struct PlateQuickScanView: View {
     @State private var capturedVolumeML: Float?
     @State private var capturedMassG: Float?
     @State private var capturedDepthSnapshot: DepthFrameSnapshot?
+    @State private var capturedFocusLabel: String?
+    @State private var capturedFocusConfidence: Float?
     let mode: Mode
     let onCameraCaptured: ((QuickPlateCapturePayload) -> Void)?
 
@@ -31,7 +34,7 @@ struct PlateQuickScanView: View {
     var body: some View {
         ZStack {
             if mode == .camera {
-                EnhancedCameraPreviewView { image, volumeML, massG, depthSnapshot in
+                EnhancedCameraPreviewView { image, volumeML, massG, depthSnapshot, focusLabel, focusConfidence in
                     DispatchQueue.main.async {
                         if let onCameraCaptured {
                             onCameraCaptured(
@@ -39,7 +42,9 @@ struct PlateQuickScanView: View {
                                     image: image,
                                     volumeML: volumeML,
                                     massG: massG,
-                                    depthSnapshot: depthSnapshot
+                                    depthSnapshot: depthSnapshot,
+                                    focusLabel: focusLabel,
+                                    focusConfidence: focusConfidence
                                 )
                             )
                             dismiss()
@@ -47,6 +52,8 @@ struct PlateQuickScanView: View {
                             self.capturedVolumeML = volumeML
                             self.capturedMassG = massG
                             self.capturedDepthSnapshot = depthSnapshot
+                            self.capturedFocusLabel = focusLabel
+                            self.capturedFocusConfidence = focusConfidence
                             self.capturedImage = image
                         }
                     }
@@ -72,27 +79,47 @@ struct PlateQuickScanView: View {
         .fullScreenCover(isPresented: $showResult) {
             NavigationView {
                 if let analysis = resultAnalysis {
-                    PlateAnalysisResultView(
-                        analysis: analysis,
-                        image: capturedImage,
-                        onStartNewScan: {
-                            showResult = false
-                            capturedImage = nil
-                            capturedVolumeML = nil
-                            capturedMassG = nil
-                            capturedDepthSnapshot = nil
-                            analysisVM.setTransientScanMetrics(volumeML: nil, massG: nil)
-                            analysisVM.setTransientDepthSnapshot(nil)
-                        },
-                        onClose: {
-                            showResult = false
-                            dismiss()
-                        },
-                        onLogMeal: {
-                            showResult = false
-                            dismiss()
-                        }
-                    )
+                    if analysis.isGuardrailBlocked {
+                        BlockedPlateAnalysisView(
+                            analysis: analysis,
+                            image: capturedImage,
+                            onRetake: {
+                                showResult = false
+                                resultAnalysis = nil
+                                capturedImage = nil
+                                capturedVolumeML = nil
+                                capturedMassG = nil
+                                capturedDepthSnapshot = nil
+                                analysisVM.setTransientScanMetrics(volumeML: nil, massG: nil)
+                                analysisVM.setTransientDepthSnapshot(nil)
+                            },
+                            onClose: {
+                                showResult = false
+                                dismiss()
+                            }
+                        )
+                    } else {
+                        PlateAnalysisResultView(
+                            analysis: analysis,
+                            image: capturedImage,
+                            onStartNewScan: {
+                                showResult = false
+                                capturedImage = nil
+                                capturedVolumeML = nil
+                                capturedMassG = nil
+                                capturedDepthSnapshot = nil
+                                analysisVM.setTransientScanMetrics(volumeML: nil, massG: nil)
+                                analysisVM.setTransientDepthSnapshot(nil)
+                            },
+                            onClose: {
+                                showResult = false
+                                dismiss()
+                            },
+                            onLogMeal: { intent in
+                                analysisVM.logCurrentMeal(intent: intent, modelContext: modelContext)
+                            }
+                        )
+                    }
                 } else {
                     Color.clear.onAppear { showResult = false }
                 }
@@ -101,12 +128,14 @@ struct PlateQuickScanView: View {
         .fullScreenCover(item: $pendingImage) { pending in
             FoodRegionSelectionView(
                 image: pending.image,
-                viewModel: analysisVM
+                viewModel: analysisVM,
+                preferredFocusLabel: capturedFocusLabel,
+                preferredFocusConfidence: capturedFocusConfidence
             )
         }
         .onChange(of: analysisVM.analysisResult) { _, newValue in
             guard awaitingAnalysisResult else { return }
-            if let result = newValue ?? analysisVM.lastAnalysisResult {
+            if let result = newValue {
                 resultAnalysis = result
                 pendingImage = nil
                 showResult = true
@@ -127,10 +156,13 @@ struct QuickPlateCapturePayload: Identifiable {
     let volumeML: Float?
     let massG: Float?
     let depthSnapshot: DepthFrameSnapshot?
+    let focusLabel: String?
+    let focusConfidence: Float?
 }
 
 struct PlateQuickPostCaptureFlowView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @StateObject private var analysisVM = PlateAnalysisViewModel()
     @State private var resultAnalysis: PlateAnalysis?
     @State private var awaitingAnalysisResult = false
@@ -141,18 +173,34 @@ struct PlateQuickPostCaptureFlowView: View {
         ZStack {
             if let analysis = resultAnalysis {
                 NavigationView {
-                    PlateAnalysisResultView(
-                        analysis: analysis,
-                        image: capture.image,
-                        onStartNewScan: { dismiss() },
-                        onClose: { dismiss() },
-                        onLogMeal: { dismiss() }
-                    )
+                    if analysis.isGuardrailBlocked {
+                        BlockedPlateAnalysisView(
+                            analysis: analysis,
+                            image: capture.image,
+                            onRetake: {
+                                NotificationCenter.default.post(name: .retakePlateScanFlow, object: nil)
+                                dismiss()
+                            },
+                            onClose: { dismiss() }
+                        )
+                    } else {
+                        PlateAnalysisResultView(
+                            analysis: analysis,
+                            image: capture.image,
+                            onStartNewScan: { dismiss() },
+                            onClose: { dismiss() },
+                            onLogMeal: { intent in
+                                analysisVM.logCurrentMeal(intent: intent, modelContext: modelContext)
+                            }
+                        )
+                    }
                 }
             } else {
                 FoodRegionSelectionView(
                     image: capture.image,
                     viewModel: analysisVM,
+                    preferredFocusLabel: capture.focusLabel,
+                    preferredFocusConfidence: capture.focusConfidence,
                     dismissOnConfirm: false,
                     onCloseRequested: { dismiss() },
                     onRetakeRequested: { dismiss() }
@@ -171,13 +219,13 @@ struct PlateQuickPostCaptureFlowView: View {
         }
         .onChange(of: analysisVM.analysisResult) { _, newValue in
             guard awaitingAnalysisResult else { return }
-            if let result = newValue ?? analysisVM.lastAnalysisResult {
+            if let result = newValue {
                 resultAnalysis = result
             }
         }
         .onChange(of: analysisVM.isAnalyzing) { _, isAnalyzing in
             guard awaitingAnalysisResult, !isAnalyzing else { return }
-            if let result = analysisVM.analysisResult ?? analysisVM.lastAnalysisResult {
+            if let result = analysisVM.analysisResult {
                 resultAnalysis = result
             } else {
                 dismiss()

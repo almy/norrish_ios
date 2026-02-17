@@ -13,14 +13,14 @@ struct PlateAnalysisResultView: View {
     let image: UIImage?
     let onStartNewScan: () -> Void
     let onClose: () -> Void
-    let onLogMeal: (() -> Void)?  // Simplified to avoid external type dependency
+    let onLogMeal: ((MealLogIntent) -> Bool)?
 
     init(
         analysis: PlateAnalysis,
         image: UIImage?,
         onStartNewScan: @escaping () -> Void,
         onClose: @escaping () -> Void,
-        onLogMeal: (() -> Void)? = nil
+        onLogMeal: ((MealLogIntent) -> Bool)? = nil
     ) {
         self.analysis = analysis
         self.image = image
@@ -32,7 +32,12 @@ struct PlateAnalysisResultView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var feedbackGiven = false
     @State private var showNutriInfo = false
-    @State private var showMealIntentSheet = false  // NEW
+    @State private var showMealIntentSheet = false
+    @State private var selectedMealIntent: MealLogIntent = .ateIt
+    @State private var showLogFeedbackAlert = false
+    @State private var logFeedbackTitle = ""
+    @State private var logFeedbackMessage = ""
+    @State private var dismissAfterLogFeedback = false
     
     private let primary = Color.momentumAmber
     private let nordicBackground = Color.nordicBone
@@ -59,34 +64,17 @@ struct PlateAnalysisResultView: View {
             bottomCTA
         }
         .sheet(isPresented: $showMealIntentSheet) {
-            VStack(spacing: 16) {
-                Text("Log Your Meal")
-                    .font(AppFonts.serif(18, weight: .semibold))
-                    .foregroundColor(.midnightSpruce)
-                Text("Confirm logging this meal to your history.")
-                    .font(AppFonts.sans(12, weight: .regular))
-                    .foregroundColor(.nordicSlate)
-                Button(action: {
-                    showMealIntentSheet = false
-                    onLogMeal?()
-                }) {
-                    HStack {
-                        Image(systemName: "checkmark.circle")
-                        Text("Log Choice")
-                            .font(AppFonts.sans(13, weight: .semibold))
-                    }
-                    .foregroundColor(.nordicBone)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.midnightSpruce)
-                    .cornerRadius(14)
+            logMealIntentSheet
+        }
+        .alert(logFeedbackTitle, isPresented: $showLogFeedbackAlert) {
+            Button("OK") {
+                if dismissAfterLogFeedback {
+                    onClose()
+                    dismiss()
                 }
-                Button("Cancel") {
-                    showMealIntentSheet = false
-                }
-                .foregroundColor(.momentumAmber)
             }
-            .padding()
+        } message: {
+            Text(logFeedbackMessage)
         }
     }
 
@@ -194,10 +182,29 @@ struct PlateAnalysisResultView: View {
                         .textCase(.uppercase)
                 }
                 Text("“\(overviewText)”")
-                    .font(AppFonts.serif(22, weight: .regular))
+                    .font(AppFonts.serif(17, weight: .regular))
                     .italic()
                     .foregroundColor(.midnightSpruce)
-                    .lineSpacing(6)
+                    .lineSpacing(3)
+                if let confidenceText {
+                    Text(confidenceText)
+                        .font(AppFonts.sans(11, weight: .semibold))
+                        .foregroundColor(.nordicSlate)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(Color.cardSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                if let uncertaintyNote {
+                    Text("Uncertainty: \(uncertaintyNote)")
+                        .font(AppFonts.sans(11, weight: .regular))
+                        .foregroundColor(.nordicSlate)
+                }
+                if let topAssumption {
+                    Text("Assumption: \(topAssumption)")
+                        .font(AppFonts.sans(11, weight: .regular))
+                        .foregroundColor(.nordicSlate)
+                }
             }
 
             VStack(alignment: .leading, spacing: 12) {
@@ -249,45 +256,65 @@ struct PlateAnalysisResultView: View {
                         .background(primary.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
- 
-                MacroBarRow(title: NSLocalizedString("nutrition.protein", comment: "Protein"), label: NSLocalizedString("macro.good", comment: "Good"), fill: 0.7, accent: primary)
-                MacroBarRow(title: NSLocalizedString("nutrition.carbs", comment: "Carbohydrates"), label: NSLocalizedString("macro.moderate", comment: "Moderate"), fill: 0.5, accent: primary)
-                MacroBarRow(title: NSLocalizedString("nutrition.fat", comment: "Dietary Fats"), label: NSLocalizedString("macro.minimal", comment: "Minimal"), fill: 0.25, accent: primary)
+
+                MacroBarRow(
+                    title: NSLocalizedString("nutrition.protein", comment: "Protein"),
+                    label: "\(analysis.macronutrients.protein)g • \(proteinLabel)",
+                    fill: proteinFill,
+                    accent: primary
+                )
+                MacroBarRow(
+                    title: NSLocalizedString("nutrition.carbs", comment: "Carbohydrates"),
+                    label: "\(analysis.macronutrients.carbs)g • \(carbsLabel)",
+                    fill: carbsFill,
+                    accent: primary
+                )
+                MacroBarRow(
+                    title: NSLocalizedString("nutrition.fat", comment: "Dietary Fats"),
+                    label: "\(analysis.macronutrients.fat)g • \(fatLabel)",
+                    fill: fatFill,
+                    accent: primary
+                )
             }
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("feedback.question".localized())
-                    .font(AppFonts.sans(13, weight: .semibold))
-                    .foregroundColor(.midnightSpruce)
-                Text("feedback.help_text".localized())
-                    .font(AppFonts.sans(11, weight: .regular))
-                    .foregroundColor(.nordicSlate)
-                HStack(spacing: 10) {
-                    Button("feedback.yes".localized()) {
-                        saveFeedback(isCorrect: true)
+            if let m = analysis.micronutrients {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("MICRONUTRIENTS")
+                        .font(AppFonts.label)
+                        .foregroundColor(.nordicSlate)
+                        .kerning(2)
+                    HStack(spacing: 10) {
+                        PlateMicronutrientCard(name: "Fiber", level: "\(m.fiberG ?? 0) g", color: .mossInsight)
+                        PlateMicronutrientCard(name: "Vitamin C", level: "\(m.vitaminCMg ?? 0) mg", color: .momentumAmber)
+                        PlateMicronutrientCard(name: "Iron", level: "\(m.ironMg ?? 0) mg", color: .midnightSpruce)
                     }
-                    .font(AppFonts.sans(12, weight: .semibold))
-                    .foregroundColor(.momentumAmber)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(feedbackGiven ? Color.cardSurface : Color.mossInsight.opacity(0.10))
-                    )
-
-                    Button("feedback.no".localized()) {
-                        saveFeedback(isCorrect: false)
+                    if let other = m.other, !other.isEmpty {
+                        Text(other)
+                            .font(AppFonts.sans(11, weight: .regular))
+                            .foregroundColor(.nordicSlate)
                     }
-                    .font(AppFonts.sans(12, weight: .semibold))
-                    .foregroundColor(.momentumAmber)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(feedbackGiven ? Color.cardSurface : Color.midnightSpruce.opacity(0.08))
-                    )
                 }
             }
+
+            if !analysis.insights.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .font(AppFonts.sans(16, weight: .regular))
+                            .foregroundColor(.nordicSlate)
+                        Text("Actionable Insights")
+                            .font(AppFonts.label)
+                            .foregroundColor(.nordicSlate)
+                            .kerning(2)
+                            .textCase(.uppercase)
+                    }
+                    ForEach(Array(analysis.insights.prefix(3).enumerated()), id: \.offset) { _, insight in
+                        ResultModernInsightCard(insight: insight)
+                    }
+                }
+            }
+
+            // Temporarily hidden per product decision.
         }
         .padding(.horizontal, 28)
         .padding(.top, 28)
@@ -330,6 +357,161 @@ struct PlateAnalysisResultView: View {
         .ignoresSafeArea(edges: .bottom)
     }
 
+}
+
+private extension PlateAnalysisResultView {
+    var logMealIntentSheet: some View {
+        VStack(spacing: 0) {
+            RoundedRectangle(cornerRadius: 999)
+                .fill(Color.nordicSlate.opacity(0.25))
+                .frame(width: 46, height: 5)
+                .padding(.top, 10)
+                .padding(.bottom, 20)
+
+            VStack(spacing: 6) {
+                Text("Log Product")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(2)
+                    .textCase(.uppercase)
+                Text(analysis.description)
+                    .font(AppFonts.serif(28, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.bottom, 22)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("What did you do?")
+                    .font(AppFonts.sans(11, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(1.4)
+                    .textCase(.uppercase)
+
+                ForEach(MealLogIntent.allCases) { intent in
+                    mealIntentRow(intent: intent)
+                }
+            }
+            .padding(.horizontal, 8)
+
+            Button(action: {
+                showMealIntentSheet = false
+                guard let onLogMeal else {
+                    dismissAfterLogFeedback = false
+                    logFeedbackTitle = "Logging unavailable"
+                    logFeedbackMessage = "This screen is read-only and cannot log meal intent."
+                    showLogFeedbackAlert = true
+                    return
+                }
+                let didLog = onLogMeal(selectedMealIntent)
+                dismissAfterLogFeedback = didLog
+                if didLog {
+                    logFeedbackTitle = "Meal logged"
+                    logFeedbackMessage = "Saved as: \(selectedMealIntent.shortBadge)."
+                } else {
+                    logFeedbackTitle = "Could not log meal"
+                    logFeedbackMessage = "Please try again."
+                }
+                showLogFeedbackAlert = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Log Choice")
+                        .font(AppFonts.sans(13, weight: .bold))
+                        .kerning(1.6)
+                        .textCase(.uppercase)
+                }
+                .foregroundColor(.nordicBone)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color.midnightSpruce)
+                .clipShape(Capsule())
+                .shadow(color: Color.midnightSpruce.opacity(0.24), radius: 14, x: 0, y: 8)
+            }
+            .padding(.top, 26)
+            .padding(.horizontal, 8)
+
+            Button(action: { showMealIntentSheet = false }) {
+                Text("Dismiss")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(1.8)
+                    .textCase(.uppercase)
+            }
+            .padding(.top, 14)
+            .padding(.bottom, 18)
+        }
+        .padding(.horizontal, 22)
+        .background(
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                .fill(Color.white)
+        )
+        .presentationDetents([.height(590)])
+        .presentationCornerRadius(34)
+    }
+
+    @ViewBuilder
+    func mealIntentRow(intent: MealLogIntent) -> some View {
+        Button(action: {
+            selectedMealIntent = intent
+        }) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(selectedMealIntent == intent ? Color.white : Color.white.opacity(0.85))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: intent.systemImage)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
+                }
+                Text(intent.title)
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                Spacer()
+                if selectedMealIntent == intent {
+                    Circle()
+                        .fill(Color.midnightSpruce)
+                        .frame(width: 24, height: 24)
+                        .overlay(
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.nordicSlate.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity)
+            .frame(height: 72)
+            .background(selectedMealIntent == intent ? Color.white : Color.cardSurface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(selectedMealIntent == intent ? Color.midnightSpruce : Color.clear, lineWidth: 2)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private extension MealLogIntent {
+    var systemImage: String {
+        switch self {
+        case .ateIt:
+            return "fork.knife"
+        case .boughtIt:
+            return "cart"
+        case .checkingInfo:
+            return "eye"
+        case .forSomeoneElse:
+            return "person.2"
+        }
+    }
 }
 
 struct InsightCard: View {
@@ -617,8 +799,79 @@ private extension PlateAnalysisResultView {
         if let pos = analysis.insights.first(where: { $0.type == .positive }) {
             return pos.description
         }
+        if let first = analysis.insights.first {
+            return first.description
+        }
         let m = analysis.macronutrients
         return "Approx. P \(m.protein)g • C \(m.carbs)g • F \(m.fat)g • \(m.calories) kcal"
+    }
+
+    var proteinFill: CGFloat {
+        CGFloat(max(0, min(1, proteinCalories / max(1, macroCaloriesTotal))))
+    }
+
+    var carbsFill: CGFloat {
+        CGFloat(max(0, min(1, carbCalories / max(1, macroCaloriesTotal))))
+    }
+
+    var fatFill: CGFloat {
+        CGFloat(max(0, min(1, fatCalories / max(1, macroCaloriesTotal))))
+    }
+
+    var proteinLabel: String {
+        ratioLabel(proteinCalories / max(1, macroCaloriesTotal), kind: "protein")
+    }
+
+    var carbsLabel: String {
+        ratioLabel(carbCalories / max(1, macroCaloriesTotal), kind: "carbs")
+    }
+
+    var fatLabel: String {
+        ratioLabel(fatCalories / max(1, macroCaloriesTotal), kind: "fat")
+    }
+
+    var proteinCalories: Double { Double(analysis.macronutrients.protein * 4) }
+    var carbCalories: Double { Double(analysis.macronutrients.carbs * 4) }
+    var fatCalories: Double { Double(analysis.macronutrients.fat * 9) }
+    var macroCaloriesTotal: Double { max(1.0, proteinCalories + carbCalories + fatCalories) }
+
+    func ratioLabel(_ ratio: Double, kind: String) -> String {
+        switch kind {
+        case "protein":
+            if ratio < 0.15 { return "Low" }
+            if ratio <= 0.35 { return "Good" }
+            return "High"
+        case "carbs":
+            if ratio < 0.35 { return "Low" }
+            if ratio <= 0.55 { return "Moderate" }
+            return "High"
+        default:
+            if ratio < 0.20 { return "Low" }
+            if ratio <= 0.35 { return "Moderate" }
+            return "High"
+        }
+    }
+
+    var confidenceText: String? {
+        guard let connections = analysis.connections else { return nil }
+        guard let raw = connections.first(where: { $0.lowercased().hasPrefix("confidence_overall=") }) else { return nil }
+        let value = raw.replacingOccurrences(of: "confidence_overall=", with: "")
+        if let num = Double(value) {
+            return "Confidence: \(Int((num * 100).rounded()))%"
+        }
+        return nil
+    }
+
+    var uncertaintyNote: String? {
+        guard let connections = analysis.connections else { return nil }
+        guard let raw = connections.first(where: { $0.lowercased().hasPrefix("uncertainty_note=") }) else { return nil }
+        return raw.replacingOccurrences(of: "uncertainty_note=", with: "")
+    }
+
+    var topAssumption: String? {
+        guard let connections = analysis.connections else { return nil }
+        guard let raw = connections.first(where: { $0.lowercased().hasPrefix("top_assumption=") }) else { return nil }
+        return raw.replacingOccurrences(of: "top_assumption=", with: "")
     }
 
     func saveFeedback(isCorrect: Bool) {

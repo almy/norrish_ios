@@ -161,7 +161,9 @@ struct ContentView: View {
         PromptOverlayHost {
             TabView(selection: $selectedTab) {
                 TabWithFloatingAddButton(onAdd: { showingQuickAdd = true }) {
-                    HomeView()
+                    HomeView(onViewAllHistory: {
+                        selectedTab = 1
+                    })
                 }
                 .tabItem {
                     VStack {
@@ -230,6 +232,10 @@ struct ContentView: View {
             }
             .fullScreenCover(item: $quickPlateCapturePayload) { payload in
                 PlateQuickPostCaptureFlowView(capture: payload)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .retakePlateScanFlow)) { _ in
+                quickPlateCapturePayload = nil
+                showingPlateScan = true
             }
             .sheet(item: $selectedProduct) { product in
                 ProductDetailView(product: product)

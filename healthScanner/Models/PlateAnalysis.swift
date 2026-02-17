@@ -17,6 +17,19 @@ struct PlateAnalysis: Codable, Equatable {
     let micronutrients: Micronutrients?
     let connections: [String]?
 
+    var isGuardrailBlocked: Bool {
+        if description.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "analysis blocked" {
+            return true
+        }
+        return insights.contains { insight in
+            let title = insight.title.lowercased()
+            let details = insight.description.lowercased()
+            return title.contains("unsupported or unsafe image")
+                || details.contains("not analyzed for safety reasons")
+                || details.contains("analysis blocked")
+        }
+    }
+
     static func mockAnalysis() -> PlateAnalysis {
         return PlateAnalysis(
             nutritionScore: 8.5,

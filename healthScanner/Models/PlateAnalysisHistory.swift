@@ -9,6 +9,43 @@ import SwiftData
 import Foundation
 import UIKit
 
+enum MealLogIntent: String, Codable, CaseIterable, Identifiable {
+    case ateIt = "ate_it"
+    case boughtIt = "bought_it"
+    case checkingInfo = "checking_info"
+    case forSomeoneElse = "for_someone_else"
+
+    var id: String { rawValue }
+}
+
+extension MealLogIntent {
+    var title: String {
+        switch self {
+        case .ateIt:
+            return "Eating / Ate it"
+        case .boughtIt:
+            return "Bought it"
+        case .checkingInfo:
+            return "Just checking info"
+        case .forSomeoneElse:
+            return "For someone else"
+        }
+    }
+
+    var shortBadge: String {
+        switch self {
+        case .ateIt:
+            return "Ate it"
+        case .boughtIt:
+            return "Bought it"
+        case .checkingInfo:
+            return "Checking info"
+        case .forSomeoneElse:
+            return "For someone else"
+        }
+    }
+}
+
 @Model
 class PlateAnalysisHistory {
     var id: UUID
@@ -21,6 +58,8 @@ class PlateAnalysisHistory {
     var carbs: Int
     var fat: Int
     var calories: Int
+    var mealLogIntentRaw: String?
+    var mealLoggedAt: Date?
     var ingredientsData: Data // JSON encoded ingredients
     var insightsData: Data // JSON encoded insights
     var microsData: Data? // JSON encoded Micronutrients
@@ -49,6 +88,8 @@ class PlateAnalysisHistory {
         self.carbs = carbs
         self.fat = fat
         self.calories = calories
+        self.mealLogIntentRaw = nil
+        self.mealLoggedAt = nil
         
         // Encode ingredients and insights as JSON
         self.ingredientsData = (try? JSONEncoder().encode(ingredients)) ?? Data()
@@ -116,6 +157,16 @@ class PlateAnalysisHistory {
             cachedConnectionsData = connectionsData
         }
         return cachedConnections
+    }
+
+    var mealLogIntent: MealLogIntent? {
+        get {
+            guard let mealLogIntentRaw else { return nil }
+            return MealLogIntent(rawValue: mealLogIntentRaw)
+        }
+        set {
+            mealLogIntentRaw = newValue?.rawValue
+        }
     }
     
     // Get Nutri-Score letter for this plate analysis

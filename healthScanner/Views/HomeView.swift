@@ -10,6 +10,11 @@ struct HomeView: View {
     @State private var showingScanner = false
     @State private var selectedPlate: PlateAnalysisHistory?
     @State private var selectedProduct: Product?
+    let onViewAllHistory: () -> Void
+
+    init(onViewAllHistory: @escaping () -> Void = {}) {
+        self.onViewAllHistory = onViewAllHistory
+    }
 
     private var insights: [PersonalizedInsight] {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date.distantPast
@@ -115,7 +120,9 @@ struct HomeView: View {
                                     .tracking(2)
                                     .foregroundColor(.nordicSlate)
                                 Spacer()
-                                Button(NSLocalizedString("recent.activity.archive", comment: "Archive recent activity")) { }
+                                Button("View all") {
+                                    onViewAllHistory()
+                                }
                                     .font(AppFonts.sans(10, weight: .semibold))
                                     .foregroundColor(.nordicSlate)
                             }
@@ -123,7 +130,7 @@ struct HomeView: View {
 
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 10) {
-                                    ForEach(recentActivity.prefix(8)) { item in
+                                    ForEach(recentActivity.prefix(5)) { item in
                                         Button {
                                             switch item.kind {
                                             case .plate(let plate):
@@ -143,17 +150,6 @@ struct HomeView: View {
                                             }
                                         }
                                     }
-                                    // Add tile
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .stroke(style: StrokeStyle(lineWidth: 1, dash: [6]))
-                                            .foregroundColor(Color.cardBorder)
-                                            .background(Color.nordicBone.opacity(0.6))
-                                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                                        Image(systemName: "plus")
-                                            .foregroundColor(.nordicSlate.opacity(0.6))
-                                    }
-                                    .frame(width: 120, height: 120)
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.bottom, 4)
@@ -440,7 +436,7 @@ private struct RecentActivityTile: View {
             Spacer()
             switch item.kind {
             case .plate(let plate):
-                Text("\(plate.protein)g Pro")
+                Text(plate.mealLogIntent?.shortBadge ?? "\(plate.protein)g Pro")
                     .font(AppFonts.sans(9, weight: .bold))
                     .foregroundColor(.mossInsight)
                     .padding(.horizontal, 6)

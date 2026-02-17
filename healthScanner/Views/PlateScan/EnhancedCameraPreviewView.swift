@@ -15,9 +15,9 @@ extension Notification.Name {
 struct EnhancedCameraPreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var state = LiveClassificationState()
-    private let onCaptured: (UIImage, Float?, Float?, DepthFrameSnapshot?) -> Void
+    private let onCaptured: (UIImage, Float?, Float?, DepthFrameSnapshot?, String?, Float?) -> Void
 
-    init(onCaptured: @escaping (UIImage, Float?, Float?, DepthFrameSnapshot?) -> Void) {
+    init(onCaptured: @escaping (UIImage, Float?, Float?, DepthFrameSnapshot?, String?, Float?) -> Void) {
         self.onCaptured = onCaptured
     }
 
@@ -26,18 +26,6 @@ struct EnhancedCameraPreviewView: View {
             CameraControllerRepresentable(state: state, onCaptured: onCaptured, onCancel: dismiss.callAsFunction)
                 .ignoresSafeArea()
             VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    Text(overlayText)
-                        .font(AppFonts.sans(11, weight: .semibold))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .foregroundColor(.nordicBone)
-                    Spacer()
-                }
-                .padding(.top, 16)
                 Spacer()
                 HStack {
                     Spacer()
@@ -60,12 +48,5 @@ struct EnhancedCameraPreviewView: View {
             }
             .allowsHitTesting(true)
         }
-    }
-
-    private var overlayText: String {
-        if state.confidence >= 0.35, state.label != "Scanning food…" {
-            return "Likely food: \(state.label) \(Int(state.confidence * 100))%"
-        }
-        return "Scanning food… align plate inside the center box"
     }
 }

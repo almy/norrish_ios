@@ -241,6 +241,15 @@ private struct HistoryTimelineCard: View {
                             .font(AppFonts.sans(10, weight: .medium))
                             .foregroundColor(.nordicSlate.opacity(0.85))
                     }
+                    if let mealIntentText {
+                        Text(mealIntentText)
+                            .font(AppFonts.sans(10, weight: .semibold))
+                            .foregroundColor(.mossInsight)
+                            .padding(.vertical, 3)
+                            .padding(.horizontal, 8)
+                            .background(Color.mossInsight.opacity(0.10))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
                     if let note = noteText {
                         Text("“\(note)”")
                             .font(AppFonts.sans(11, weight: .regular))
@@ -341,6 +350,15 @@ private struct HistoryTimelineCard: View {
             if !product.brand.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 return product.brand
             }
+            return nil
+        }
+    }
+
+    private var mealIntentText: String? {
+        switch item {
+        case .plate(let plate):
+            return plate.mealLogIntent?.shortBadge
+        case .product:
             return nil
         }
     }

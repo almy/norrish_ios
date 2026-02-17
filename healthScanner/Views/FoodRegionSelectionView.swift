@@ -8,6 +8,8 @@ struct FoodRegionSelectionView: View {
     @Environment(\.modelContext) private var modelContext
     @ObservedObject var viewModel: PlateAnalysisViewModel
     @Environment(\.dismiss) private var dismiss
+    let preferredFocusLabel: String?
+    let preferredFocusConfidence: Float?
     let dismissOnConfirm: Bool
     let onCloseRequested: (() -> Void)?
     let onRetakeRequested: (() -> Void)?
@@ -45,12 +47,16 @@ struct FoodRegionSelectionView: View {
     init(
         image: UIImage,
         viewModel: PlateAnalysisViewModel,
+        preferredFocusLabel: String? = nil,
+        preferredFocusConfidence: Float? = nil,
         dismissOnConfirm: Bool = true,
         onCloseRequested: (() -> Void)? = nil,
         onRetakeRequested: (() -> Void)? = nil
     ) {
         self.image = image
         self.viewModel = viewModel
+        self.preferredFocusLabel = preferredFocusLabel
+        self.preferredFocusConfidence = preferredFocusConfidence
         self.dismissOnConfirm = dismissOnConfirm
         self.onCloseRequested = onCloseRequested
         self.onRetakeRequested = onRetakeRequested
@@ -83,6 +89,11 @@ struct FoodRegionSelectionView: View {
         .onAppear {
             baselineVolumeML = viewModel.transientVolumeML
             baselineMassG = viewModel.transientMassG
+            if let preferredFocusLabel,
+               preferredFocusLabel != "Scanning food…" {
+                photoLabel = preferredFocusLabel
+                photoConfidence = preferredFocusConfidence ?? 0
+            }
             detect()
         }
         .onChange(of: regionsFingerprint) { _, _ in
@@ -420,7 +431,7 @@ private extension FoodRegionSelectionView {
                 self.editableRegions = results.enumerated().map { idx, r in
                     EditableRegion(rect: r.boundingBox, confidence: r.confidence, isSelected: true, color: colors[idx % colors.count])
                 }
-                self.activeRegionID = self.editableRegions.first?.id
+                self.activeRegionID = self.preferredRegionIDForFocus() ?? self.editableRegions.first?.id
                 self.baselineSelectedAreaPx = max(1, self.editableRegions.reduce(0) { $0 + ($1.rect.width * $1.rect.height) })
             }
             await runYOLORegionCategorization()
@@ -636,30 +647,61 @@ private extension FoodRegionSelectionView {
     func remapDetectionsToEditableRegions() {
         var mapped: [UUID: (label: String, confidence: Float)] = [:]
         for region in editableRegions {
-            let best = yoloDetections
-                .map { detection in
-                    (detection, overlapRatio(region.rect, detection.rect))
-                }
-                .max { lhs, rhs in
-                    if lhs.1 == rhs.1 {
-                        return lhs.0.confidence < rhs.0.confidence
-                    }
-                    return lhs.1 < rhs.1
-                }
-
-            if let best, best.1 > 0.005 {
-                mapped[region.id] = (best.0.label, best.0.confidence)
-                continue
+            let regionCenter = CGPoint(x: region.rect.midX, y: region.rect.midY)
+            let candidates: [(det: RegionDetection, overlap: CGFloat, containsCenter: Bool, distance: CGFloat)] = yoloDetections.map { detection in
+                let overlap = overlapRatio(region.rect, detection.rect)
+                let containsCenter = detection.rect.contains(regionCenter)
+                let distance = squaredDistance(
+                    regionCenter,
+                    CGPoint(x: detection.rect.midX, y: detection.rect.midY)
+                )
+                return (detection, overlap, containsCenter, distance)
             }
 
-            if let nearest = nearestDetection(to: region.rect) {
-                mapped[region.id] = (nearest.label, nearest.confidence)
+            let best = candidates
+                .filter { $0.overlap > 0.02 || $0.containsCenter }
+                .sorted { lhs, rhs in
+                    if lhs.containsCenter != rhs.containsCenter {
+                        return lhs.containsCenter && !rhs.containsCenter
+                    }
+                    if lhs.distance == rhs.distance {
+                        if lhs.overlap == rhs.overlap {
+                            return lhs.det.confidence > rhs.det.confidence
+                        }
+                        return lhs.overlap > rhs.overlap
+                    }
+                    return lhs.distance < rhs.distance
+                }
+                .first
+
+            if let best {
+                mapped[region.id] = (best.det.label, best.det.confidence)
                 continue
             }
 
             mapped[region.id] = ("Food", 0)
         }
+        if let preferredFocusLabel,
+           preferredFocusLabel != "Scanning food…" {
+            let preferredConfidence = preferredFocusConfidence ?? 0
+            if let preferredRegionID = preferredRegionIDForFocus() {
+                // Keep the live-camera focus label consistent in post-capture flow.
+                mapped[preferredRegionID] = (preferredFocusLabel, preferredConfidence)
+            }
+        }
         regionCategoryByID = mapped
+    }
+
+    func preferredRegionIDForFocus() -> UUID? {
+        guard !editableRegions.isEmpty else { return nil }
+        let imageCenter = CGPoint(x: image.size.width / 2, y: image.size.height / 2)
+        if let containing = editableRegions.first(where: { $0.rect.contains(imageCenter) }) {
+            return containing.id
+        }
+        return editableRegions.min { lhs, rhs in
+            squaredDistance(CGPoint(x: lhs.rect.midX, y: lhs.rect.midY), imageCenter)
+            < squaredDistance(CGPoint(x: rhs.rect.midX, y: rhs.rect.midY), imageCenter)
+        }?.id
     }
 
     func nearestDetection(to rect: CGRect) -> RegionDetection? {

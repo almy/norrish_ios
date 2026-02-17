@@ -164,6 +164,32 @@ final class PlateAnalysisViewModel: ObservableObject {
         await analyzePreparedImage(imageForUpload, regions: regions, originalImage: originalImage, modelContext: modelContext)
     }
 
+    @discardableResult
+    func logCurrentMeal(intent: MealLogIntent, modelContext: ModelContext) -> Bool {
+        let targetHistory: PlateAnalysisHistory?
+        if let currentHistory {
+            targetHistory = currentHistory
+        } else {
+            var descriptor = FetchDescriptor<PlateAnalysisHistory>(
+                sortBy: [SortDescriptor(\.analyzedDate, order: .reverse)]
+            )
+            descriptor.fetchLimit = 1
+            targetHistory = try? modelContext.fetch(descriptor).first
+        }
+
+        guard let history = targetHistory else { return false }
+        history.mealLogIntent = intent
+        history.mealLoggedAt = Date()
+
+        do {
+            try modelContext.save()
+            currentHistory = history
+            return true
+        } catch {
+            return false
+        }
+    }
+
     private func analyzePreparedImage(_ uploadImage: UIImage, regions: [ImagePreprocessor.Result]?, originalImage: UIImage, modelContext: ModelContext) async {
         let baseAnalysis = PlateAnalysis(
             nutritionScore: 0,
@@ -185,7 +211,7 @@ final class PlateAnalysisViewModel: ObservableObject {
 
         isAnalyzing = true
         saveLastAnalysisToDefaults(analysis: baseAnalysis, image: originalImage)
-        let historyRef = savePlateAnalysisToHistory(analysis: baseAnalysis, image: originalImage, modelContext: modelContext)
+        currentHistory = nil
 
         do {
             let resized = resizedImage(uploadImage, maxSide: 896)
@@ -254,10 +280,11 @@ final class PlateAnalysisViewModel: ObservableObject {
 
             let analysis = mapPlateAnalysis(response.analysis)
             analysisResult = analysis
-            saveLastAnalysisToDefaults(analysis: analysis, image: originalImage)
-
-            if let history = currentHistory ?? historyRef as PlateAnalysisHistory? {
-                update(history: history, with: analysis)
+            if analysis.isGuardrailBlocked {
+                currentHistory = nil
+            } else {
+                saveLastAnalysisToDefaults(analysis: analysis, image: originalImage)
+                _ = savePlateAnalysisToHistory(analysis: analysis, image: originalImage, modelContext: modelContext)
             }
         } catch {
             let message = (error as NSError).userInfo[NSLocalizedDescriptionKey] as? String ?? error.localizedDescription

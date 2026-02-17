@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 			03C5A44AFDB34602A5712999 /* NutriScoreBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA9640569F4B5B9DCDCA57 /* NutriScoreBadge.swift */; };
 			A91D10082F3C000100AAA001 /* AppLoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91D10182F3C000100AAA001 /* AppLoadingOverlay.swift */; };
+			A91D10092F3C000100AAA001 /* BlockedPlateAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91D10242F3C000100AAA001 /* BlockedPlateAnalysisView.swift */; };
 			1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42784632A507491D970BC129 /* ProductService.swift */; };
 			1D58B9102829457C892B5917 /* CoreMLFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D58B90F2829457C892B5917 /* CoreMLFoodAnalysisService.swift */; };
 			A91D10072F3C000100AAA001 /* YOLO26X-seg.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */; };
@@ -149,6 +150,7 @@
 			A91D10162F3C000100AAA001 /* EnhancedCaptureMetricsEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedCaptureMetricsEstimator.swift; sourceTree = "<group>"; };
 			A91D10172F3C000100AAA001 /* YOLO26X-seg.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = "YOLO26X-seg.mlpackage"; sourceTree = "<group>"; };
 			A91D10182F3C000100AAA001 /* AppLoadingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLoadingOverlay.swift; sourceTree = "<group>"; };
+			A91D10242F3C000100AAA001 /* BlockedPlateAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockedPlateAnalysisView.swift; sourceTree = "<group>"; };
 			ABE9DF8501314CD2902886EE /* OpenAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIService.swift; sourceTree = "<group>"; };
 		AC1F6370882F47499FF0ED7A /* PlateAnalysisResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateAnalysisResultView.swift; sourceTree = "<group>"; };
 		AF94A4DE97BC4192B4C7023B /* CameraBarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraBarcodeScannerView.swift; sourceTree = "<group>"; };
@@ -522,6 +524,7 @@
 					CE5335DB2E79D4230086689E /* Profile */,
 				2E144E98C5B141AF9F71E5C3 /* Components */,
 				81035EE2844A4F00BBF876A6 /* ContentView.swift */,
+				A91D10242F3C000100AAA001 /* BlockedPlateAnalysisView.swift */,
 				CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */,
 				A7C41F1B9D6E4E53A1230012 /* HistoryTabView.swift */,
 				A7C41F1B9D6E4E53A1230011 /* QuickAddSheetView.swift */,
@@ -739,6 +742,7 @@
 					CEF4FE5D2F2A6A53009FAA35 /* IconMapper.swift in Sources */,
 					A91D10022F3C000100AAA001 /* EnhancedCameraController.swift in Sources */,
 					A91D10082F3C000100AAA001 /* AppLoadingOverlay.swift in Sources */,
+					A91D10092F3C000100AAA001 /* BlockedPlateAnalysisView.swift in Sources */,
 					D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */,
 					A91D10032F3C000100AAA001 /* MediaPickers.swift in Sources */,
 					B798BDB59DD74C6683177ABA /* ImageCacheService.swift in Sources */,
