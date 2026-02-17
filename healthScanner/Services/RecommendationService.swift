@@ -28,7 +28,9 @@ final class RecommendationService {
     }
 
     private func makePlatePayload(from plate: PlateAnalysisHistory) -> BackendPlateHistoryPayload {
-        let ingredients = plate.ingredients.map { BackendPlateIngredient(name: $0.name, amount: $0.amount) }
+        let ingredients = plate.ingredients.map {
+            BackendPlateIngredient(name: $0.name, amount: $0.amount, confidence: nil)
+        }
         let insights = plate.insights.map {
             BackendPlateInsight(type: $0.type.rawValue, title: $0.title, description: $0.description)
         }
@@ -89,7 +91,9 @@ final class RecommendationService {
             fiberG: micros.fiberG,
             vitaminCMg: micros.vitaminCMg,
             ironMg: micros.ironMg,
-            other: micros.other
+            other: micros.other,
+            notable: nil,
+            summary: nil
         )
     }
 

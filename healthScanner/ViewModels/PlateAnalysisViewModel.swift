@@ -437,8 +437,10 @@ final class PlateAnalysisViewModel: ObservableObject {
             switch insight.type.lowercased() {
             case "positive":
                 type = .positive
-            case "warning":
+            case "warning", "caution":
                 type = .warning
+            case "tip", "context", "suggestion":
+                type = .suggestion
             default:
                 type = .suggestion
             }
@@ -447,12 +449,28 @@ final class PlateAnalysisViewModel: ObservableObject {
 
         let microModel: Micronutrients? = {
             guard let micros = analysis.micronutrients else { return nil }
+            let notable: [MicronutrientNotable]? = micros.notable?.map { item in
+                MicronutrientNotable(
+                    name: item.name,
+                    amount: item.amount,
+                    unit: item.unit,
+                    dailyValuePct: item.dailyValuePct,
+                    direction: item.direction
+                )
+            }
             return Micronutrients(
                 fiberG: micros.fiberG,
                 vitaminCMg: micros.vitaminCMg,
                 ironMg: micros.ironMg,
-                other: micros.other
+                other: micros.other,
+                notable: notable,
+                summary: micros.summary
             )
+        }()
+
+        let portionEstimate: PortionEstimate? = {
+            guard let p = analysis.portionEstimate else { return nil }
+            return PortionEstimate(amount: p.amount, unit: p.unit, confidence: p.confidence)
         }()
 
         return PlateAnalysis(
@@ -464,10 +482,21 @@ final class PlateAnalysisViewModel: ObservableObject {
                 fat: analysis.macronutrients.fat,
                 calories: analysis.macronutrients.calories
             ),
-            ingredients: analysis.ingredients.map { Ingredient(name: $0.name, amount: $0.amount) },
+            ingredients: analysis.ingredients.map {
+                Ingredient(name: $0.name, amount: $0.amount, confidence: $0.confidence)
+            },
             insights: insights,
             micronutrients: microModel,
-            connections: analysis.connections
+            connections: analysis.connections,
+            mealType: analysis.mealType,
+            portionEstimate: portionEstimate,
+            confidenceIdentification: analysis.confidenceIdentification,
+            confidenceQuantity: analysis.confidenceQuantity,
+            confidenceOverall: analysis.confidenceOverall,
+            uncertaintyNotes: analysis.uncertaintyNotes,
+            topAssumptions: analysis.topAssumptions,
+            whyThisScore: analysis.whyThisScore,
+            quickWinActions: analysis.quickWinActions
         )
     }
 

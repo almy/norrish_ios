@@ -49,6 +49,15 @@ struct BackendPlateAnalysis: Decodable {
     let insights: [BackendPlateInsight]
     let micronutrients: BackendMicronutrients?
     let connections: [String]?
+    let mealType: String?
+    let portionEstimate: BackendPortionEstimate?
+    let confidenceIdentification: Double?
+    let confidenceQuantity: Double?
+    let confidenceOverall: Double?
+    let uncertaintyNotes: [String]?
+    let topAssumptions: [String]?
+    let whyThisScore: [String]?
+    let quickWinActions: [String]?
 }
 
 struct BackendMacronutrients: Decodable {
@@ -61,6 +70,7 @@ struct BackendMacronutrients: Decodable {
 struct BackendPlateIngredient: Codable {
     let name: String
     let amount: String
+    let confidence: Double?
 }
 
 struct BackendPlateInsight: Codable {
@@ -74,6 +84,50 @@ struct BackendMicronutrients: Codable {
     let vitaminCMg: Int?
     let ironMg: Int?
     let other: String?
+    let notable: [BackendMicronutrientNotable]?
+    let summary: String?
+}
+
+struct BackendMicronutrientNotable: Codable {
+    let name: String
+    let amount: Double
+    let unit: String
+    let dailyValuePct: Int?
+    let direction: String?
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case amount
+        case unit
+        case dailyValuePct
+        case daily_value_pct
+        case direction
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name)
+        amount = try c.decode(Double.self, forKey: .amount)
+        unit = try c.decode(String.self, forKey: .unit)
+        dailyValuePct = try c.decodeIfPresent(Int.self, forKey: .dailyValuePct)
+            ?? c.decodeIfPresent(Int.self, forKey: .daily_value_pct)
+        direction = try c.decodeIfPresent(String.self, forKey: .direction)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(name, forKey: .name)
+        try c.encode(amount, forKey: .amount)
+        try c.encode(unit, forKey: .unit)
+        try c.encodeIfPresent(dailyValuePct, forKey: .dailyValuePct)
+        try c.encodeIfPresent(direction, forKey: .direction)
+    }
+}
+
+struct BackendPortionEstimate: Decodable {
+    let amount: Double
+    let unit: String
+    let confidence: Double
 }
 
 struct BackendRecommendationsRequest: Encodable {

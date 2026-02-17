@@ -16,6 +16,51 @@ struct PlateAnalysis: Codable, Equatable {
     let insights: [Insight]
     let micronutrients: Micronutrients?
     let connections: [String]?
+    let mealType: String?
+    let portionEstimate: PortionEstimate?
+    let confidenceIdentification: Double?
+    let confidenceQuantity: Double?
+    let confidenceOverall: Double?
+    let uncertaintyNotes: [String]?
+    let topAssumptions: [String]?
+    let whyThisScore: [String]?
+    let quickWinActions: [String]?
+
+    init(
+        nutritionScore: Double,
+        description: String,
+        macronutrients: Macronutrients,
+        ingredients: [Ingredient],
+        insights: [Insight],
+        micronutrients: Micronutrients?,
+        connections: [String]?,
+        mealType: String? = nil,
+        portionEstimate: PortionEstimate? = nil,
+        confidenceIdentification: Double? = nil,
+        confidenceQuantity: Double? = nil,
+        confidenceOverall: Double? = nil,
+        uncertaintyNotes: [String]? = nil,
+        topAssumptions: [String]? = nil,
+        whyThisScore: [String]? = nil,
+        quickWinActions: [String]? = nil
+    ) {
+        self.nutritionScore = nutritionScore
+        self.description = description
+        self.macronutrients = macronutrients
+        self.ingredients = ingredients
+        self.insights = insights
+        self.micronutrients = micronutrients
+        self.connections = connections
+        self.mealType = mealType
+        self.portionEstimate = portionEstimate
+        self.confidenceIdentification = confidenceIdentification
+        self.confidenceQuantity = confidenceQuantity
+        self.confidenceOverall = confidenceOverall
+        self.uncertaintyNotes = uncertaintyNotes
+        self.topAssumptions = topAssumptions
+        self.whyThisScore = whyThisScore
+        self.quickWinActions = quickWinActions
+    }
 
     var isGuardrailBlocked: Bool {
         if description.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "analysis blocked" {
@@ -58,7 +103,16 @@ struct PlateAnalysis: Codable, Equatable {
             connections: [
                 "High fiber content supports digestive health",
                 "Complete amino acid profile from quinoa"
-            ]
+            ],
+            mealType: "lunch",
+            portionEstimate: PortionEstimate(amount: 420, unit: "g", confidence: 0.72),
+            confidenceIdentification: 0.88,
+            confidenceQuantity: 0.66,
+            confidenceOverall: 0.78,
+            uncertaintyNotes: [],
+            topAssumptions: [],
+            whyThisScore: [],
+            quickWinActions: []
         )
     }
 }
@@ -76,11 +130,50 @@ struct Micronutrients: Codable, Equatable {
     let vitaminCMg: Int?
     let ironMg: Int?
     let other: String?
+    let notable: [MicronutrientNotable]?
+    let summary: String?
+
+    init(
+        fiberG: Int?,
+        vitaminCMg: Int?,
+        ironMg: Int?,
+        other: String?,
+        notable: [MicronutrientNotable]? = nil,
+        summary: String? = nil
+    ) {
+        self.fiberG = fiberG
+        self.vitaminCMg = vitaminCMg
+        self.ironMg = ironMg
+        self.other = other
+        self.notable = notable
+        self.summary = summary
+    }
+}
+
+struct MicronutrientNotable: Codable, Equatable {
+    let name: String
+    let amount: Double
+    let unit: String
+    let dailyValuePct: Int?
+    let direction: String?
+}
+
+struct PortionEstimate: Codable, Equatable {
+    let amount: Double
+    let unit: String
+    let confidence: Double
 }
 
 struct Ingredient: Codable, Equatable {
     let name: String
     let amount: String
+    let confidence: Double?
+
+    init(name: String, amount: String, confidence: Double? = nil) {
+        self.name = name
+        self.amount = amount
+        self.confidence = confidence
+    }
 }
 
 struct Insight: Codable, Equatable {
