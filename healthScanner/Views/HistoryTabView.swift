@@ -363,3 +363,48 @@ private struct HistoryTimelineCard: View {
         }
     }
 }
+
+// Preview-only: minimal mixed dataset (product + plate) for timeline rendering.
+#Preview("History Tab") {
+    // Sample product used to render product row styling.
+    let product = Product(
+        barcode: "1234567890123",
+        name: "Granola Bar",
+        brand: "Norrish",
+        nutritionData: NutritionData(
+            calories: 210,
+            fat: 8,
+            saturatedFat: 1.2,
+            sugar: 9,
+            sodium: 0.19,
+            protein: 6,
+            fiber: 4,
+            carbohydrates: 30,
+            fruitsVegetablesNutsPercent: 35
+        ),
+        imageURL: nil,
+        localImagePath: nil,
+        categoriesTags: ["en:snacks"],
+        ingredients: "Oats, nuts, honey"
+    )
+
+    // Sample plate entry used to render plate row styling.
+    let plate = PlateAnalysisHistory.mockData()
+
+    return HistoryTabView(
+        filteredHistoryItems: [.product(product), .plate(plate)],
+        historyTrendInsights: [
+            PersonalizedInsight(
+                icon: "leaf.fill",
+                iconColor: .mossInsight,
+                title: "Fiber Trend",
+                message: "You increased average daily fiber this week.",
+                category: .health
+            )
+        ],
+        historyDigestIndex: .constant(0),
+        onSelectItem: { _ in },
+        onDeleteItem: { _ in }
+    )
+    .modelContainer(for: [Product.self, PlateAnalysisHistory.self], inMemory: true)
+}

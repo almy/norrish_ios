@@ -32,3 +32,15 @@ struct NutritionCard: View {
         .cornerRadius(12)
     }
 }
+
+// Preview-only: basic card sample for typography and spacing checks.
+#Preview("Nutrition Card") {
+    NutritionCard(
+        title: "Protein",
+        value: "24",
+        unit: "g",
+        color: .mossInsight
+    )
+    .padding()
+    .background(Color.nordicBone)
+}

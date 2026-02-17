@@ -50,3 +50,16 @@ struct ReticleOverlayView: View {
         }
     }
 }
+
+// Preview-only: overlay on dark gradient to mimic camera contrast.
+#Preview("Reticle Overlay") {
+    ZStack {
+        LinearGradient(
+            colors: [Color.black.opacity(0.7), Color.black],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        ReticleOverlayView()
+    }
+    .frame(height: 360)
+}

@@ -259,7 +259,7 @@ struct ContentView: View {
             // Not-found UX when backend cannot resolve scanned barcode.
             .fullScreenCover(isPresented: $showingProductNotFound) {
                 ProductNotFoundView(
-                    onBack: { showingProductNotFound = false },
+                    onClose: { showingProductNotFound = false },
                     onScanAgain: {
                         showingProductNotFound = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {

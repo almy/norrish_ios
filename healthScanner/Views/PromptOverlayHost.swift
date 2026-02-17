@@ -13,3 +13,15 @@ struct PromptOverlayHost<Content: View>: View {
         content
     }
 }
+
+// Preview-only: validates pass-through host composition.
+#Preview("Prompt Host") {
+    PromptOverlayHost {
+        ZStack {
+            Color.nordicBone.ignoresSafeArea()
+            Text("Prompt Host Content")
+                .font(AppFonts.sans(16, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
+        }
+    }
+}

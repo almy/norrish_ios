@@ -62,3 +62,12 @@ struct QuickAddSheetView: View {
         return min(max(h * 0.28, 220), 340)
     }
 }
+
+// Preview-only: lightweight static actions for Canvas rendering.
+#Preview("Quick Add Sheet") {
+    QuickAddSheetView(
+        onScanBarcode: {},
+        onScanPlate: {},
+        onUploadPlate: {}
+    )
+}

@@ -86,3 +86,14 @@ struct CachedAsyncImage: View {
         }
     }
 }
+
+// Preview-only: uses a non-resolving URL to exercise loading/error placeholder states.
+#Preview("Cached Async Image") {
+    CachedAsyncImage(
+        urlString: "https://example.invalid/image.jpg",
+        cacheKey: "preview-cache-key"
+    )
+    .frame(width: 180, height: 180)
+    .padding()
+    .background(Color.nordicBone)
+}

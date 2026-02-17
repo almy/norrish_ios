@@ -32,3 +32,15 @@ struct TabWithFloatingAddButton<Content: View>: View {
         }
     }
 }
+
+// Preview-only: demonstrates wrapper layout with static placeholder content.
+#Preview("Tab Wrapper") {
+    TabWithFloatingAddButton(onAdd: {}) {
+        ZStack {
+            Color.nordicBone.ignoresSafeArea()
+            Text("Wrapped Content")
+                .font(AppFonts.serif(24, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
+        }
+    }
+}

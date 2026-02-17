@@ -34,3 +34,13 @@ struct NutriScoreBadge: View {
 }
 
 // All Nutri-Score calculation functions have been moved to NutriScoreUtilities.swift
+
+// Preview-only: regular and compact badge variants.
+#Preview("NutriScore Badge") {
+    VStack(spacing: 12) {
+        NutriScoreBadge(letter: .A)
+        NutriScoreBadge(letter: .C, compact: true)
+    }
+    .padding()
+    .background(Color.nordicBone)
+}

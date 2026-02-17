@@ -512,6 +512,12 @@ struct ProductDetailView: View {
     }
 }
 
+// Preview-only: static sample product and in-memory model context.
+#Preview("Product Detail") {
+    ProductDetailView(product: Product.sampleProduct)
+        .modelContainer(for: Product.self, inMemory: true)
+}
+
 // CachedAsyncImage moved to Views/Components/CachedAsyncImage.swift
 
 struct FlowLayout<Content: View>: View {

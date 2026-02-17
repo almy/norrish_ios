@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProductNotFoundView: View {
-    let onBack: () -> Void
+    let onClose: () -> Void
     let onScanAgain: () -> Void
     let onAddManually: () -> Void
     let onReport: () -> Void
@@ -9,19 +9,37 @@ struct ProductNotFoundView: View {
     @State private var ringRotation: Double = 0
     @State private var glowScale: CGFloat = 1.0
     @State private var scanLineY: CGFloat = 0.22
+    @State private var imageRingScale: CGFloat = 1.0
+    @State private var imageRingTilt: Double = -3
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.nordicBone.ignoresSafeArea()
+        GeometryReader { proxy in
+            ZStack(alignment: .top) {
+                Color.nordicBone.ignoresSafeArea()
 
-            ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
-                    hero
+                    hero(height: max(220, proxy.size.height * 0.33))
                     card
+                    Spacer(minLength: 0)
                 }
+
+                HStack {
+                    Spacer()
+                    Button(action: onClose) {
+                        ZStack {
+                            Circle().fill(Color.white.opacity(0.55))
+                            Circle().stroke(Color.white.opacity(0.75), lineWidth: 1)
+                            Image(systemName: "xmark")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.midnightSpruce)
+                        }
+                        .frame(width: 40, height: 40)
+                    }
+                }
+                .padding(.trailing, 20)
+                .padding(.top, max(-40, proxy.safeAreaInsets.top - 40))
             }
         }
-        .safeAreaInset(edge: .top) { header }
         .task {
             withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) {
                 ringRotation = 360
@@ -32,54 +50,28 @@ struct ProductNotFoundView: View {
             withAnimation(.easeInOut(duration: 2.6).repeatForever(autoreverses: true)) {
                 scanLineY = 0.78
             }
+            withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                imageRingScale = 1.08
+            }
+            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+                imageRingTilt = 3
+            }
         }
     }
 
-    private var header: some View {
-        HStack {
-            Button(action: onBack) {
-                ZStack {
-                    Circle().fill(Color.white.opacity(0.55))
-                    Circle().stroke(Color.white.opacity(0.75), lineWidth: 1)
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.midnightSpruce)
-                }
-                .frame(width: 40, height: 40)
-            }
-
-            Spacer()
-
-            HStack(spacing: 8) {
-                Circle().fill(Color.momentumAmber).frame(width: 7, height: 7)
-                Text("Not Recognised")
-                    .font(AppFonts.sans(10, weight: .bold))
-                    .textCase(.uppercase)
-                    .kerning(2)
-                    .foregroundColor(.nordicSlate)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(Color.white.opacity(0.6))
-            .clipShape(Capsule())
-            .overlay(Capsule().stroke(Color.white.opacity(0.75), lineWidth: 1))
-
-            Spacer()
-
-            Color.clear.frame(width: 40, height: 40)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-    }
-
-    private var hero: some View {
+    private func hero(height: CGFloat) -> some View {
         ZStack {
-            LinearGradient(
-                colors: [Color(red: 0.89, green: 0.92, blue: 0.95), Color(red: 0.80, green: 0.84, blue: 0.89), Color(red: 0.60, green: 0.66, blue: 0.74)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            if let inspirational = UIImage(named: "plate_analysis") {
+                Image(uiImage: inspirational)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                LinearGradient(
+                    colors: [Color(red: 0.89, green: 0.92, blue: 0.95), Color(red: 0.80, green: 0.84, blue: 0.89), Color(red: 0.60, green: 0.66, blue: 0.74)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
 
             VStack {
                 Spacer()
@@ -93,7 +85,12 @@ struct ProductNotFoundView: View {
                 endPoint: .bottom
             )
         }
-        .frame(height: UIScreen.main.bounds.height * 0.45)
+        .frame(height: height)
+        .clipped()
+        .clipShape(
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+        )
+        .padding(.horizontal, 10)
     }
 
     private var scanGlyph: some View {
@@ -103,11 +100,30 @@ struct ProductNotFoundView: View {
                 .frame(width: 86, height: 86)
                 .scaleEffect(glowScale)
 
-            Circle()
-                .stroke(style: StrokeStyle(lineWidth: 1.5, dash: [5, 6]))
-                .foregroundColor(Color.nordicSlate.opacity(0.3))
-                .frame(width: 84, height: 84)
-                .rotationEffect(.degrees(ringRotation))
+            Group {
+                if let funImage = UIImage(named: "plate_analysis") {
+                    Image(uiImage: funImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    LinearGradient(
+                        colors: [Color.momentumAmber.opacity(0.25), Color.mossInsight.opacity(0.25)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .overlay(
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.nordicSlate.opacity(0.8))
+                    )
+                }
+            }
+            .frame(width: 84, height: 84)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(Color.white.opacity(0.45), lineWidth: 1))
+            .rotationEffect(.degrees(ringRotation))
+            .scaleEffect(imageRingScale)
+            .rotation3DEffect(.degrees(imageRingTilt), axis: (x: 0, y: 1, z: 0))
 
             ZStack {
                 Circle()
@@ -137,17 +153,18 @@ struct ProductNotFoundView: View {
         VStack(spacing: 0) {
             VStack(spacing: 10) {
                 Text("Product Not Found")
-                    .font(AppFonts.serif(36, weight: .semibold))
+                    .font(AppFonts.serif(32, weight: .semibold))
                     .foregroundColor(.midnightSpruce)
                     .multilineTextAlignment(.center)
 
                 Text("We couldn't match this scan to our collection yet.\nOur AI is always learning. Try again or add it yourself.")
-                    .font(AppFonts.sans(14, weight: .regular))
+                    .font(AppFonts.sans(13, weight: .regular))
                     .foregroundColor(.nordicSlate)
                     .multilineTextAlignment(.center)
                     .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.bottom, 26)
+            .padding(.bottom, 18)
 
             VStack(spacing: 12) {
                 Text("Possible Reasons")
@@ -162,7 +179,7 @@ struct ProductNotFoundView: View {
                     reasonChip(icon: "sparkles.rectangle.stack", text: "New product")
                 }
             }
-            .padding(.bottom, 26)
+            .padding(.bottom, 16)
 
             Divider().overlay(Color.softDivider)
 
@@ -177,7 +194,7 @@ struct ProductNotFoundView: View {
                     .textCase(.uppercase)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 60)
+                    .frame(height: 56)
                     .background(Color.midnightSpruce)
                     .clipShape(Capsule())
                 }
@@ -192,10 +209,21 @@ struct ProductNotFoundView: View {
                     .textCase(.uppercase)
                     .foregroundColor(.midnightSpruce)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 60)
+                    .frame(height: 56)
                     .overlay(Capsule().stroke(Color.cardBorder, lineWidth: 1))
                 }
 
+                Button(action: onClose) {
+                    Text("Close")
+                        .font(AppFonts.sans(12, weight: .semibold))
+                        .kerning(1.2)
+                        .foregroundColor(.nordicSlate)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                        .overlay(Capsule().stroke(Color.cardBorder, lineWidth: 1))
+                }
+
+                /*
                 Button(action: onReport) {
                     HStack(spacing: 6) {
                         Image(systemName: "flag")
@@ -206,17 +234,18 @@ struct ProductNotFoundView: View {
                     .foregroundColor(.nordicSlate.opacity(0.75))
                 }
                 .padding(.top, 2)
+                */
             }
-            .padding(.top, 24)
+            .padding(.top, 18)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 44)
-        .padding(.bottom, 40)
+        .padding(.top, 30)
+        .padding(.bottom, 24)
         .background(
             RoundedRectangle(cornerRadius: 40, style: .continuous)
                 .fill(Color.white)
         )
-        .offset(y: -26)
+        .offset(y: 42)
     }
 
     private func reasonChip(icon: String, text: String) -> some View {
@@ -235,3 +264,12 @@ struct ProductNotFoundView: View {
     }
 }
 
+// Preview-only: static callbacks for product-not-found UI review.
+#Preview("Product Not Found") {
+    ProductNotFoundView(
+        onClose: {},
+        onScanAgain: {},
+        onAddManually: {},
+        onReport: {}
+    )
+}

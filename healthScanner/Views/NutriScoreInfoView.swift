@@ -166,3 +166,14 @@ struct NutriScoreInfoView: View {
         }
     }
 }
+
+// Preview-only: sample breakdown + plate score to show both sections.
+#Preview("Nutri-Score Info") {
+    NutriScoreInfoView(
+        productBreakdown: computeNutriScoreBreakdown(
+            Product.sampleProduct.nutritionData,
+            categories: Product.sampleProduct.categoriesTags
+        ),
+        plateScore: 7.2
+    )
+}

@@ -57,3 +57,19 @@ struct RecentScanRow: View {
         }
     }
 }
+
+// Preview-only: mocked scan row wired to a sample product.
+#Preview("Recent Scan Row") {
+    let sample = RecentScan(
+        id: UUID(),
+        barcode: Product.sampleProduct.barcode,
+        productName: Product.sampleProduct.name,
+        scanDate: Date(),
+        nutriScoreLetter: Product.sampleProduct.nutriScoreLetter,
+        imageURL: nil
+    )
+
+    return RecentScanRow(scan: sample, products: [Product.sampleProduct]) { _ in }
+        .padding()
+        .background(Color.nordicBone)
+}

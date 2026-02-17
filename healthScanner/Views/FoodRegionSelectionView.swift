@@ -763,6 +763,29 @@ private extension FoodRegionSelectionView {
     }
 }
 
+// Preview-only: generated image + in-memory model container for Canvas.
+#Preview("Food Region Selection") {
+    // Synthetic plate-like image so selection overlays can render in Canvas.
+    let renderer = UIGraphicsImageRenderer(size: CGSize(width: 720, height: 960))
+    let previewImage = renderer.image { ctx in
+        UIColor.systemGray5.setFill()
+        ctx.fill(CGRect(x: 0, y: 0, width: 720, height: 960))
+        UIColor.systemGreen.withAlphaComponent(0.2).setFill()
+        ctx.fill(CGRect(x: 80, y: 180, width: 560, height: 420))
+    }
+
+    return FoodRegionSelectionView(
+        image: previewImage,
+        viewModel: PlateAnalysisViewModel(),
+        preferredFocusLabel: "Food",
+        preferredFocusConfidence: 0.78,
+        dismissOnConfirm: false,
+        onCloseRequested: {},
+        onRetakeRequested: {}
+    )
+    .modelContainer(for: PlateAnalysisHistory.self, inMemory: true)
+}
+
 private struct RegionOverlay: View {
     let rect: CGRect
     let color: Color

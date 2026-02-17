@@ -174,7 +174,7 @@ struct BarcodeScannerView: View {
             }
             .fullScreenCover(isPresented: $showingProductNotFound) {
                 ProductNotFoundView(
-                    onBack: { showingProductNotFound = false },
+                    onClose: { showingProductNotFound = false },
                     onScanAgain: {
                         showingProductNotFound = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
@@ -235,3 +235,12 @@ struct BarcodeScannerView: View {
 
 // MARK: - Original Scanner Logic (kept for camera functionality)
 // Camera barcode UIKit controller moved to Scanning/Barcode/BarcodeScannerViewController.swift
+
+// Preview-only: scanner landing screen with in-memory Product model context.
+#Preview("Barcode Scanner") {
+    BarcodeScannerView(
+        scannedCode: .constant(nil),
+        isScanning: .constant(false)
+    )
+    .modelContainer(for: Product.self, inMemory: true)
+}

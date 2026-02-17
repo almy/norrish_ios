@@ -71,3 +71,27 @@ struct BlockedPlateAnalysisView: View {
         }
     }
 }
+
+// Preview-only: mocked blocked analysis payload.
+#Preview("Blocked Analysis") {
+    BlockedPlateAnalysisView(
+        analysis: PlateAnalysis(
+            nutritionScore: 0,
+            description: "Analysis blocked",
+            macronutrients: Macronutrients(protein: 0, carbs: 0, fat: 0, calories: 0),
+            ingredients: [],
+            insights: [
+                Insight(
+                    type: .warning,
+                    title: "Unsupported image",
+                    description: "This image was blocked by safety guardrails and was not analyzed."
+                )
+            ],
+            micronutrients: nil,
+            connections: nil
+        ),
+        image: nil,
+        onRetake: {},
+        onClose: {}
+    )
+}

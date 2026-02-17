@@ -89,3 +89,7 @@ struct AppLoadingOverlay: View {
     }
 }
 
+// Preview-only: verifies loading visual in isolation.
+#Preview("Loading Overlay") {
+    AppLoadingOverlay(title: "Fetching product information...", subtitle: "Looking up barcode details")
+}
