@@ -31,8 +31,8 @@ struct PlateAnalysisResultView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var feedbackGiven = false
-    @State private var showNutriInfo = false
     @State private var showMealIntentSheet = false
+    @State private var showDetailsPanel = false
     @State private var selectedMealIntent: MealLogIntent = .ateIt
     @State private var showLogFeedbackAlert = false
     @State private var logFeedbackTitle = ""
@@ -41,25 +41,30 @@ struct PlateAnalysisResultView: View {
     
     private let primary = Color.momentumAmber
     private let nordicBackground = Color.nordicBone
+    private let scoreLow = Color.momentumAmber
+    private let scoreGood = Color.mossInsight
+    private let scorePoor = Color.red.opacity(0.85)
 
     var body: some View {
-        ZStack(alignment: .top) {
-            nordicBackground
-                .ignoresSafeArea()
+        ZStack(alignment: .bottom) {
+            ZStack(alignment: .top) {
+                nordicBackground
+                    .ignoresSafeArea()
 
-            GeometryReader { proxy in
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        heroHeader
-                        contentCard
+                GeometryReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            heroHeader
+                            contentCard
+                        }
+                        .frame(width: proxy.size.width, alignment: .top)
+                        .padding(.bottom, 150)
                     }
-                    .frame(width: proxy.size.width, alignment: .top)
-                    .padding(.bottom, 150)
+                    .scrollBounceBehavior(.basedOnSize, axes: .vertical)
                 }
-                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
-            }
 
-            headerBar
+                headerBar
+            }
 
             bottomCTA
         }
@@ -79,7 +84,8 @@ struct PlateAnalysisResultView: View {
     }
 
     private var heroHeader: some View {
-        ZStack {
+        let heroHeight = UIScreen.main.bounds.height * 0.5
+        return ZStack {
             Group {
                 if let image {
                     Image(uiImage: image)
@@ -95,42 +101,48 @@ struct PlateAnalysisResultView: View {
                         )
                 }
             }
-            .frame(height: UIScreen.main.bounds.height * 0.5)
+            .frame(height: heroHeight)
             .clipped()
 
             LinearGradient(
-                gradient: Gradient(colors: [Color.black.opacity(0.7), Color.black.opacity(0.0)]),
+                gradient: Gradient(colors: [Color.black.opacity(0.75), Color.black.opacity(0.1), Color.black.opacity(0.0)]),
                 startPoint: .bottom,
                 endPoint: .top
             )
-            .frame(height: UIScreen.main.bounds.height * 0.5)
+            .frame(height: heroHeight)
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Rectangle()
-                        .fill(primary)
-                        .frame(width: 32, height: 1)
-                    Text(NSLocalizedString("plate.optimized", comment: "Nutritionally Optimized label"))
-                        .font(AppFonts.label)
-                        .kerning(2.5)
-                        .foregroundColor(primary)
+            HStack(alignment: .bottom, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Rectangle()
+                            .fill(scoreBandColor)
+                            .frame(width: 32, height: 1)
+                        Text(scoreBandTitle.uppercased())
+                            .font(AppFonts.label)
+                            .kerning(2.2)
+                            .foregroundColor(scoreBandColor)
+                    }
+                    Text(analysis.description)
+                        .font(AppFonts.serif(34, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                    Text(heroMetaLine)
+                        .font(AppFonts.sans(11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.78))
+                        .kerning(1.0)
                         .textCase(.uppercase)
                 }
-                Text(analysis.description)
-                    .font(AppFonts.serif(32, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                let m = analysis.macronutrients
-                Text("\(m.calories) kcal • \(Int(analysis.nutritionScore))/10")
-                    .font(AppFonts.sans(12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
-                    .kerning(1.2)
-                    .textCase(.uppercase)
+
+                MiniScoreRing(
+                    score: analysis.nutritionScore,
+                    color: scoreBandColor
+                )
+                .padding(.bottom, 2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.bottom, 48)
-            .frame(height: UIScreen.main.bounds.height * 0.5, alignment: .bottom)
+            .frame(height: heroHeight, alignment: .bottom)
         }
     }
 
@@ -169,165 +181,275 @@ struct PlateAnalysisResultView: View {
     }
 
     private var contentCard: some View {
-        VStack(alignment: .leading, spacing: 28) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    Image(systemName: "menucard")
-                        .font(AppFonts.sans(16, weight: .regular))
-                        .foregroundColor(.nordicSlate)
-                    Text(NSLocalizedString("chef.insight", comment: "Chef's Insight"))
-                        .font(AppFonts.label)
-                        .foregroundColor(.nordicSlate)
-                        .kerning(2)
-                        .textCase(.uppercase)
-                }
-                Text("“\(overviewText)”")
-                    .font(AppFonts.serif(17, weight: .regular))
-                    .italic()
-                    .foregroundColor(.midnightSpruce)
-                    .lineSpacing(3)
-                if let confidenceText {
-                    Text(confidenceText)
-                        .font(AppFonts.sans(11, weight: .semibold))
-                        .foregroundColor(.nordicSlate)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
-                        .background(Color.cardSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
-                if let uncertaintyNote {
-                    Text("Uncertainty: \(uncertaintyNote)")
-                        .font(AppFonts.sans(11, weight: .regular))
-                        .foregroundColor(.nordicSlate)
-                }
-                if let topAssumption {
-                    Text("Assumption: \(topAssumption)")
-                        .font(AppFonts.sans(11, weight: .regular))
-                        .foregroundColor(.nordicSlate)
+        VStack(alignment: .leading, spacing: 26) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(scoreBandColor)
+                    .frame(width: 6, height: 6)
+                Text(confidenceLabel.uppercased())
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .kerning(1.8)
+                    .foregroundColor(.nordicSlate)
+                Capsule()
+                    .fill(Color.cardBorder)
+                    .frame(height: 2)
+                    .overlay(alignment: .leading) {
+                        GeometryReader { proxy in
+                            Capsule()
+                                .fill(scoreBandColor)
+                                .frame(width: proxy.size.width * confidenceClamped, height: 2)
+                        }
+                    }
+                Text("\(Int((confidenceClamped * 100).rounded()))%")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate.opacity(0.6))
+            }
+
+            if !scoreRationaleLines.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionHeader(icon: "chart.line.uptrend.xyaxis", title: "Why this score")
+                    ForEach(scoreRationaleLines.indices, id: \.self) { idx in
+                        HStack(alignment: .top, spacing: 10) {
+                            Circle()
+                                .fill(scoreBandColor)
+                                .frame(width: 5, height: 5)
+                                .padding(.top, 5)
+                            Text(scoreRationaleLines[idx])
+                                .font(AppFonts.sans(13, weight: .regular))
+                                .foregroundColor(.nordicSlate)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                 }
             }
 
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.seal")
-                        .font(AppFonts.sans(16, weight: .regular))
-                        .foregroundColor(.nordicSlate)
-                    Text(NSLocalizedString("ingredients.detected", comment: "Detected Ingredients"))
-                        .font(AppFonts.label)
-                        .foregroundColor(.nordicSlate)
-                        .kerning(2)
-                        .textCase(.uppercase)
-                }
-                ChipFlow(alignment: .leading, spacing: 8) {
-                    ForEach(analysis.ingredients.indices, id: \.self) { idx in
-                        let ing = analysis.ingredients[idx]
-                        Text(ing.name)
-                            .font(AppFonts.sans(11, weight: .medium))
-                            .foregroundColor(.nordicSlate)
-                            .textCase(.uppercase)
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 999)
-                                    .fill(Color.cardSurface)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 999)
-                                            .stroke(Color.cardBorder, lineWidth: 1)
-                                    )
-                            )
-                    }
+            if let primaryQuickWin {
+                VStack(alignment: .leading, spacing: 12) {
+                    sectionHeader(icon: "fork.knife", title: "Next time, try")
+                    Text("\"\(primaryQuickWin)\"")
+                        .font(AppFonts.serif(26, weight: .regular))
+                        .italic()
+                        .foregroundColor(.midnightSpruce)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(NSLocalizedString("macro.profile", comment: "Macro Profile"))
+                    Text("Macro Profile")
                         .font(AppFonts.label)
                         .foregroundColor(.nordicSlate)
                         .kerning(3)
                         .textCase(.uppercase)
                     Spacer()
-                    Text(NSLocalizedString("plate.optimized.badge", comment: "Optimized badge"))
-                        .font(AppFonts.sans(9, weight: .bold))
-                        .foregroundColor(primary)
+                    Text("\(analysis.macronutrients.calories) kcal")
+                        .font(AppFonts.sans(10, weight: .bold))
+                        .foregroundColor(scoreBandColor)
                         .textCase(.uppercase)
                         .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
-                        .background(primary.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .padding(.horizontal, 10)
+                        .background(scoreBandColor.opacity(0.14))
+                        .clipShape(Capsule())
                 }
 
-                MacroBarRow(
-                    title: NSLocalizedString("nutrition.protein", comment: "Protein"),
-                    label: "\(analysis.macronutrients.protein)g • \(proteinLabel)",
-                    fill: proteinFill,
-                    accent: primary
+                PlateMacroProgressRow(
+                    title: "Protein",
+                    amount: analysis.macronutrients.protein,
+                    dailyTarget: 50,
+                    color: scorePoor
                 )
-                MacroBarRow(
-                    title: NSLocalizedString("nutrition.carbs", comment: "Carbohydrates"),
-                    label: "\(analysis.macronutrients.carbs)g • \(carbsLabel)",
-                    fill: carbsFill,
-                    accent: primary
+                PlateMacroProgressRow(
+                    title: "Carbohydrates",
+                    amount: analysis.macronutrients.carbs,
+                    dailyTarget: 275,
+                    color: scoreLow
                 )
-                MacroBarRow(
-                    title: NSLocalizedString("nutrition.fat", comment: "Dietary Fats"),
-                    label: "\(analysis.macronutrients.fat)g • \(fatLabel)",
-                    fill: fatFill,
-                    accent: primary
+                PlateMacroProgressRow(
+                    title: "Fat",
+                    amount: analysis.macronutrients.fat,
+                    dailyTarget: 78,
+                    color: primary.opacity(0.7)
                 )
             }
 
-            if let m = analysis.micronutrients {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("MICRONUTRIENTS")
-                        .font(AppFonts.label)
-                        .foregroundColor(.nordicSlate)
-                        .kerning(2)
-                    HStack(spacing: 10) {
-                        PlateMicronutrientCard(name: "Fiber", level: "\(m.fiberG ?? 0) g", color: .mossInsight)
-                        PlateMicronutrientCard(name: "Vitamin C", level: "\(m.vitaminCMg ?? 0) mg", color: .momentumAmber)
-                        PlateMicronutrientCard(name: "Iron", level: "\(m.ironMg ?? 0) mg", color: .midnightSpruce)
+            if !microHighlights.isEmpty {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: min(4, microHighlights.count)), spacing: 0) {
+                    ForEach(microHighlights.indices, id: \.self) { idx in
+                        let item = microHighlights[idx]
+                        VStack(spacing: 4) {
+                            Text(item.valueText)
+                                .font(AppFonts.sans(16, weight: .semibold))
+                                .foregroundColor(item.color)
+                            Text(item.name)
+                                .font(AppFonts.sans(10, weight: .medium))
+                                .foregroundColor(.nordicSlate)
+                                .lineLimit(1)
+                            if let dv = item.dailyValueText {
+                                Text(dv)
+                                    .font(AppFonts.sans(9, weight: .semibold))
+                                    .foregroundColor(item.color.opacity(0.9))
+                            }
+                        }
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .overlay(alignment: .trailing) {
+                            if idx < microHighlights.count - 1 {
+                                Rectangle().fill(Color.cardBorder).frame(width: 1)
+                            }
+                        }
                     }
-                    if let other = m.other, !other.isEmpty {
-                        Text(other)
-                            .font(AppFonts.sans(11, weight: .regular))
-                            .foregroundColor(.nordicSlate)
+                }
+                .padding(.vertical, 6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 0, style: .continuous)
+                        .stroke(Color.cardBorder, lineWidth: 1)
+                )
+            }
+
+            if !secondaryQuickWins.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    sectionHeader(icon: "lightbulb.max", title: "More ideas")
+                    ForEach(secondaryQuickWins.indices, id: \.self) { idx in
+                        let tip = secondaryQuickWins[idx]
+                        HStack(alignment: .top, spacing: 10) {
+                            ZStack {
+                                Circle()
+                                    .fill(primary.opacity(0.14))
+                                    .frame(width: 24, height: 24)
+                                Text("\(idx + 2)")
+                                    .font(AppFonts.sans(11, weight: .bold))
+                                    .foregroundColor(primary)
+                            }
+                            Text(tip)
+                                .font(AppFonts.sans(13, weight: .medium))
+                                .foregroundColor(.midnightSpruce)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer()
+                        }
+                        .padding(.vertical, 6)
+                        if idx < secondaryQuickWins.count - 1 {
+                            Divider()
+                        }
                     }
                 }
             }
 
-            if !analysis.insights.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "sparkles")
-                            .font(AppFonts.sans(16, weight: .regular))
-                            .foregroundColor(.nordicSlate)
-                        Text("Actionable Insights")
-                            .font(AppFonts.label)
-                            .foregroundColor(.nordicSlate)
-                            .kerning(2)
+            VStack(alignment: .leading, spacing: 0) {
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showDetailsPanel.toggle() } }) {
+                    HStack {
+                        Text("Details & Ingredients")
+                            .font(AppFonts.sans(11, weight: .bold))
+                            .kerning(1.6)
                             .textCase(.uppercase)
+                            .foregroundColor(.nordicSlate)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.nordicSlate.opacity(0.7))
+                            .rotationEffect(.degrees(showDetailsPanel ? 180 : 0))
                     }
-                    ForEach(Array(analysis.insights.prefix(3).enumerated()), id: \.offset) { _, insight in
-                        ResultModernInsightCard(insight: insight)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                }
+                .buttonStyle(.plain)
+
+                if showDetailsPanel {
+                    VStack(alignment: .leading, spacing: 14) {
+                        if !analysis.ingredients.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Likely ingredients")
+                                    .font(AppFonts.sans(9, weight: .bold))
+                                    .kerning(1.4)
+                                    .textCase(.uppercase)
+                                    .foregroundColor(.nordicSlate.opacity(0.6))
+                                ChipFlow(alignment: .leading, spacing: 8) {
+                                    ForEach(analysis.ingredients.indices, id: \.self) { idx in
+                                        Text(analysis.ingredients[idx].name)
+                                            .font(AppFonts.sans(11, weight: .medium))
+                                            .foregroundColor(.nordicSlate)
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 10)
+                                            .background(Color.cardSurface)
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                            }
+                        }
+
+                        if let connectionsNote {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(scoreLow)
+                                Text(connectionsNote)
+                                    .font(AppFonts.sans(11, weight: .medium))
+                                    .foregroundColor(scoreLow)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(scoreLow.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Insights")
+                                .font(AppFonts.sans(9, weight: .bold))
+                                .kerning(1.4)
+                                .textCase(.uppercase)
+                                .foregroundColor(.nordicSlate.opacity(0.6))
+                            ForEach(insightsForDetails.indices, id: \.self) { idx in
+                                HStack(alignment: .top, spacing: 8) {
+                                    Image(systemName: insightsForDetails[idx].icon)
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.nordicSlate.opacity(0.6))
+                                        .padding(.top, 1)
+                                    Text(insightsForDetails[idx].text)
+                                        .font(AppFonts.sans(11, weight: .regular))
+                                        .foregroundColor(.nordicSlate)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                        }
+
+                        Text("Estimates are based on visual analysis and can vary with image angle, lighting, and portion context.")
+                            .font(AppFonts.sans(11, weight: .regular))
+                            .foregroundColor(.nordicSlate.opacity(0.85))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color.cardSurface)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                 }
             }
-
-            // Temporarily hidden per product decision.
+            .background(Color.white.opacity(0.75))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.cardBorder, lineWidth: 1)
+            )
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 28)
+        .padding(.horizontal, 24)
+        .padding(.top, 30)
         .padding(.bottom, 40)
         .background(
             nordicBackground
-                .clipShape(RoundedRectangle(cornerRadius: 40, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 40, style: .continuous)
-                        .stroke(Color.clear, lineWidth: 0)
-                )
+                .clipShape(RoundedRectangle(cornerRadius: 42, style: .continuous))
         )
         .offset(y: -28)
+    }
+
+    @ViewBuilder
+    private func sectionHeader(icon: String, title: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(.nordicSlate.opacity(0.6))
+            Text(title)
+                .font(AppFonts.sans(10, weight: .bold))
+                .foregroundColor(.nordicSlate.opacity(0.7))
+                .kerning(1.9)
+                .textCase(.uppercase)
+        }
     }
 
     private var bottomCTA: some View {
@@ -635,6 +757,112 @@ struct ScoreRingView: View {
 }
 
 // MARK: - Helpers
+private struct MiniScoreRing: View {
+    let score: Double
+    let color: Color
+
+    private var clampedScore: Double {
+        max(0.0, min(10.0, score))
+    }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.black.opacity(0.28))
+                .frame(width: 72, height: 72)
+            Circle()
+                .stroke(Color.white.opacity(0.14), lineWidth: 4)
+                .frame(width: 62, height: 62)
+            Circle()
+                .trim(from: 0, to: clampedScore / 10.0)
+                .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .frame(width: 62, height: 62)
+            VStack(spacing: 0) {
+                Text("\(Int(clampedScore.rounded()))")
+                    .font(AppFonts.serif(22, weight: .semibold))
+                    .foregroundColor(.white)
+                Text("/10")
+                    .font(AppFonts.sans(9, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+        }
+    }
+}
+
+private struct PlateMacroProgressRow: View {
+    let title: String
+    let amount: Int
+    let dailyTarget: Int
+    let color: Color
+
+    private var percent: Int {
+        Int((Double(amount) / Double(max(1, dailyTarget)) * 100).rounded())
+    }
+
+    private var fillRatio: Double {
+        min(1.0, max(0.0, Double(amount) / Double(max(1, dailyTarget))))
+    }
+
+    private var balanceLabel: String {
+        switch percent {
+        case ..<10: return "Low"
+        case ..<25: return "Moderate"
+        default: return "Higher"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .center) {
+                HStack(spacing: 8) {
+                    Text(title.uppercased())
+                        .font(AppFonts.sans(11, weight: .bold))
+                        .foregroundColor(.nordicSlate)
+                        .kerning(1.2)
+                    Text(balanceLabel)
+                        .font(AppFonts.sans(10, weight: .semibold))
+                        .foregroundColor(color)
+                        .padding(.vertical, 3)
+                        .padding(.horizontal, 8)
+                        .background(color.opacity(0.14))
+                        .clipShape(Capsule())
+                }
+                Spacer()
+                Text("\(amount)g")
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                Text("/ \(dailyTarget)g")
+                    .font(AppFonts.sans(10, weight: .medium))
+                    .foregroundColor(.nordicSlate.opacity(0.7))
+            }
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.cardSurface)
+                        .frame(height: 4)
+                    Capsule()
+                        .fill(color.opacity(0.4))
+                        .frame(width: proxy.size.width * fillRatio, height: 4)
+                }
+            }
+            .frame(height: 4)
+
+            Text("\(percent)% of daily target")
+                .font(AppFonts.sans(9, weight: .medium))
+                .foregroundColor(.nordicSlate.opacity(0.6))
+        }
+    }
+}
+
+private struct PlateMicroHighlight {
+    let name: String
+    let valueText: String
+    let dailyValueText: String?
+    let color: Color
+}
+
 private struct ResultMacroCard: View {
     let title: String
     let value: String
@@ -795,83 +1023,158 @@ struct PlateMicronutrientCard: View {
 }
 
 private extension PlateAnalysisResultView {
-    var overviewText: String {
-        if let pos = analysis.insights.first(where: { $0.type == .positive }) {
-            return pos.description
-        }
-        if let first = analysis.insights.first {
-            return first.description
-        }
-        let m = analysis.macronutrients
-        return "Approx. P \(m.protein)g • C \(m.carbs)g • F \(m.fat)g • \(m.calories) kcal"
-    }
-
-    var proteinFill: CGFloat {
-        CGFloat(max(0, min(1, proteinCalories / max(1, macroCaloriesTotal))))
-    }
-
-    var carbsFill: CGFloat {
-        CGFloat(max(0, min(1, carbCalories / max(1, macroCaloriesTotal))))
-    }
-
-    var fatFill: CGFloat {
-        CGFloat(max(0, min(1, fatCalories / max(1, macroCaloriesTotal))))
-    }
-
-    var proteinLabel: String {
-        ratioLabel(proteinCalories / max(1, macroCaloriesTotal), kind: "protein")
-    }
-
-    var carbsLabel: String {
-        ratioLabel(carbCalories / max(1, macroCaloriesTotal), kind: "carbs")
-    }
-
-    var fatLabel: String {
-        ratioLabel(fatCalories / max(1, macroCaloriesTotal), kind: "fat")
-    }
-
-    var proteinCalories: Double { Double(analysis.macronutrients.protein * 4) }
-    var carbCalories: Double { Double(analysis.macronutrients.carbs * 4) }
-    var fatCalories: Double { Double(analysis.macronutrients.fat * 9) }
-    var macroCaloriesTotal: Double { max(1.0, proteinCalories + carbCalories + fatCalories) }
-
-    func ratioLabel(_ ratio: Double, kind: String) -> String {
-        switch kind {
-        case "protein":
-            if ratio < 0.15 { return "Low" }
-            if ratio <= 0.35 { return "Good" }
-            return "High"
-        case "carbs":
-            if ratio < 0.35 { return "Low" }
-            if ratio <= 0.55 { return "Moderate" }
-            return "High"
-        default:
-            if ratio < 0.20 { return "Low" }
-            if ratio <= 0.35 { return "Moderate" }
-            return "High"
+    var scoreBandTitle: String {
+        switch analysis.nutritionScore {
+        case ..<4.5: return "Needs Attention"
+        case ..<7.0: return "Room to Improve"
+        default: return "Well Balanced"
         }
     }
 
-    var confidenceText: String? {
-        guard let connections = analysis.connections else { return nil }
-        guard let raw = connections.first(where: { $0.lowercased().hasPrefix("confidence_overall=") }) else { return nil }
+    var scoreBandColor: Color {
+        switch analysis.nutritionScore {
+        case ..<4.5: return scorePoor
+        case ..<7.0: return scoreLow
+        default: return scoreGood
+        }
+    }
+
+    var heroMetaLine: String {
+        var segments: [String] = []
+        if let mealType = analysis.mealType?.trimmingCharacters(in: .whitespacesAndNewlines), !mealType.isEmpty {
+            segments.append(mealType.capitalized)
+        }
+        if let portion = analysis.portionEstimate {
+            segments.append("~\(Int(portion.amount.rounded())) \(portion.unit)")
+        }
+        segments.append("\(analysis.macronutrients.calories) kcal")
+        return segments.joined(separator: " • ")
+    }
+
+    var confidenceRaw: Double {
+        if let confidence = analysis.confidenceOverall {
+            return confidence
+        }
+        guard let connections = analysis.connections else { return 0.6 }
+        guard let raw = connections.first(where: { $0.lowercased().hasPrefix("confidence_overall=") }) else { return 0.6 }
         let value = raw.replacingOccurrences(of: "confidence_overall=", with: "")
-        if let num = Double(value) {
-            return "Confidence: \(Int((num * 100).rounded()))%"
+        return Double(value) ?? 0.6
+    }
+
+    var confidenceClamped: Double {
+        max(0.0, min(1.0, confidenceRaw))
+    }
+
+    var confidenceLabel: String {
+        switch confidenceClamped {
+        case 0.75...: return "High confidence"
+        case 0.5...: return "Moderate confidence"
+        default: return "Low confidence"
+        }
+    }
+
+    var scoreRationaleLines: [String] {
+        if let why = analysis.whyThisScore?.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }), !why.isEmpty {
+            return Array(why.prefix(3))
+        }
+        let fallback = analysis.insights.prefix(2).map(\.description).filter { !$0.isEmpty }
+        return fallback.isEmpty ? ["Macronutrient balance and estimated portion drove this score."] : fallback
+    }
+
+    var primaryQuickWin: String? {
+        if let wins = analysis.quickWinActions?.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }), !wins.isEmpty {
+            return wins[0]
+        }
+        return analysis.insights.first(where: { $0.type == .suggestion })?.description
+    }
+
+    var secondaryQuickWins: [String] {
+        if let wins = analysis.quickWinActions?.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }), wins.count > 1 {
+            return Array(wins.dropFirst().prefix(3))
+        }
+        return Array(analysis.insights.filter { $0.type == .suggestion }.map(\.description).prefix(2))
+    }
+
+    var microHighlights: [PlateMicroHighlight] {
+        if let notable = analysis.micronutrients?.notable, !notable.isEmpty {
+            return Array(notable.prefix(4)).map { item in
+                let color: Color = {
+                    switch item.direction?.lowercased() {
+                    case "low", "down":
+                        return scorePoor
+                    case "high", "up":
+                        return scoreLow
+                    default:
+                        return .midnightSpruce
+                    }
+                }()
+                return PlateMicroHighlight(
+                    name: item.name,
+                    valueText: formatAmount(item.amount, unit: item.unit),
+                    dailyValueText: item.dailyValuePct.map { "\($0)% DV" },
+                    color: color
+                )
+            }
+        }
+
+        guard let micros = analysis.micronutrients else { return [] }
+        var rows: [PlateMicroHighlight] = []
+        if let fiber = micros.fiberG {
+            rows.append(PlateMicroHighlight(name: "Fiber", valueText: "\(fiber)g", dailyValueText: nil, color: scorePoor))
+        }
+        if let vitC = micros.vitaminCMg {
+            rows.append(PlateMicroHighlight(name: "Vitamin C", valueText: "\(vitC)mg", dailyValueText: nil, color: scoreGood))
+        }
+        if let iron = micros.ironMg {
+            rows.append(PlateMicroHighlight(name: "Iron", valueText: "\(iron)mg", dailyValueText: nil, color: .midnightSpruce))
+        }
+        return Array(rows.prefix(4))
+    }
+
+    var connectionsNote: String? {
+        if let extracted = analysis.connections?.first(where: {
+            let lower = $0.lowercased()
+            return lower.contains("allergen") || lower.contains("contains ") || lower.contains("gluten")
+        }) {
+            return extracted
         }
         return nil
     }
 
-    var uncertaintyNote: String? {
+    var insightsForDetails: [(icon: String, text: String)] {
+        var details: [(icon: String, text: String)] = []
+        if let note = analysis.uncertaintyNotes?.first(where: { !$0.isEmpty }) ?? uncertaintyNoteFromConnections {
+            details.append(("eye", note))
+        }
+        if let assumption = analysis.topAssumptions?.first(where: { !$0.isEmpty }) ?? topAssumptionFromConnections {
+            details.append(("ruler", assumption))
+        }
+        if let summary = analysis.micronutrients?.summary, !summary.isEmpty {
+            details.append(("text.alignleft", summary))
+        }
+        if details.isEmpty {
+            details.append(("info.circle", "No additional assumptions were provided for this analysis."))
+        }
+        return Array(details.prefix(3))
+    }
+
+    var uncertaintyNoteFromConnections: String? {
         guard let connections = analysis.connections else { return nil }
         guard let raw = connections.first(where: { $0.lowercased().hasPrefix("uncertainty_note=") }) else { return nil }
         return raw.replacingOccurrences(of: "uncertainty_note=", with: "")
     }
 
-    var topAssumption: String? {
+    var topAssumptionFromConnections: String? {
         guard let connections = analysis.connections else { return nil }
         guard let raw = connections.first(where: { $0.lowercased().hasPrefix("top_assumption=") }) else { return nil }
         return raw.replacingOccurrences(of: "top_assumption=", with: "")
+    }
+
+    func formatAmount(_ value: Double, unit: String) -> String {
+        if abs(value.rounded() - value) < 0.01 {
+            return "\(Int(value.rounded()))\(unit)"
+        }
+        return "\(String(format: "%.1f", value))\(unit)"
     }
 
     func saveFeedback(isCorrect: Bool) {
