@@ -34,6 +34,10 @@ final class BarcodeScannerViewModel: ObservableObject {
 
         do {
             let product = try await productService.fetchProductInfo(for: barcode)
+            // Guardrail: do not persist backend placeholders for missing products.
+            guard shouldPersistInHistory(product) else {
+                throw BackendAPIError.httpError(statusCode: 404, body: "Product not found")
+            }
             modelContext.insert(product)
             try modelContext.save()
             NotificationCenter.default.post(name: .barcodeScanCompleted, object: nil, userInfo: [
@@ -49,5 +53,35 @@ final class BarcodeScannerViewModel: ObservableObject {
             throw error
         }
     }
-}
 
+    private func shouldPersistInHistory(_ product: Product) -> Bool {
+        let normalizedName = product.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let normalizedBrand = product.brand.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        let looksLikeNotFoundName =
+            normalizedName.isEmpty
+            || normalizedName == "unknown product"
+            || normalizedName.contains("not found")
+            || normalizedName.contains("unknown")
+
+        let looksLikeNotFoundBrand =
+            normalizedBrand.isEmpty
+            || normalizedBrand == "unknown"
+            || normalizedBrand.contains("not found")
+
+        let n = product.nutritionData
+        let hasNoNutritionSignal =
+            n.calories <= 0
+            && n.fat <= 0
+            && n.saturatedFat <= 0
+            && n.sugar <= 0
+            && n.sodium <= 0
+            && n.protein <= 0
+            && n.fiber <= 0
+            && n.carbohydrates <= 0
+
+        if looksLikeNotFoundName { return false }
+        if looksLikeNotFoundBrand && hasNoNutritionSignal { return false }
+        return true
+    }
+}

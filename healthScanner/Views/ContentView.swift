@@ -39,6 +39,7 @@ private enum HistoryFilterEngine {
 
         if historyType == .all || historyType == .products {
             let filteredProducts = products.filter { product in
+                guard isHistoryEligibleProduct(product) else { return false }
                 let matchesSearchText = searchText.isEmpty || product.name.localizedCaseInsensitiveContains(searchText)
                 return matchesSearchText && matches(filter: filter, letter: product.nutriScoreLetter)
             }
@@ -80,6 +81,14 @@ private enum HistoryFilterEngine {
         case .D: return 2
         case .E: return 1
         }
+    }
+
+    private static func isHistoryEligibleProduct(_ product: Product) -> Bool {
+        let normalizedName = product.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if normalizedName.isEmpty { return false }
+        if normalizedName == "unknown product" { return false }
+        if normalizedName.contains("not found") || normalizedName.contains("unknown") { return false }
+        return true
     }
 }
 
