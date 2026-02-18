@@ -11,8 +11,13 @@ import UIKit
 struct ProductDetailView: View {
     let product: Product
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var showNutriInfo = false
-    @State private var didLogProduct = false
+    @State private var showLogProductIntentSheet = false
+    @State private var selectedMealIntent: MealLogIntent = .ateIt
+    @State private var showLogFeedbackAlert = false
+    @State private var logFeedbackTitle = ""
+    @State private var logFeedbackMessage = ""
     @State private var similarSuggestions: [SimilarProductSuggestion] = []
     @State private var isLoadingSimilar = false
     @State private var didLoadSimilar = false
@@ -47,8 +52,23 @@ struct ProductDetailView: View {
                 plateScore: nil
             )
         }
+        .sheet(isPresented: $showLogProductIntentSheet) {
+            logProductIntentSheet
+        }
+        .alert(logFeedbackTitle, isPresented: $showLogFeedbackAlert) {
+            Button("OK") {
+                if logFeedbackTitle == "Product logged" {
+                    dismiss()
+                }
+            }
+        } message: {
+            Text(logFeedbackMessage)
+        }
         .onAppear {
             print("[ProductDetailView] Appeared for barcode=\(product.barcode) name=\(product.name) brand=\(product.brand) imageURL=\(product.imageURL ?? "nil") localImagePath=\(product.localImagePath ?? "nil")")
+            if let existingIntent = product.mealLogIntent {
+                selectedMealIntent = existingIntent
+            }
             if product.localImagePath == nil, let path = ImageCacheService.shared.cachedFilePath(forKey: product.barcode) {
                 product.localImagePath = path
                 print("[ProductDetailView] Set missing localImagePath=\(path)")
@@ -323,7 +343,7 @@ struct ProductDetailView: View {
     private var bottomCTA: some View {
         VStack {
             Spacer()
-            Button(action: { logThisProduct(); dismiss() }) {
+            Button(action: { showLogProductIntentSheet = true }) {
                 HStack(spacing: 10) {
                     Text(NSLocalizedString("product.log", comment: "Log this product CTA"))
                         .font(AppFonts.sans(12, weight: .bold))
@@ -475,9 +495,19 @@ struct ProductDetailView: View {
         return pieces.joined(separator: ", ")
     }
 
-    private func logThisProduct() {
-        didLogProduct = true
-        print("[ProductDetailView] Logged product: \(product.name)")
+    private func logThisProduct(intent: MealLogIntent) -> Bool {
+        // Move the product to "recent" surfaces when the user explicitly logs intent.
+        product.scannedDate = Date()
+        product.mealLogIntent = intent
+        product.mealLoggedAt = Date()
+        do {
+            try modelContext.save()
+            print("[ProductDetailView] Logged product: \(product.name) as \(intent.rawValue)")
+            return true
+        } catch {
+            print("[ProductDetailView] Failed to log product intent for \(product.name): \(error)")
+            return false
+        }
     }
 
     // MARK: - MacroRow view
@@ -508,6 +538,153 @@ struct ProductDetailView: View {
             }
             .frame(height: 32)
             .padding(.vertical, 4)
+        }
+    }
+}
+
+private extension ProductDetailView {
+    var logProductIntentSheet: some View {
+        VStack(spacing: 0) {
+            RoundedRectangle(cornerRadius: 999)
+                .fill(Color.nordicSlate.opacity(0.25))
+                .frame(width: 46, height: 5)
+                .padding(.top, 10)
+                .padding(.bottom, 20)
+
+            VStack(spacing: 6) {
+                Text("Log Product")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(2)
+                    .textCase(.uppercase)
+                Text(product.name)
+                    .font(AppFonts.serif(28, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.bottom, 22)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("What did you do?")
+                    .font(AppFonts.sans(11, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(1.4)
+                    .textCase(.uppercase)
+
+                ForEach(MealLogIntent.allCases) { intent in
+                    mealIntentRow(intent: intent)
+                }
+            }
+            .padding(.horizontal, 8)
+
+            Button(action: {
+                showLogProductIntentSheet = false
+                let didLog = logThisProduct(intent: selectedMealIntent)
+                if didLog {
+                    logFeedbackTitle = "Product logged"
+                    logFeedbackMessage = "Saved as: \(selectedMealIntent.shortBadge)."
+                } else {
+                    logFeedbackTitle = "Could not log product"
+                    logFeedbackMessage = "Please try again."
+                }
+                showLogFeedbackAlert = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Log Choice")
+                        .font(AppFonts.sans(13, weight: .bold))
+                        .kerning(1.6)
+                        .textCase(.uppercase)
+                }
+                .foregroundColor(.nordicBone)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color.midnightSpruce)
+                .clipShape(Capsule())
+                .shadow(color: Color.midnightSpruce.opacity(0.24), radius: 14, x: 0, y: 8)
+            }
+            .padding(.top, 26)
+            .padding(.horizontal, 8)
+
+            Button(action: { showLogProductIntentSheet = false }) {
+                Text("Dismiss")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(1.8)
+                    .textCase(.uppercase)
+            }
+            .padding(.top, 14)
+            .padding(.bottom, 18)
+        }
+        .padding(.horizontal, 22)
+        .background(
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                .fill(Color.white)
+        )
+        .presentationDetents([.height(590)])
+        .presentationCornerRadius(34)
+    }
+
+    @ViewBuilder
+    func mealIntentRow(intent: MealLogIntent) -> some View {
+        Button(action: {
+            selectedMealIntent = intent
+        }) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(selectedMealIntent == intent ? Color.white : Color.white.opacity(0.85))
+                        .frame(width: 46, height: 46)
+                    Image(systemName: intent.systemImage)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
+                }
+                Text(intent.title)
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                Spacer()
+                if selectedMealIntent == intent {
+                    Circle()
+                        .fill(Color.midnightSpruce)
+                        .frame(width: 24, height: 24)
+                        .overlay(
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.nordicSlate.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(maxWidth: .infinity)
+            .frame(height: 72)
+            .background(selectedMealIntent == intent ? Color.white : Color.cardSurface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(selectedMealIntent == intent ? Color.midnightSpruce : Color.clear, lineWidth: 2)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private extension MealLogIntent {
+    var systemImage: String {
+        switch self {
+        case .ateIt:
+            return "fork.knife"
+        case .boughtIt:
+            return "cart"
+        case .checkingInfo:
+            return "eye"
+        case .forSomeoneElse:
+            return "person.2"
         }
     }
 }

@@ -358,8 +358,8 @@ private struct HistoryTimelineCard: View {
         switch item {
         case .plate(let plate):
             return plate.mealLogIntent?.shortBadge
-        case .product:
-            return nil
+        case .product(let product):
+            return product.mealLogIntent?.shortBadge
         }
     }
 }

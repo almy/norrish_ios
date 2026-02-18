@@ -29,6 +29,15 @@ final class BarcodeScannerViewModel: ObservableObject {
         defer { isLoading = false }
 
         if let existing = products.first(where: { $0.barcode == barcode }) {
+            // Treat a re-scan as a new history moment by refreshing the scan timestamp.
+            existing.scannedDate = Date()
+            try modelContext.save()
+            NotificationCenter.default.post(name: .barcodeScanCompleted, object: nil, userInfo: [
+                "upc": existing.barcode,
+                "title": existing.name,
+                "store": nil as String?
+            ])
+            await AggregatorService.shared.upsertDaily(for: existing.scannedDate, modelContext: modelContext)
             return existing
         }
 

@@ -20,8 +20,10 @@ final class Product {
     var localImagePath: String? // Persisted path to cached image
     var categoriesTags: [String]? // OFF categories tags (e.g., ["en:beverages", "en:cheeses"])
     var ingredients: String? // Product ingredients list 
+    var mealLogIntentRaw: String?
+    var mealLoggedAt: Date?
     
-    init(barcode: String, name: String, brand: String, nutritionData: NutritionData, imageURL: String? = nil, localImagePath: String? = nil, categoriesTags: [String]? = nil, ingredients: String? = nil) {
+    init(barcode: String, name: String, brand: String, nutritionData: NutritionData, imageURL: String? = nil, localImagePath: String? = nil, categoriesTags: [String]? = nil, ingredients: String? = nil, mealLogIntentRaw: String? = nil, mealLoggedAt: Date? = nil) {
         self.barcode = barcode
         self.name = name
         self.brand = brand
@@ -31,11 +33,23 @@ final class Product {
         self.localImagePath = localImagePath
         self.categoriesTags = categoriesTags
         self.ingredients = ingredients
+        self.mealLogIntentRaw = mealLogIntentRaw
+        self.mealLoggedAt = mealLoggedAt
     }
 
     // Get Nutri-Score letter for this product
     var nutriScoreLetter: NutriScoreLetter {
         return nutriScoreForProduct(self)
+    }
+
+    var mealLogIntent: MealLogIntent? {
+        get {
+            guard let mealLogIntentRaw else { return nil }
+            return MealLogIntent(rawValue: mealLogIntentRaw)
+        }
+        set {
+            mealLogIntentRaw = newValue?.rawValue
+        }
     }
 }
 

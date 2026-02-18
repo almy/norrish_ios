@@ -452,9 +452,9 @@ private struct RecentActivityTile: View {
                     .background(Color.nordicBone.opacity(0.95))
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             case .product(let product):
-                Text("Nutri \(product.nutriScoreLetter.rawValue)")
+                Text(product.mealLogIntent?.shortBadge ?? "Nutri \(product.nutriScoreLetter.rawValue)")
                     .font(AppFonts.sans(9, weight: .bold))
-                    .foregroundColor(.momentumAmber)
+                    .foregroundColor(product.mealLogIntent == nil ? .momentumAmber : .mossInsight)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(Color.nordicBone.opacity(0.95))
