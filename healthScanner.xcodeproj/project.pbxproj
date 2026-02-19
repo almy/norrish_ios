@@ -179,7 +179,7 @@
 		CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalRecommendationML.swift; sourceTree = "<group>"; };
 		CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreprocessor.swift; sourceTree = "<group>"; };
 		CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodRegionSelectionView.swift; sourceTree = "<group>"; };
-		CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreenV2.storyboard; sourceTree = "<group>"; };
+		CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = healthScanner/Resources/LaunchScreenV2.storyboard; sourceTree = "<group>"; };
 		CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationEnhancer.swift; sourceTree = "<group>"; };
 		CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateScanView.swift; sourceTree = "<group>"; };
 		CEDF292F2F3A9B2000C37A87 /* SimilarProductSuggestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarProductSuggestion.swift; sourceTree = "<group>"; };
