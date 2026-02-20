@@ -38,6 +38,9 @@ enum NorrishMigrationPlan: SchemaMigrationPlan {
 struct norrishApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var localizationManager = LocalizationManager.shared
+    @StateObject private var profileIdentity = ProfileIdentityStore.shared
+    @StateObject private var preferencesManager = DietaryPreferencesManager.shared
+    @AppStorage("onboarding.completed") private var onboardingCompleted = false
     @State private var showSplash = true
     @State private var startupConfigError: String?
 
@@ -79,6 +82,18 @@ struct norrishApp: App {
                     SplashOverlayView()
                         .transition(.opacity)
                         .zIndex(1)
+                }
+
+                if !showSplash && !onboardingCompleted {
+                    FirstTimeOnboardingView(onComplete: {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            onboardingCompleted = true
+                        }
+                    })
+                    .environmentObject(profileIdentity)
+                    .environmentObject(preferencesManager)
+                    .transition(.opacity)
+                    .zIndex(2)
                 }
             }
             .onAppear {

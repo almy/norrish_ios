@@ -96,6 +96,7 @@
 		F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81B5F38D5DE44326AF954F94 /* RecentScanRow.swift */; };
 		F0A1B2C3D4E5F67890123457 /* Resources/Fonts in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C3D4E5F67890123456 /* Resources/Fonts */; };
 		F61728394A5B6C7D8E9FA0B1 /* resources/plate.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A0B1C2D3E4F5061728394A5B /* resources/plate.jpg */; };
+		F1B3A8D52F4A100100B0A001 /* FirstTimeOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */; };
 		FD4AF8AB5ED2421B8442279A /* RecentScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8355D74FBF394F90B7C1A84C /* RecentScan.swift */; };
 		FF8408BD6B2A4F06801E3EB2 /* norrishApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */; };
 /* End PBXBuildFile section */
@@ -209,6 +210,7 @@
 		E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Resources/AppConfig.plist; sourceTree = "<group>"; };
 		F0A1B2C3D4E5F67890123456 /* Resources/Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources/Fonts; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F708192A3B4C /* BackendAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPIClient.swift; sourceTree = "<group>"; };
+		F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstTimeOnboardingView.swift; sourceTree = "<group>"; };
 		F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateProgressRingView.swift; sourceTree = "<group>"; };
 		F3A405162738495A6B7C8D9E /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = norrishApp.swift; sourceTree = "<group>"; };
@@ -516,6 +518,14 @@
 			path = Overlay;
 			sourceTree = "<group>";
 		};
+		F1B3A8D72F4A100100B0A001 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		F66EE23448934565A9CAC556 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -523,6 +533,7 @@
 				A91D10222F3C000100AAA001 /* Common */,
 				CE5336032E7AEC390086689E /* Recommendations */,
 				BCE332B57D4349F490E0A768 /* Scanning */,
+				F1B3A8D72F4A100100B0A001 /* Onboarding */,
 				CE5335DB2E79D4230086689E /* Profile */,
 				2E144E98C5B141AF9F71E5C3 /* Components */,
 				81035EE2844A4F00BBF876A6 /* ContentView.swift */,
@@ -753,6 +764,7 @@
 				1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */,
 				CE5335E82E79DDB40086689E /* LocalizationDebug.swift in Sources */,
 				8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */,
+				F1B3A8D52F4A100100B0A001 /* FirstTimeOnboardingView.swift in Sources */,
 				A7C41F1B9D6E4E53A1230002 /* HistoryTabView.swift in Sources */,
 				882BF269549A4DCD812F01D5 /* ProductDetailView.swift in Sources */,
 				882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */,
