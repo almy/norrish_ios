@@ -235,8 +235,6 @@ private struct LaunchStoryboardReplicaView: UIViewRepresentable {
 private struct SplashOverlayView: View {
     @State private var activeBarIndex = 2
     @State private var overlayOpacity: Double = 0
-    @State private var overlayScale: CGFloat = 1.018
-    @State private var overlayYOffset: CGFloat = 8
 
     var body: some View {
         GeometryReader { geometry in
@@ -255,21 +253,15 @@ private struct SplashOverlayView: View {
             .ignoresSafeArea()
         }
         .opacity(overlayOpacity)
-        .scaleEffect(overlayScale)
-        .offset(y: overlayYOffset)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.22).delay(0.06)) {
+            withAnimation(.easeOut(duration: 0.18)) {
                 overlayOpacity = 1
-            }
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.90, blendDuration: 0.12).delay(0.04)) {
-                overlayScale = 1.0
-                overlayYOffset = 0
             }
         }
         .task {
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 320_000_000)
                 activeBarIndex = (activeBarIndex + 1) % 4
+                try? await Task.sleep(nanoseconds: 320_000_000)
             }
         }
     }
