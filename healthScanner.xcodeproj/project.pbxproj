@@ -69,7 +69,6 @@
 		CE5336092E7C60950086689E /* PlateAnalysis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09FFD0EA8EF747698BE82BC6 /* PlateAnalysis.swift */; };
 		CEA6620B2F2620A8002A7EA2 /* ImagePreprocessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */; };
 		CEA6620D2F262210002A7EA2 /* FoodRegionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */; };
-		CED6D9E92E6F09A4006C1A7A /* LaunchScreenV2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */; };
 		CEDDA7772F39D3F000F80CA6 /* SegmentationEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */; };
 		CEDDA7792F39E4BD00F80CA6 /* PlateScanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */; };
 		CEDF29302F3A9B2000C37A87 /* SimilarProductSuggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEDF292F2F3A9B2000C37A87 /* SimilarProductSuggestion.swift */; };
@@ -87,6 +86,7 @@
 		CEF4FE672F3103E8009FAA35 /* AggregatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */; };
 		CEF4FE6B2F310465009FAA35 /* PromptOverlayHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */; };
 		CEF4FE6D2F32784B009FAA35 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE6C2F32784B009FAA35 /* HomeView.swift */; };
+		CEF520A52F49D90400C1F39E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF520A42F49D90400C1F39E /* LaunchScreen.storyboard */; };
 		D2E3F405162738495A6B7C8D /* RecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F3A405162738495A6B7C8D /* RecommendationService.swift */; };
 		D4E5F61728394A5B6C7D8E9F /* Resources/AppConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */; };
 		D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93339F43356641779417CA4A /* BarcodeScannerView.swift */; };
@@ -95,8 +95,16 @@
 		E5F61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift */; };
 		F07734E5DD9145D2A8783302 /* RecentScanRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81B5F38D5DE44326AF954F94 /* RecentScanRow.swift */; };
 		F0A1B2C3D4E5F67890123457 /* Resources/Fonts in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C3D4E5F67890123456 /* Resources/Fonts */; };
-		F61728394A5B6C7D8E9FA0B1 /* resources/plate.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A0B1C2D3E4F5061728394A5B /* resources/plate.jpg */; };
 		F1B3A8D52F4A100100B0A001 /* FirstTimeOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */; };
+		F1B3A8E12F4A100100B0A001 /* OnboardingComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8E22F4A100100B0A001 /* OnboardingComponents.swift */; };
+		F1B3A8E32F4A100100B0A001 /* OnboardingMissionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8E42F4A100100B0A001 /* OnboardingMissionScreen.swift */; };
+		F1B3A8E52F4A100100B0A001 /* OnboardingTrendsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8E62F4A100100B0A001 /* OnboardingTrendsScreen.swift */; };
+		F1B3A8E72F4A100100B0A001 /* OnboardingPlateScanScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8E82F4A100100B0A001 /* OnboardingPlateScanScreen.swift */; };
+		F1B3A8E92F4A100100B0A001 /* OnboardingProductScanScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8EA2F4A100100B0A001 /* OnboardingProductScanScreen.swift */; };
+		F1B3A8EB2F4A100100B0A001 /* OnboardingProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8EC2F4A100100B0A001 /* OnboardingProfileScreen.swift */; };
+		F1B3A8ED2F4A100100B0A001 /* OnboardingTailorScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8EE2F4A100100B0A001 /* OnboardingTailorScreen.swift */; };
+		F1B3A8EF2F4A100100B0A001 /* OnboardingReadyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B3A8F02F4A100100B0A001 /* OnboardingReadyScreen.swift */; };
+		F61728394A5B6C7D8E9FA0B1 /* resources/plate.jpg in Resources */ = {isa = PBXBuildFile; fileRef = A0B1C2D3E4F5061728394A5B /* resources/plate.jpg */; };
 		FD4AF8AB5ED2421B8442279A /* RecentScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8355D74FBF394F90B7C1A84C /* RecentScan.swift */; };
 		FF8408BD6B2A4F06801E3EB2 /* norrishApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */; };
 /* End PBXBuildFile section */
@@ -180,7 +188,6 @@
 		CE5336072E7AF1FE0086689E /* LocalRecommendationML.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalRecommendationML.swift; sourceTree = "<group>"; };
 		CEA6620A2F2620A8002A7EA2 /* ImagePreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePreprocessor.swift; sourceTree = "<group>"; };
 		CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodRegionSelectionView.swift; sourceTree = "<group>"; };
-		CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreenV2.storyboard; sourceTree = "<group>"; };
 		CEDDA7762F39D3F000F80CA6 /* SegmentationEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SegmentationEnhancer.swift; sourceTree = "<group>"; };
 		CEDDA7782F39E4BD00F80CA6 /* PlateScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateScanView.swift; sourceTree = "<group>"; };
 		CEDF292F2F3A9B2000C37A87 /* SimilarProductSuggestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimilarProductSuggestion.swift; sourceTree = "<group>"; };
@@ -201,6 +208,7 @@
 		CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregatorService.swift; sourceTree = "<group>"; };
 		CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptOverlayHost.swift; sourceTree = "<group>"; };
 		CEF4FE6C2F32784B009FAA35 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		CEF520A42F49D90400C1F39E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D1E2F3A405162738495A6B7C /* RecommendationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsViewModel.swift; sourceTree = "<group>"; };
 		D636EC943F04417B920D1E0E /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
 		DBF5C9CFF11E4AFF8EEFA817 /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
@@ -211,6 +219,14 @@
 		F0A1B2C3D4E5F67890123456 /* Resources/Fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources/Fonts; sourceTree = "<group>"; };
 		F1A2B3C4D5E6F708192A3B4C /* BackendAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPIClient.swift; sourceTree = "<group>"; };
 		F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstTimeOnboardingView.swift; sourceTree = "<group>"; };
+		F1B3A8E22F4A100100B0A001 /* OnboardingComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingComponents.swift; sourceTree = "<group>"; };
+		F1B3A8E42F4A100100B0A001 /* OnboardingMissionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingMissionScreen.swift; sourceTree = "<group>"; };
+		F1B3A8E62F4A100100B0A001 /* OnboardingTrendsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTrendsScreen.swift; sourceTree = "<group>"; };
+		F1B3A8E82F4A100100B0A001 /* OnboardingPlateScanScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPlateScanScreen.swift; sourceTree = "<group>"; };
+		F1B3A8EA2F4A100100B0A001 /* OnboardingProductScanScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProductScanScreen.swift; sourceTree = "<group>"; };
+		F1B3A8EC2F4A100100B0A001 /* OnboardingProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingProfileScreen.swift; sourceTree = "<group>"; };
+		F1B3A8EE2F4A100100B0A001 /* OnboardingTailorScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTailorScreen.swift; sourceTree = "<group>"; };
+		F1B3A8F02F4A100100B0A001 /* OnboardingReadyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingReadyScreen.swift; sourceTree = "<group>"; };
 		F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateProgressRingView.swift; sourceTree = "<group>"; };
 		F3A405162738495A6B7C8D9E /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = norrishApp.swift; sourceTree = "<group>"; };
@@ -441,8 +457,8 @@
 		CEF23E422E6C5F66002B903F = {
 			isa = PBXGroup;
 			children = (
+				CEF520A42F49D90400C1F39E /* LaunchScreen.storyboard */,
 				CE2042512F25012B004E0BBD /* healthScanner.xctestplan */,
-				CED6D9E82E6F09A4006C1A7A /* LaunchScreenV2.storyboard */,
 				CEF23E4D2E6C5F66002B903F /* healthScanner */,
 				CEF23E602E6C5F67002B903F /* healthScannerTests */,
 				CEF23E6A2E6C5F67002B903F /* healthScannerUITests */,
@@ -510,20 +526,28 @@
 			path = healthScannerUITests;
 			sourceTree = "<group>";
 		};
+		F1B3A8D72F4A100100B0A001 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				F1B3A8E22F4A100100B0A001 /* OnboardingComponents.swift */,
+				F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */,
+				F1B3A8E42F4A100100B0A001 /* OnboardingMissionScreen.swift */,
+				F1B3A8E62F4A100100B0A001 /* OnboardingTrendsScreen.swift */,
+				F1B3A8E82F4A100100B0A001 /* OnboardingPlateScanScreen.swift */,
+				F1B3A8EA2F4A100100B0A001 /* OnboardingProductScanScreen.swift */,
+				F1B3A8EC2F4A100100B0A001 /* OnboardingProfileScreen.swift */,
+				F1B3A8EE2F4A100100B0A001 /* OnboardingTailorScreen.swift */,
+				F1B3A8F02F4A100100B0A001 /* OnboardingReadyScreen.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		F595988B5A6B45FC9C571FED /* Overlay */ = {
 			isa = PBXGroup;
 			children = (
 				F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */,
 			);
 			path = Overlay;
-			sourceTree = "<group>";
-		};
-		F1B3A8D72F4A100100B0A001 /* Onboarding */ = {
-			isa = PBXGroup;
-			children = (
-				F1B3A8D62F4A100100B0A001 /* FirstTimeOnboardingView.swift */,
-			);
-			path = Onboarding;
 			sourceTree = "<group>";
 		};
 		F66EE23448934565A9CAC556 /* Views */ = {
@@ -662,8 +686,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F0A1B2C3D4E5F67890123457 /* Resources/Fonts in Resources */,
+				CEF520A52F49D90400C1F39E /* LaunchScreen.storyboard in Resources */,
 				CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */,
-				CED6D9E92E6F09A4006C1A7A /* LaunchScreenV2.storyboard in Resources */,
 				CE5335CC2E79A8CF0086689E /* Localizable.strings in Resources */,
 				CEF23E582E6C5F67002B903F /* Preview Assets.xcassets in Resources */,
 				CEF23E552E6C5F67002B903F /* Assets.xcassets in Resources */,
@@ -764,7 +788,15 @@
 				1F85C90B0ABA4D1CB6983FB4 /* ProductService.swift in Sources */,
 				CE5335E82E79DDB40086689E /* LocalizationDebug.swift in Sources */,
 				8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */,
+				F1B3A8E12F4A100100B0A001 /* OnboardingComponents.swift in Sources */,
 				F1B3A8D52F4A100100B0A001 /* FirstTimeOnboardingView.swift in Sources */,
+				F1B3A8E32F4A100100B0A001 /* OnboardingMissionScreen.swift in Sources */,
+				F1B3A8E52F4A100100B0A001 /* OnboardingTrendsScreen.swift in Sources */,
+				F1B3A8E72F4A100100B0A001 /* OnboardingPlateScanScreen.swift in Sources */,
+				F1B3A8E92F4A100100B0A001 /* OnboardingProductScanScreen.swift in Sources */,
+				F1B3A8EB2F4A100100B0A001 /* OnboardingProfileScreen.swift in Sources */,
+				F1B3A8ED2F4A100100B0A001 /* OnboardingTailorScreen.swift in Sources */,
+				F1B3A8EF2F4A100100B0A001 /* OnboardingReadyScreen.swift in Sources */,
 				A7C41F1B9D6E4E53A1230002 /* HistoryTabView.swift in Sources */,
 				882BF269549A4DCD812F01D5 /* ProductDetailView.swift in Sources */,
 				882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */,
@@ -957,11 +989,11 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Norrish;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = Noorish;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Norrish uses your camera to scan barcodes and analyze meals from photos so you get accurate nutrition insights.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreenV2;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -996,11 +1028,11 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Norrish;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.food-and-drink";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
-				INFOPLIST_KEY_NSCameraUsageDescription = Noorish;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Norrish uses your camera to scan barcodes and analyze meals from photos so you get accurate nutrition insights.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreenV2;
+				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1074,7 +1106,7 @@
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = W68D4B8SR3;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs uses the camera to scan food";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Norrish uses your camera to scan barcodes and analyze meals from photos so you get accurate nutrition insights.";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.healthScannerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1097,7 +1129,7 @@
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = W68D4B8SR3;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs uses the camera to scan food";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Norrish uses your camera to scan barcodes and analyze meals from photos so you get accurate nutrition insights.";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.myftiu.ios.healthScannerUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";

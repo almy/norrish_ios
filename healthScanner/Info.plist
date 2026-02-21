@@ -13,9 +13,34 @@
 		<string>Fonts/Inter/static/Inter_28pt-SemiBold.ttf</string>
 		<string>Fonts/Inter/static/Inter_28pt-Bold.ttf</string>
 	</array>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>camera.viewfinder</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Analyze your plate</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Analyze Plate</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.myftiu.ios.norrish.quickaction.analyze_plate</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>barcode.viewfinder</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Scan a product barcode</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Scan Product</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>com.myftiu.ios.norrish.quickaction.scan_product</string>
+		</dict>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Norrish uses your camera to scan barcodes and analyze meals from photos so you get accurate nutrition insights.</string>
 	<key>UILaunchScreen_Generation</key>
 	<false/>
 	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreenV2</string>
+	<string>LaunchScreen</string>
 </dict>
 </plist>
