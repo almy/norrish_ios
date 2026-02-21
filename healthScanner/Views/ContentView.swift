@@ -8,6 +8,11 @@
 import SwiftUI
 import SwiftData
 
+extension Notification.Name {
+    static let onboardingOpenPlatePhoto = Notification.Name("onboardingOpenPlatePhoto")
+    static let onboardingOpenProductScan = Notification.Name("onboardingOpenProductScan")
+}
+
 // Shared grade filter used by History presentation controls.
 enum ProductFilter: CaseIterable {
     case all, gradeA, gradeB, gradeC, gradeD, gradeE
@@ -97,6 +102,7 @@ struct ContentView: View {
 
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var localizationManager: LocalizationManager
+    @EnvironmentObject private var quickActionState: HomeScreenQuickActionState
     @Query private var products: [Product]
     @Query private var plateAnalyses: [PlateAnalysisHistory]
     @StateObject private var barcodeScanVM = BarcodeScannerViewModel()
@@ -180,7 +186,17 @@ struct ContentView: View {
         PromptOverlayHost {
             // Main app shell with Home / History / Profile tabs.
             TabView(selection: $selectedTab) {
-                TabWithFloatingAddButton(onAdd: { showingQuickAdd = true }) {
+                TabWithFloatingAddButton(
+                    onAdd: { showingQuickAdd = true },
+                    onScanProduct: {
+                        showingQuickAdd = false
+                        showingScanner = true
+                    },
+                    onAnalyzePlate: {
+                        showingQuickAdd = false
+                        showingPlateScan = true
+                    }
+                ) {
                     HomeView(onViewAllHistory: {
                         selectedTab = 1
                     })
@@ -193,7 +209,17 @@ struct ContentView: View {
                 }
                 .tag(0)
 
-                TabWithFloatingAddButton(onAdd: { showingQuickAdd = true }) {
+                TabWithFloatingAddButton(
+                    onAdd: { showingQuickAdd = true },
+                    onScanProduct: {
+                        showingQuickAdd = false
+                        showingScanner = true
+                    },
+                    onAnalyzePlate: {
+                        showingQuickAdd = false
+                        showingPlateScan = true
+                    }
+                ) {
                     HistoryTabView(
                         filteredHistoryItems: filteredHistoryItems,
                         historyTrendInsights: historyTrendInsights,
@@ -293,6 +319,26 @@ struct ContentView: View {
                 quickPlateCapturePayload = nil
                 showingPlateScan = true
             }
+            .onReceive(NotificationCenter.default.publisher(for: .onboardingOpenPlatePhoto)) { _ in
+                selectedTab = 0
+                showingQuickAdd = false
+                showingScanner = false
+                showingPlateScan = false
+                showingPlateUpload = false
+                DispatchQueue.main.async {
+                    showingPlateScan = true
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .onboardingOpenProductScan)) { _ in
+                selectedTab = 0
+                showingQuickAdd = false
+                showingPlateUpload = false
+                showingPlateScan = false
+                showingScanner = false
+                DispatchQueue.main.async {
+                    showingScanner = true
+                }
+            }
             // Product details route.
             .sheet(item: $selectedProduct) { product in
                 ProductDetailView(product: product)
@@ -347,6 +393,37 @@ struct ContentView: View {
                 guard !didRunPlateHistoryMigration else { return }
                 didRunPlateHistoryMigration = true
                 await PlateHistoryMigrationService.shared.migrateIfNeeded(modelContext: modelContext)
+            }
+            .onAppear {
+                consumePendingHomeQuickAction()
+            }
+            .onChange(of: quickActionState.pendingAction) { _, _ in
+                consumePendingHomeQuickAction()
+            }
+        }
+    }
+
+    private func consumePendingHomeQuickAction() {
+        guard let action = quickActionState.consumePendingAction() else { return }
+        selectedTab = 0
+        showingQuickAdd = false
+        showingProductNotFound = false
+        selectedProduct = nil
+        selectedPlateAnalysis = nil
+        switch action {
+        case .analyzePlate:
+            showingScanner = false
+            showingPlateUpload = false
+            showingPlateScan = false
+            DispatchQueue.main.async {
+                showingPlateScan = true
+            }
+        case .scanProduct:
+            showingPlateUpload = false
+            showingPlateScan = false
+            showingScanner = false
+            DispatchQueue.main.async {
+                showingScanner = true
             }
         }
     }

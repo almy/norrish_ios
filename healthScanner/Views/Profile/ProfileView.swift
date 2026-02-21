@@ -249,10 +249,16 @@ private extension ProfileView {
                         Image(uiImage: avatarImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                    } else {
-                        Image("profile_avatar")
+                    } else if let bundledAvatar = UIImage(named: "profile_avatar") {
+                        Image(uiImage: bundledAvatar)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .foregroundColor(.nordicSlate.opacity(0.7))
+                            .padding(10)
                     }
                 }
                 .frame(width: 96, height: 96)

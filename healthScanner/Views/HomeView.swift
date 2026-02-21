@@ -57,10 +57,16 @@ struct HomeView: View {
                                         Image(uiImage: avatar)
                                             .resizable()
                                             .scaledToFill()
-                                    } else {
-                                        Image("profile_avatar")
+                                    } else if let bundledAvatar = UIImage(named: "profile_avatar") {
+                                        Image(uiImage: bundledAvatar)
                                             .resizable()
                                             .scaledToFill()
+                                    } else {
+                                        Image(systemName: "person.crop.circle.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .foregroundColor(.nordicSlate.opacity(0.7))
+                                            .padding(6)
                                     }
                                 }
                                 .clipShape(Circle())

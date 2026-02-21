@@ -12,7 +12,10 @@ struct QuickAddSheetView: View {
                 .font(AppFonts.serif(18, weight: .semibold))
                 .foregroundColor(.midnightSpruce)
                 .padding(.top, 16)
-            Button(action: onScanBarcode) {
+            Button(action: {
+                Haptics.selection()
+                onScanBarcode()
+            }) {
                 HStack {
                     Image(systemName: "barcode.viewfinder")
                     Text("tab.scan".localized())
@@ -23,7 +26,10 @@ struct QuickAddSheetView: View {
                 .foregroundColor(.nordicBone)
                 .cornerRadius(12)
             }
-            Button(action: onScanPlate) {
+            Button(action: {
+                Haptics.selection()
+                onScanPlate()
+            }) {
                 HStack {
                     Image(systemName: "fork.knife")
                     Text("tab.plate".localized())
@@ -37,7 +43,10 @@ struct QuickAddSheetView: View {
                         .stroke(Color.cardBorder, lineWidth: 1)
                 )
             }
-            Button(action: onUploadPlate) {
+            Button(action: {
+                Haptics.selection()
+                onUploadPlate()
+            }) {
                 HStack {
                     Image(systemName: "photo")
                     Text(NSLocalizedString("plate.upload_photo", comment: "Upload photo"))
@@ -60,6 +69,14 @@ struct QuickAddSheetView: View {
     private var quickActionSheetHeight: CGFloat {
         let h = UIScreen.main.bounds.height
         return min(max(h * 0.28, 220), 340)
+    }
+}
+
+private enum Haptics {
+    static func selection() {
+        let generator = UISelectionFeedbackGenerator()
+        generator.prepare()
+        generator.selectionChanged()
     }
 }
 

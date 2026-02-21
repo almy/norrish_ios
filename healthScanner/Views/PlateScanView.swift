@@ -70,6 +70,7 @@ struct PlateQuickScanView: View {
         }
         .onChange(of: capturedImage) { _, newValue in
             guard let image = newValue else { return }
+            analysisVM.analysisResult = nil
             analysisVM.setTransientScanMetrics(volumeML: capturedVolumeML, massG: capturedMassG)
             analysisVM.setTransientDepthSnapshot(capturedDepthSnapshot)
             resultAnalysis = nil
@@ -139,10 +140,8 @@ struct PlateQuickScanView: View {
                 resultAnalysis = result
                 pendingImage = nil
                 showResult = true
-            } else {
-                dismiss()
+                awaitingAnalysisResult = false
             }
-            awaitingAnalysisResult = false
         }
         .onReceive(NotificationCenter.default.publisher(for: .closePlateScanFlow)) { _ in
             dismiss()

@@ -18,15 +18,25 @@ struct SettingsView: View {
                 Section {
                     HStack(spacing: 16) {
                         // Adaptive profile image that changes with theme
-                        Image("profile_avatar")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.momentumAmber, lineWidth: 3)
-                            )
+                        Group {
+                            if let bundledAvatar = UIImage(named: "profile_avatar") {
+                                Image(uiImage: bundledAvatar)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .foregroundColor(.nordicSlate.opacity(0.7))
+                                    .padding(8)
+                            }
+                        }
+                        .frame(width: 80, height: 80)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.momentumAmber, lineWidth: 3)
+                        )
 
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Health Scanner User")

@@ -1,11 +1,21 @@
 import SwiftUI
+import UIKit
 
 struct TabWithFloatingAddButton<Content: View>: View {
     let onAdd: () -> Void
+    let onScanProduct: () -> Void
+    let onAnalyzePlate: () -> Void
     @ViewBuilder let content: Content
 
-    init(onAdd: @escaping () -> Void, @ViewBuilder content: () -> Content) {
+    init(
+        onAdd: @escaping () -> Void,
+        onScanProduct: @escaping () -> Void,
+        onAnalyzePlate: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
         self.onAdd = onAdd
+        self.onScanProduct = onScanProduct
+        self.onAnalyzePlate = onAnalyzePlate
         self.content = content()
     }
 
@@ -16,11 +26,29 @@ struct TabWithFloatingAddButton<Content: View>: View {
                 Spacer()
                 HStack {
                     Spacer()
-                    Button(action: onAdd) {
+                    Button(action: {
+                        Haptics.impact(.medium)
+                        onAdd()
+                    }) {
                         Image(systemName: "plus")
                             .font(.title2)
                             .foregroundColor(.nordicBone)
                             .padding()
+                    }
+                    .contextMenu {
+                        Button {
+                            Haptics.selection()
+                            onScanProduct()
+                        } label: {
+                            Label("Scan Product", systemImage: "barcode.viewfinder")
+                        }
+
+                        Button {
+                            Haptics.selection()
+                            onAnalyzePlate()
+                        } label: {
+                            Label("Analyze Plate", systemImage: "camera.viewfinder")
+                        }
                     }
                     .background(Color.midnightSpruce)
                     .clipShape(Circle())
@@ -33,9 +61,23 @@ struct TabWithFloatingAddButton<Content: View>: View {
     }
 }
 
+private enum Haptics {
+    static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+
+    static func selection() {
+        let generator = UISelectionFeedbackGenerator()
+        generator.prepare()
+        generator.selectionChanged()
+    }
+}
+
 // Preview-only: demonstrates wrapper layout with static placeholder content.
 #Preview("Tab Wrapper") {
-    TabWithFloatingAddButton(onAdd: {}) {
+    TabWithFloatingAddButton(onAdd: {}, onScanProduct: {}, onAnalyzePlate: {}) {
         ZStack {
             Color.nordicBone.ignoresSafeArea()
             Text("Wrapped Content")
