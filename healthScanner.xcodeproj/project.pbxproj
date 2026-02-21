@@ -86,7 +86,7 @@
 		CEF4FE672F3103E8009FAA35 /* AggregatorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */; };
 		CEF4FE6B2F310465009FAA35 /* PromptOverlayHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */; };
 		CEF4FE6D2F32784B009FAA35 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEF4FE6C2F32784B009FAA35 /* HomeView.swift */; };
-		CEF520A52F49D90400C1F39E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF520A42F49D90400C1F39E /* LaunchScreen.storyboard */; };
+		CEF520A52F49D90400C1F39E /* LaunchScreenFresh.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CEF520A42F49D90400C1F39E /* LaunchScreenFresh.storyboard */; };
 		D2E3F405162738495A6B7C8D /* RecommendationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2F3A405162738495A6B7C8D /* RecommendationService.swift */; };
 		D4E5F61728394A5B6C7D8E9F /* Resources/AppConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = E4F5061728394A5B6C7D8E9F /* Resources/AppConfig.plist */; };
 		D57E3994316C4216B417406B /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93339F43356641779417CA4A /* BarcodeScannerView.swift */; };
@@ -208,7 +208,7 @@
 		CEF4FE662F3103E8009FAA35 /* AggregatorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AggregatorService.swift; sourceTree = "<group>"; };
 		CEF4FE6A2F310465009FAA35 /* PromptOverlayHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptOverlayHost.swift; sourceTree = "<group>"; };
 		CEF4FE6C2F32784B009FAA35 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		CEF520A42F49D90400C1F39E /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		CEF520A42F49D90400C1F39E /* LaunchScreenFresh.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreenFresh.storyboard; sourceTree = "<group>"; };
 		D1E2F3A405162738495A6B7C /* RecommendationsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendationsViewModel.swift; sourceTree = "<group>"; };
 		D636EC943F04417B920D1E0E /* PlateDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateDetailView.swift; sourceTree = "<group>"; };
 		DBF5C9CFF11E4AFF8EEFA817 /* Product.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
@@ -457,7 +457,7 @@
 		CEF23E422E6C5F66002B903F = {
 			isa = PBXGroup;
 			children = (
-				CEF520A42F49D90400C1F39E /* LaunchScreen.storyboard */,
+				CEF520A42F49D90400C1F39E /* LaunchScreenFresh.storyboard */,
 				CE2042512F25012B004E0BBD /* healthScanner.xctestplan */,
 				CEF23E4D2E6C5F66002B903F /* healthScanner */,
 				CEF23E602E6C5F67002B903F /* healthScannerTests */,
@@ -686,7 +686,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F0A1B2C3D4E5F67890123457 /* Resources/Fonts in Resources */,
-				CEF520A52F49D90400C1F39E /* LaunchScreen.storyboard in Resources */,
+				CEF520A52F49D90400C1F39E /* LaunchScreenFresh.storyboard in Resources */,
 				CEF4FE5F2F2A6A68009FAA35 /* IconMapping.json in Resources */,
 				CE5335CC2E79A8CF0086689E /* Localizable.strings in Resources */,
 				CEF23E582E6C5F67002B903F /* Preview Assets.xcassets in Resources */,
@@ -993,7 +993,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreenFresh;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1032,7 +1032,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreenFresh;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (

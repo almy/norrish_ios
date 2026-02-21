@@ -144,6 +144,9 @@ struct norrishApp: App {
                 }
 
                 if showSplash {
+                    LaunchStaticBackgroundView()
+                        .zIndex(1)
+
                     SplashOverlayView()
                         .zIndex(2)
                 }
@@ -184,6 +187,15 @@ struct norrishApp: App {
     }
 }
 
+private struct LaunchStaticBackgroundView: View {
+    var body: some View {
+        Image("LaunchScreen")
+            .resizable()
+            .scaledToFill()
+            .ignoresSafeArea()
+    }
+}
+
 private struct SplashOverlayView: View {
     @State private var activeBarIndex = 2
 
@@ -196,12 +208,6 @@ private struct SplashOverlayView: View {
             let origin = CGPoint(x: (canvas.width - fittedSize.width) / 2, y: (canvas.height - fittedSize.height) / 2)
 
             ZStack(alignment: .topLeading) {
-                Image("LaunchScreen")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: canvas.width, height: canvas.height)
-                    .clipped()
-
                 animatedBarsOverlay
                     .scaleEffect(scale, anchor: .topLeading)
                     .offset(x: origin.x, y: origin.y)
