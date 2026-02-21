@@ -24,6 +24,7 @@
 		882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDDB990BA3B8419AA37FB08A /* ProductNotFoundView.swift */; };
 		8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81035EE2844A4F00BBF876A6 /* ContentView.swift */; };
 		95AEB268BBD64AF48958000C /* BarcodeScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A536FD72F7B241AD82F63CC6 /* BarcodeScannerViewModel.swift */; };
+		A1D9C8B72F5A110100D0E001 /* AppLaunchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */; };
 		A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */; };
 		A1B2C3D4E5F60718293A4B5D /* BackendAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F708192A3B4C /* BackendAPIClient.swift */; };
 		A5F1B41B55D944F6BD142399 /* BarcodeScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA631B3A21A84D5FAA0C7ABB /* BarcodeScannerViewController.swift */; };
@@ -230,6 +231,7 @@
 		F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateProgressRingView.swift; sourceTree = "<group>"; };
 		F3A405162738495A6B7C8D9E /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = norrishApp.swift; sourceTree = "<group>"; };
+		A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLaunchViews.swift; sourceTree = "<group>"; };
 		F5E61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendIntegrationTests.swift; sourceTree = "<group>"; };
 		FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		FF6E4A499A014860AA425C4D /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
@@ -560,6 +562,7 @@
 				F1B3A8D72F4A100100B0A001 /* Onboarding */,
 				CE5335DB2E79D4230086689E /* Profile */,
 				2E144E98C5B141AF9F71E5C3 /* Components */,
+				A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */,
 				81035EE2844A4F00BBF876A6 /* ContentView.swift */,
 				A91D10242F3C000100AAA001 /* BlockedPlateAnalysisView.swift */,
 				CEA6620C2F262210002A7EA2 /* FoodRegionSelectionView.swift */,
@@ -802,6 +805,7 @@
 				882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */,
 				A7C41F1B9D6E4E53A1230001 /* QuickAddSheetView.swift in Sources */,
 				FF8408BD6B2A4F06801E3EB2 /* norrishApp.swift in Sources */,
+				A1D9C8B72F5A110100D0E001 /* AppLaunchViews.swift in Sources */,
 				A7C41F1B9D6E4E53A1230003 /* TabWithFloatingAddButton.swift in Sources */,
 				CE5335E72E79DDB40086689E /* DietaryPreferences+Utilities.swift in Sources */,
 				CE5335D12E79D1AE0086689E /* ThemeManager.swift in Sources */,
