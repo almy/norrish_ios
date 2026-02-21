@@ -97,6 +97,7 @@ struct norrishApp: App {
     @State private var showSplash = true
     @State private var startupConfigError: String?
     private let splashMinimumDuration: TimeInterval = 5.062
+    private let screenshotMode = ProcessInfo.processInfo.environment["NORRISH_SCREENSHOT_MODE"] == "1"
 
     init() {
         // Kick off Core ML model prewarm at app launch (guaranteed entry point)
@@ -132,7 +133,7 @@ struct norrishApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                Color.nordicBone.ignoresSafeArea()
+                Color.white.ignoresSafeArea()
 
                 if !showSplash {
                     ContentView()
@@ -141,14 +142,17 @@ struct norrishApp: App {
                         .environmentObject(quickActionState)
                         .preferredColorScheme(themeManager.currentTheme.colorScheme)
                         .localized()
+                        .transition(.opacity)
                 }
 
                 if showSplash {
                     LaunchStaticBackgroundView()
                         .zIndex(1)
+                        .transition(.opacity)
 
                     SplashOverlayView()
                         .zIndex(2)
+                        .transition(.opacity)
                 }
 
                 if !showSplash && !onboardingCompleted {
@@ -167,11 +171,18 @@ struct norrishApp: App {
                 }
             }
             .onAppear {
+                if screenshotMode {
+                    onboardingCompleted = true
+                    showSplash = false
+                    return
+                }
                 if startupConfigError == nil {
                     startupConfigError = AppConfig.startupValidationError()
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + splashMinimumDuration) {
-                    showSplash = false
+                    withAnimation(.easeInOut(duration: 0.28)) {
+                        showSplash = false
+                    }
                 }
             }
             .alert("Configuration Error", isPresented: Binding(
@@ -189,15 +200,43 @@ struct norrishApp: App {
 
 private struct LaunchStaticBackgroundView: View {
     var body: some View {
-        Image("LaunchScreen")
-            .resizable()
-            .scaledToFill()
+        LaunchStoryboardReplicaView()
             .ignoresSafeArea()
     }
 }
 
+private struct LaunchStoryboardReplicaView: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let container = UIView()
+        container.backgroundColor = .clear
+
+        if let vc = UIStoryboard(name: "LaunchScreenFresh", bundle: nil).instantiateInitialViewController() {
+            let launchView = vc.view ?? UIView()
+            launchView.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(launchView)
+
+            NSLayoutConstraint.activate([
+                launchView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                launchView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+                launchView.topAnchor.constraint(equalTo: container.topAnchor),
+                launchView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+            ])
+        } else {
+            // Keep a sane fallback if the storyboard can't be instantiated.
+            container.backgroundColor = UIColor(red: 0.976, green: 0.969, blue: 0.949, alpha: 1.0)
+        }
+
+        return container
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
 private struct SplashOverlayView: View {
     @State private var activeBarIndex = 2
+    @State private var overlayOpacity: Double = 0
+    @State private var overlayScale: CGFloat = 1.018
+    @State private var overlayYOffset: CGFloat = 8
 
     var body: some View {
         GeometryReader { geometry in
@@ -214,6 +253,18 @@ private struct SplashOverlayView: View {
             }
             .frame(width: canvas.width, height: canvas.height)
             .ignoresSafeArea()
+        }
+        .opacity(overlayOpacity)
+        .scaleEffect(overlayScale)
+        .offset(y: overlayYOffset)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.22).delay(0.06)) {
+                overlayOpacity = 1
+            }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.90, blendDuration: 0.12).delay(0.04)) {
+                overlayScale = 1.0
+                overlayYOffset = 0
+            }
         }
         .task {
             while !Task.isCancelled {
