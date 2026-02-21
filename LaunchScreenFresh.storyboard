@@ -18,17 +18,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreen" translatesAutoresizingMaskIntoConstraints="NO" id="StaticLaunchImageView">
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchScreen-iphone-6.9-3x-1290x2796" translatesAutoresizingMaskIntoConstraints="NO" id="StaticLaunchImageView">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
                         </subviews>
+                        <color key="backgroundColor" red="0.97599999999999998" green="0.96899999999999997" blue="0.94899999999999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="StaticLaunchImageView" firstAttribute="top" secondItem="RootView" secondAttribute="top" id="ImageTop"/>
                             <constraint firstItem="StaticLaunchImageView" firstAttribute="bottom" secondItem="RootView" secondAttribute="bottom" id="ImageBottom"/>
                             <constraint firstItem="StaticLaunchImageView" firstAttribute="leading" secondItem="RootView" secondAttribute="leading" id="ImageLeading"/>
+                            <constraint firstItem="StaticLaunchImageView" firstAttribute="top" secondItem="RootView" secondAttribute="top" id="ImageTop"/>
                             <constraint firstAttribute="trailing" secondItem="StaticLaunchImageView" secondAttribute="trailing" id="ImageTrailing"/>
                         </constraints>
-                        <color key="backgroundColor" red="0.97599999999999998" green="0.96899999999999997" blue="0.94899999999999995" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FR1" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -37,6 +37,6 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchScreen" width="393" height="852"/>
+        <image name="LaunchScreen-iphone-6.9-3x-1290x2796" width="393" height="852"/>
     </resources>
 </document>

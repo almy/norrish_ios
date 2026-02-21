@@ -119,6 +119,7 @@ struct ContentView: View {
     @State private var showingProductNotFound = false
     @State private var quickPlateCapturePayload: QuickPlateCapturePayload?
     @State private var selectedTab = 0
+    @State private var appliedScreenshotInitialTab = false
 
     // History controls (query-like UI state).
     @State private var searchText = ""
@@ -255,6 +256,20 @@ struct ContentView: View {
                     .tag(2)
             }
             .accentColor(.momentumAmber)
+            .onAppear {
+                guard !appliedScreenshotInitialTab else { return }
+                appliedScreenshotInitialTab = true
+                if let value = ProcessInfo.processInfo.environment["NORRISH_INITIAL_TAB"] {
+                    switch value.lowercased() {
+                    case "history":
+                        selectedTab = 1
+                    case "profile":
+                        selectedTab = 2
+                    default:
+                        selectedTab = 0
+                    }
+                }
+            }
             // Global product-fetch overlay used right after barcode scan returns.
             .overlay {
                 if barcodeScanVM.isLoading {

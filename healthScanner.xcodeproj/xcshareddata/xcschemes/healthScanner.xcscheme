@@ -115,7 +115,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Bump Build Number"
-               scriptText = "\"${SRCROOT}/scripts/prearchive_bump_build.sh\"&#10;">
+               scriptText = "&quot;${SRCROOT}/scripts/prearchive_bump_build.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
