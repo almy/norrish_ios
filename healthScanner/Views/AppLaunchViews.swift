@@ -54,6 +54,9 @@ struct SplashOverlayView: View {
                 let origin = CGPoint(x: (canvas.width - fittedSize.width) / 2, y: (canvas.height - fittedSize.height) / 2)
 
                 ZStack(alignment: .topLeading) {
+                    AuroraWavesView(elapsed: elapsed, intensity: 0.92 - (Double(progress) * 0.08))
+                        .opacity(0.92)
+
                     animatedBarsOverlay(progress: progress, pulse: pulse)
                         .scaleEffect(scale, anchor: .topLeading)
                         .offset(x: origin.x, y: origin.y)
@@ -143,4 +146,104 @@ struct SplashOverlayView: View {
         .multilineTextAlignment(.center)
         .lineSpacing(2)
     }
+}
+
+private struct AuroraWavesView: View {
+    let elapsed: TimeInterval
+    let intensity: Double
+
+    var body: some View {
+        Canvas(opaque: false, rendersAsynchronously: true) { context, size in
+            let frameTime = CGFloat(elapsed * 60.0)
+            let w = size.width
+            let h = size.height
+
+            for spec in Self.ribbons {
+                let baseY = h * spec.y
+
+                var ribbonFill = Path()
+                var ribbonEdge = Path()
+
+                let startX: CGFloat = -30
+                let endX = w + 30
+                let step: CGFloat = 3
+
+                let firstY = waveY(x: startX, baseY: baseY, t: frameTime, spec: spec)
+                ribbonFill.move(to: CGPoint(x: startX, y: firstY))
+                ribbonEdge.move(to: CGPoint(x: startX, y: firstY))
+
+                var x = startX + step
+                while x <= endX {
+                    let y = waveY(x: x, baseY: baseY, t: frameTime, spec: spec)
+                    ribbonFill.addLine(to: CGPoint(x: x, y: y))
+                    ribbonEdge.addLine(to: CGPoint(x: x, y: y))
+                    x += step
+                }
+
+                ribbonFill.addLine(to: CGPoint(x: endX, y: h + 50))
+                ribbonFill.addLine(to: CGPoint(x: startX, y: h + 50))
+                ribbonFill.closeSubpath()
+
+                let color = Color(
+                    red: Double(spec.color.0) / 255.0,
+                    green: Double(spec.color.1) / 255.0,
+                    blue: Double(spec.color.2) / 255.0
+                )
+
+                context.drawLayer { layer in
+                    layer.addFilter(.blur(radius: spec.blur))
+                    layer.fill(
+                        ribbonFill,
+                        with: .linearGradient(
+                            Gradient(stops: [
+                                .init(color: color.opacity(0), location: 0.0),
+                                .init(color: color.opacity(0.08 * intensity), location: 0.20),
+                                .init(color: color.opacity(0.14 * intensity), location: 0.42),
+                                .init(color: color.opacity(0.10 * intensity), location: 0.64),
+                                .init(color: color.opacity(0), location: 1.0)
+                            ]),
+                            startPoint: CGPoint(x: w * 0.5, y: baseY - spec.width * 0.7),
+                            endPoint: CGPoint(x: w * 0.5, y: baseY + spec.width)
+                        )
+                    )
+                }
+
+                context.stroke(
+                    ribbonEdge,
+                    with: .color(color.opacity(0.12 * intensity)),
+                    lineWidth: 1.35
+                )
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    private func waveY(x: CGFloat, baseY: CGFloat, t: CGFloat, spec: AuroraRibbonSpec) -> CGFloat {
+        let wave1 = sin(x * spec.frequency + t * spec.speed + spec.phase) * spec.amplitude
+        let wave2 = sin(x * spec.frequency * 1.7 + t * spec.speed * 0.6 + spec.phase + 1.3) * spec.amplitude * 0.35
+        let wave3 = cos(x * spec.frequency * 0.4 + t * spec.speed * 1.4 + 0.7) * spec.amplitude * 0.25
+        return baseY + wave1 + wave2 + wave3
+    }
+
+    private struct AuroraRibbonSpec {
+        let y: CGFloat
+        let amplitude: CGFloat
+        let frequency: CGFloat
+        let speed: CGFloat
+        let color: (Int, Int, Int)
+        let width: CGFloat
+        let phase: CGFloat
+        let blur: CGFloat
+    }
+
+    private static let ribbons: [AuroraRibbonSpec] = [
+        .init(y: 0.28, amplitude: 90, frequency: 0.0025, speed: 0.007, color: (72, 180, 130), width: 220, phase: 0.0, blur: 40),
+        .init(y: 0.36, amplitude: 70, frequency: 0.0030, speed: 0.005, color: (56, 152, 188), width: 180, phase: 1.5, blur: 35),
+        .init(y: 0.48, amplitude: 110, frequency: 0.0020, speed: 0.009, color: (120, 200, 155), width: 260, phase: 3.0, blur: 50),
+        .init(y: 0.40, amplitude: 55, frequency: 0.0040, speed: 0.006, color: (180, 160, 220), width: 150, phase: 0.8, blur: 30),
+        .init(y: 0.55, amplitude: 80, frequency: 0.0030, speed: 0.008, color: (200, 180, 100), width: 200, phase: 2.2, blur: 45),
+        .init(y: 0.32, amplitude: 65, frequency: 0.0035, speed: 0.011, color: (100, 210, 180), width: 170, phase: 4.5, blur: 38),
+        .init(y: 0.60, amplitude: 95, frequency: 0.0018, speed: 0.007, color: (90, 170, 210), width: 240, phase: 5.0, blur: 55)
+    ]
 }
