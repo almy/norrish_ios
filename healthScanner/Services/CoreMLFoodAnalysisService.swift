@@ -78,7 +78,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
     @MainActor
     private func loadModels() async {
-        print("🤖 Initializing CoreML food analysis models...")
+        AppLog.debug(AppLog.vision, "Initializing CoreML food analysis models")
         modelStatus = "ai.status.loading".localized
 
         await withTaskGroup(of: Void.self) { group in
@@ -97,22 +97,20 @@ final class CoreMLFoodAnalysisService: ObservableObject {
     }
 
     private func loadClassificationModel() async {
-        print("🔍 Looking for classification model: \(classificationModelName)")
+        AppLog.debug(AppLog.vision, "Looking for classification model: \(classificationModelName)")
 
         // Diagnostics: list compiled and package models present
         let compiled = Bundle.main.paths(forResourcesOfType: "mlmodelc", inDirectory: nil)
         if !compiled.isEmpty {
-            print("📦 Available .mlmodelc files in bundle:")
-            compiled.forEach { print("  - \($0)") }
+            AppLog.debug(AppLog.vision, "Available .mlmodelc files: \(compiled.count)")
         }
         let packages = Bundle.main.paths(forResourcesOfType: "mlpackage", inDirectory: nil)
         if !packages.isEmpty {
-            print("📦 Available .mlpackage files in bundle:")
-            packages.forEach { print("  - \($0)") }
+            AppLog.debug(AppLog.vision, "Available .mlpackage files: \(packages.count)")
         }
 
         guard let modelURL = findModelURL(named: classificationModelName) else {
-            print("❌ Classification model not found: \(classificationModelName)")
+            AppLog.error(AppLog.vision, "Classification model not found: \(classificationModelName)")
             return
         }
 
@@ -128,22 +126,22 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
             if isClassification {
                 classificationModel = model
-                print("✅ Classification model loaded successfully from: \(url.lastPathComponent) (\(url.pathExtension))")
+                AppLog.debug(AppLog.vision, "Classification model loaded from: \(url.lastPathComponent).\(url.pathExtension)")
             } else {
                 segmentationModel = model
-                print("✅ Segmentation model loaded successfully from: \(url.lastPathComponent) (\(url.pathExtension))")
+                AppLog.debug(AppLog.vision, "Segmentation model loaded from: \(url.lastPathComponent).\(url.pathExtension)")
             }
         } catch {
             let modelType = isClassification ? "classification" : "segmentation"
-            print("❌ Failed to load \(modelType) model: \(error)")
+            AppLog.error(AppLog.vision, "Failed to load \(modelType) model: \(error.localizedDescription)")
         }
     }
 
     private func loadSegmentationModel() async {
-        print("🔍 Looking for segmentation model: \(segmentationModelName)")
+        AppLog.debug(AppLog.vision, "Looking for segmentation model: \(segmentationModelName)")
 
         guard let modelURL = findModelURL(named: segmentationModelName) else {
-            print("❌ Segmentation model not found: \(segmentationModelName)")
+            AppLog.error(AppLog.vision, "Segmentation model not found: \(segmentationModelName)")
             return
         }
 
@@ -170,7 +168,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
             isReady = true  // Allow camera to work without CoreML
         }
 
-        print("🤖 CoreML models ready: \(modelStatus)")
+        AppLog.debug(AppLog.vision, "CoreML models ready: \(modelStatus)")
     }
 
     // MARK: - Public Analysis Methods
@@ -178,7 +176,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
     func analyzeFood(image: UIImage) async -> EnhancedFoodAnalysisResult {
         // Don't block if models aren't initialized - return graceful fallback
         if !isInitialized {
-            print("⚠️ Models not initialized yet - returning fallback result")
+            AppLog.debug(AppLog.vision, "Models not initialized yet; returning fallback result")
             return EnhancedFoodAnalysisResult(
                 classification: nil,
                 segmentation: nil,
@@ -191,7 +189,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
         // Prepare image for analysis
         guard let processedImage = preprocessImage(image) else {
-            print("❌ Failed to preprocess image for analysis")
+            AppLog.error(AppLog.vision, "Failed to preprocess image for analysis")
             return EnhancedFoodAnalysisResult(
                 classification: nil,
                 segmentation: nil,
@@ -214,7 +212,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
         let processingTime = Date().timeIntervalSince(startTime)
 
-        print("🎯 Food analysis completed in \(String(format: "%.3f", processingTime))s")
+        AppLog.debug(AppLog.vision, "Food analysis completed in \(String(format: "%.3f", processingTime))s")
 
         return EnhancedFoodAnalysisResult(
             classification: classification,
@@ -276,7 +274,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
     private func performClassification(on pixelBuffer: CVPixelBuffer) -> FoodClassificationResult? {
         guard let model = classificationModel else {
-            print("⚠️ Classification model not available")
+            AppLog.debug(AppLog.vision, "Classification model not available")
             return nil
         }
 
@@ -303,9 +301,9 @@ final class CoreMLFoodAnalysisService: ObservableObject {
             }
 
             // If no dictionary output found, try other formats
-            print("🔍 Available outputs: \(prediction.featureNames)")
+            AppLog.debug(AppLog.vision, "Classification output features: \(prediction.featureNames)")
         } catch {
-            print("❌ Classification inference error: \(error)")
+            AppLog.error(AppLog.vision, "Classification inference error: \(error.localizedDescription)")
         }
 
         return nil
@@ -315,7 +313,7 @@ final class CoreMLFoodAnalysisService: ObservableObject {
 
     private func performSegmentation(on pixelBuffer: CVPixelBuffer, originalSize: CGSize) -> FoodSegmentationResult? {
         guard let model = segmentationModel else {
-            print("⚠️ Segmentation model not available")
+            AppLog.debug(AppLog.vision, "Segmentation model not available")
             return nil
         }
 
@@ -340,9 +338,9 @@ final class CoreMLFoodAnalysisService: ObservableObject {
                 }
             }
 
-            print("🔍 Available segmentation outputs: \(prediction.featureNames)")
+            AppLog.debug(AppLog.vision, "Segmentation output features: \(prediction.featureNames)")
         } catch {
-            print("❌ Segmentation inference error: \(error)")
+            AppLog.error(AppLog.vision, "Segmentation inference error: \(error.localizedDescription)")
         }
 
         return nil

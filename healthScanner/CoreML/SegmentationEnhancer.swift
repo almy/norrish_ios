@@ -26,7 +26,7 @@ public final class SegmentationEnhancer {
                         let mlModel = try MLModel(contentsOf: url, configuration: config)
                         let vnModel = try VNCoreMLModel(for: mlModel)
                         cachedModel = vnModel
-                        print("✅ [SegEnhance] YOLOv8x model loaded: \(url.lastPathComponent)")
+                        AppLog.debug(AppLog.vision, "[SegEnhance] YOLOv8x model loaded: \(url.lastPathComponent)")
                         return vnModel
                     } catch {
                         continue
@@ -34,7 +34,7 @@ public final class SegmentationEnhancer {
                 }
             }
         }
-        print("❌ [SegEnhance] YOLOv8x model not found in bundle; falling back")
+        AppLog.error(AppLog.vision, "[SegEnhance] YOLOv8x model not found in bundle; falling back")
         return nil
     }
 
@@ -47,14 +47,13 @@ public final class SegmentationEnhancer {
         let size = CGSize(width: cg.width, height: cg.height)
         let ciContext = CIContext()
 
-        let ciInput = CIImage(cgImage: cg)
-        print("📐 [SegEnhance] Input size: \(Int(size.width))x\(Int(size.height))")
+        AppLog.debug(AppLog.vision, "[SegEnhance] Input size: \(Int(size.width))x\(Int(size.height))")
 
         // 1) Try YOLO segmentation-like mask (feature outputs), else detections → boxes, else saliency
         var boxes: [CGRect] = []
         var maskCI: CIImage? = nil
         let yoloModel = Self.loadModel()
-        print("🔧 [SegEnhance] YOLO available: \(yoloModel != nil ? "YES" : "NO")")
+        AppLog.debug(AppLog.vision, "[SegEnhance] YOLO available: \(yoloModel != nil ? "YES" : "NO")")
         if let model = yoloModel {
             let handler = VNImageRequestHandler(cgImage: cg, orientation: cgImagePropertyOrientation(from: image.imageOrientation), options: [:])
             let request = VNCoreMLRequest(model: model)
@@ -66,17 +65,17 @@ public final class SegmentationEnhancer {
                 let detCount = (results as? [VNRecognizedObjectObservation])?.count ?? 0
                 let pbCount = results.compactMap { $0 as? VNPixelBufferObservation }.count
                 let fvCount = results.compactMap { $0 as? VNCoreMLFeatureValueObservation }.count
-                print("🔎 [SegEnhance] Vision results types: \(types)")
-                print("🔎 [SegEnhance] counts — det:\(detCount), pixbuf:\(pbCount), feat:\(fvCount)")
+                AppLog.debug(AppLog.vision, "[SegEnhance] Vision results types: \(types)")
+                AppLog.debug(AppLog.vision, "[SegEnhance] counts det:\(detCount), pixbuf:\(pbCount), feat:\(fvCount)")
                 if detCount > 0, let dets = results as? [VNRecognizedObjectObservation] {
                     let tops = dets.prefix(3).compactMap { obs -> String? in
                         guard let lab = obs.labels.first else { return nil }
                         return "\(lab.identifier)(\(Int(obs.confidence * 100))%)"
                     }
-                    print("🔎 [SegEnhance] top dets: \(tops)")
+                    AppLog.debug(AppLog.vision, "[SegEnhance] top detections: \(tops)")
                 }
                 if let m = self.segmentationMask(from: results, targetSize: size) {
-                    print("🟢 [SegEnhance] Using YOLO feature mask")
+                    AppLog.debug(AppLog.vision, "[SegEnhance] Using YOLO feature mask")
                     maskCI = m
                 } else if let detections = results as? [VNRecognizedObjectObservation], !detections.isEmpty {
                     let top = detections
@@ -85,10 +84,10 @@ public final class SegmentationEnhancer {
                         .filter { $0.confidence >= 0.20 }
                         .map { Self.denormalizeVisionRect($0.boundingBox, imageSize: size) }
                     boxes.append(contentsOf: top)
-                    print("🟢 [SegEnhance] YOLO detections used: \(boxes.count)")
+                    AppLog.debug(AppLog.vision, "[SegEnhance] YOLO detections used: \(boxes.count)")
                 }
             } catch {
-                print("❌ [SegEnhance] YOLO Vision perform error: \(error)")
+                AppLog.error(AppLog.vision, "[SegEnhance] YOLO Vision perform error: \(error.localizedDescription)")
                 // fall through to saliency
             }
         }
@@ -102,7 +101,7 @@ public final class SegmentationEnhancer {
                 if let obs = salReq.results?.first as? VNSaliencyImageObservation,
                    let salient = obs.salientObjects, !salient.isEmpty {
                     boxes = salient.map { Self.denormalizeVisionRect($0.boundingBox, imageSize: size) }
-                    print("🟡 [SegEnhance] Saliency boxes used: \(boxes.count)")
+                    AppLog.debug(AppLog.vision, "[SegEnhance] Saliency boxes used: \(boxes.count)")
                 }
             } catch {
                 // ignore
@@ -111,7 +110,7 @@ public final class SegmentationEnhancer {
 
         // 3) If still nothing at all, do global simple enhance
         if maskCI == nil && boxes.isEmpty {
-            print("⚪️ [SegEnhance] Global fallback (simple vibrance)")
+            AppLog.debug(AppLog.vision, "[SegEnhance] Global fallback (simple vibrance)")
             return simpleGlobalEnhance(image, vibrance: preferredVibrance)
         }
 
@@ -270,7 +269,7 @@ public final class SegmentationEnhancer {
         }
 
         func normalizeTo8bit(_ values: [Float]) -> [UInt8] {
-            var minV = values.min() ?? 0
+            let minV = values.min() ?? 0
             var maxV = values.max() ?? 1
             if maxV - minV < 1e-6 { maxV = minV + 1e-6 }
             let scale = 255.0 / (maxV - minV)

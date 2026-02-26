@@ -176,7 +176,10 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             videoOutput.alwaysDiscardsLateVideoFrames = true
             if session.canAddOutput(videoOutput) {
                 session.addOutput(videoOutput)
-                videoOutput.connection(with: .video)?.videoOrientation = .portrait
+                if let connection = videoOutput.connection(with: .video),
+                   connection.isVideoRotationAngleSupported(90) {
+                    connection.videoRotationAngle = 90
+                }
             }
 
             session.commitConfiguration()
@@ -198,7 +201,6 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 }
             })
             classificationRequest.regionOfInterest = roiRectNormalized
-            classificationRequest.usesCPUOnly = false
         }
 
         private func setupFocusOverlay() {

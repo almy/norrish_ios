@@ -6,12 +6,14 @@ import Vision
 import CoreGraphics
 import AVFoundation
 
+@MainActor
 protocol AggregatorServicing {
     func upsertDaily(for date: Date, modelContext: ModelContext) async
 }
 
 extension AggregatorService: AggregatorServicing {}
 
+@MainActor
 protocol ImageCacheServicing {
     func saveImage(_ image: UIImage, forKey key: String)
 }
@@ -54,12 +56,12 @@ final class PlateAnalysisViewModel: ObservableObject {
 
     init(
         backendClient: PlateScanAPIClient = BackendAPIClient.shared,
-        aggregatorService: AggregatorServicing = AggregatorService.shared,
-        imageCacheService: ImageCacheServicing = ImageCacheService.shared
+        aggregatorService: AggregatorServicing? = nil,
+        imageCacheService: ImageCacheServicing? = nil
     ) {
         self.backendClient = backendClient
-        self.aggregatorService = aggregatorService
-        self.imageCacheService = imageCacheService
+        self.aggregatorService = aggregatorService ?? AggregatorService.shared
+        self.imageCacheService = imageCacheService ?? ImageCacheService.shared
     }
 
     func loadLastAnalysisFromDefaults() {

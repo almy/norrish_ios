@@ -37,49 +37,35 @@ struct CachedAsyncImage: View {
             }
         }
         .onAppear {
-            #if DEBUG
-            print("🎬 CachedAsyncImage: View appeared for key: \(cacheKey), URL: \(urlString)")
-            #endif
+            AppLog.debug(AppLog.storage, "CachedAsyncImage appeared: key=\(cacheKey)")
             loadImage()
         }
     }
     
     private func loadImage() {
-        #if DEBUG
-        print("🔄 CachedAsyncImage: Starting loadImage() for key: \(cacheKey)")
-        #endif
+        AppLog.debug(AppLog.storage, "CachedAsyncImage load start: key=\(cacheKey)")
         // First try loading from cache
         if let cachedImage = ImageCacheService.shared.loadImage(forKey: cacheKey) {
-            #if DEBUG
-            print("✅ CachedAsyncImage: Found cached image, setting state")
-            #endif
+            AppLog.debug(AppLog.storage, "CachedAsyncImage cache hit: key=\(cacheKey)")
             self.image = cachedImage
             self.isLoading = false
             return
         }
         
-        #if DEBUG
-        print("📥 CachedAsyncImage: No cached image found, starting download task")
-        #endif
+        AppLog.debug(AppLog.storage, "CachedAsyncImage cache miss: key=\(cacheKey)")
         // If not in cache, download and cache
         Task {
-            #if DEBUG
-            print("🚀 CachedAsyncImage: Background task started for download")
-            #endif
+            AppLog.debug(AppLog.storage, "CachedAsyncImage download started: key=\(cacheKey)")
             isLoading = true
             if let downloadedImage = await ImageCacheService.shared.downloadAndCacheImage(from: urlString, forKey: cacheKey) {
                 await MainActor.run {
-                    #if DEBUG
-                    print("✅ CachedAsyncImage: Download successful, updating UI")
-                    #endif
+                    AppLog.debug(AppLog.storage, "CachedAsyncImage download success: key=\(cacheKey)")
                     self.image = downloadedImage
                     self.isLoading = false
                 }
             } else {
                 await MainActor.run {
-                    #if DEBUG
-                    print("❌ CachedAsyncImage: Download failed, showing error state")
-                    #endif
+                    AppLog.error(AppLog.storage, "CachedAsyncImage download failed: key=\(cacheKey)")
                     self.isLoading = false
                 }
             }
