@@ -19,6 +19,9 @@ final class healthScannerUITestsLaunchTests: XCTestCase {
 
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchEnvironment["NORRISH_SCREENSHOT_MODE"] = "1"
+        app.launchEnvironment["API_BASE_URL"] = "https://example.com"
+        app.launchEnvironment["API_KEY"] = "ui-test-key"
         app.launch()
 
         // Insert steps here to perform after app launch but before taking a screenshot,

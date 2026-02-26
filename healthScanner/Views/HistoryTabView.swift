@@ -55,6 +55,7 @@ struct HistoryTabView: View {
         .scrollContentBackground(.hidden)
         .background(Color.nordicBone)
         .padding(.bottom, 0)
+        .accessibilityIdentifier("screen.history")
     }
 
     private var historyHeader: some View {

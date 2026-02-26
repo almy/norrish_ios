@@ -26,6 +26,7 @@ struct QuickAddSheetView: View {
                 .foregroundColor(.nordicBone)
                 .cornerRadius(12)
             }
+            .accessibilityIdentifier("quickAdd.scanBarcode")
             Button(action: {
                 Haptics.selection()
                 onScanPlate()
@@ -43,6 +44,7 @@ struct QuickAddSheetView: View {
                         .stroke(Color.cardBorder, lineWidth: 1)
                 )
             }
+            .accessibilityIdentifier("quickAdd.scanPlate")
             Button(action: {
                 Haptics.selection()
                 onUploadPlate()
@@ -60,10 +62,12 @@ struct QuickAddSheetView: View {
                         .stroke(Color.cardBorder, lineWidth: 1)
                 )
             }
+            .accessibilityIdentifier("quickAdd.uploadPhoto")
             Spacer()
         }
         .padding(20)
         .presentationDetents([.height(quickActionSheetHeight)])
+        .accessibilityIdentifier("sheet.quickAdd")
     }
 
     private var quickActionSheetHeight: CGFloat {

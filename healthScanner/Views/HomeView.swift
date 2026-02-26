@@ -178,6 +178,7 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
         }
+        .accessibilityIdentifier("screen.home")
         .sheet(isPresented: $showingScanner) {
             BarcodeScannerView(scannedCode: .constant(nil), isScanning: .constant(false))
         }

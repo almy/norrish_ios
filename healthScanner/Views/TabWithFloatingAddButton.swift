@@ -35,6 +35,7 @@ struct TabWithFloatingAddButton<Content: View>: View {
                             .foregroundColor(.nordicBone)
                             .padding()
                     }
+                    .accessibilityIdentifier("fab.quickAdd")
                     .contextMenu {
                         Button {
                             Haptics.selection()

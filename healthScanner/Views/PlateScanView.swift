@@ -68,6 +68,7 @@ struct PlateQuickScanView: View {
                 AppLoadingOverlay(title: NSLocalizedString("scan.status.fetching", tableName: "Scan", comment: ""))
             }
         }
+        .accessibilityIdentifier(mode == .camera ? "screen.plateQuickScan.camera" : "screen.plateQuickScan.photo")
         .onChange(of: capturedImage) { _, newValue in
             guard let image = newValue else { return }
             analysisVM.analysisResult = nil
