@@ -3,7 +3,7 @@ import AVFoundation
 import CoreGraphics
 import simd
 
-struct DepthFrameSnapshot {
+struct DepthFrameSnapshot: @unchecked Sendable {
     let depthMap: CVPixelBuffer
     let intrinsics: simd_float3x3
     let imageSize: CGSize

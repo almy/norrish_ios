@@ -670,7 +670,6 @@ public final class DualCameraPlateScannerViewController: UIViewController,
         ready = ready || captureWindowActive || timedOut
 
         // Combine with content gating: require content to be valid for several frames
-        let contentReady = contentStableCount >= requiredContentStableFrames
         // ready = ready && contentReady // moved into hint logic
 
         DispatchQueue.main.async {

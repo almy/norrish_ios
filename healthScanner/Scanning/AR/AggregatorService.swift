@@ -12,27 +12,20 @@ final class AggregatorService {
         let start = cal.startOfDay(for: date)
         guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return }
 
-        // Fetch products in day range
-        let productPredicate = #Predicate<Product> { p in
-            p.scannedDate >= start && p.scannedDate < end
-        }
+        // Fetch and filter in-memory to avoid SwiftData predicate Sendable warnings in strict concurrency mode.
         var products: [Product] = []
         do {
-            let fetch = FetchDescriptor<Product>(predicate: productPredicate)
-            products = try modelContext.fetch(fetch)
+            let allProducts = try modelContext.fetch(FetchDescriptor<Product>())
+            products = allProducts.filter { $0.scannedDate >= start && $0.scannedDate < end }
         } catch {
             // If fetch fails, continue with empty
             products = []
         }
 
-        // Fetch plates in day range
-        let platePredicate = #Predicate<PlateAnalysisHistory> { h in
-            h.analyzedDate >= start && h.analyzedDate < end
-        }
         var plates: [PlateAnalysisHistory] = []
         do {
-            let fetch = FetchDescriptor<PlateAnalysisHistory>(predicate: platePredicate)
-            plates = try modelContext.fetch(fetch)
+            let allPlates = try modelContext.fetch(FetchDescriptor<PlateAnalysisHistory>())
+            plates = allPlates.filter { $0.analyzedDate >= start && $0.analyzedDate < end }
         } catch {
             plates = []
         }
@@ -56,14 +49,10 @@ final class AggregatorService {
             fat      += Double(h.fat)
         }
 
-        // Find existing aggregate for the day
-        let aggPredicate = #Predicate<DailyNutritionAggregateEntity> { a in
-            a.date >= start && a.date < end
-        }
         var existing: DailyNutritionAggregateEntity?
         do {
-            let fetch = FetchDescriptor<DailyNutritionAggregateEntity>(predicate: aggPredicate)
-            existing = try modelContext.fetch(fetch).first
+            let allAggregates = try modelContext.fetch(FetchDescriptor<DailyNutritionAggregateEntity>())
+            existing = allAggregates.first { $0.date >= start && $0.date < end }
         } catch {
             existing = nil
         }

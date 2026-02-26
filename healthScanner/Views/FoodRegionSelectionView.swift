@@ -421,7 +421,12 @@ private extension FoodRegionSelectionView {
         Task {
             let results: [ImagePreprocessor.Result] = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .userInitiated).async {
-                    let computed = viewModel.detectFoodRegions(in: image, maxRegions: 5)
+                    let computed = ImagePreprocessor.preprocessFoodRegions(
+                        image,
+                        maxRegions: 5,
+                        padding: 0.08,
+                        confidenceThreshold: 0.05
+                    )
                     continuation.resume(returning: computed)
                 }
             }
@@ -500,7 +505,7 @@ private extension FoodRegionSelectionView {
     }
 
     func resize(_ region: inout EditableRegion, scale: CGFloat) {
-        var rect = region.rect
+        let rect = region.rect
         let center = CGPoint(x: rect.midX, y: rect.midY)
         var newSize = CGSize(width: rect.width * scale, height: rect.height * scale)
         newSize.width = max(12, min(image.size.width, newSize.width))
@@ -629,10 +634,10 @@ private extension FoodRegionSelectionView {
                     let imageSize = image.size
                     let mapped = observations.compactMap { obs -> RegionDetection? in
                         guard let top = obs.labels.first else { return nil }
-                        let rect = denormalizeVisionRect(obs.boundingBox, imageSize: imageSize)
+                        let rect = Self.denormalizeVisionRect(obs.boundingBox, imageSize: imageSize)
                         return RegionDetection(
                             rect: rect.integral,
-                            label: formattedModelLabel(top.identifier),
+                            label: Self.formattedModelLabel(top.identifier),
                             confidence: top.confidence
                         )
                     }
@@ -735,7 +740,7 @@ private extension FoodRegionSelectionView {
         return interArea / denom
     }
 
-    func formattedModelLabel(_ raw: String) -> String {
+    nonisolated static func formattedModelLabel(_ raw: String) -> String {
         let trimmed = raw
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "_", with: " ")
@@ -743,7 +748,7 @@ private extension FoodRegionSelectionView {
         return first.uppercased() + trimmed.dropFirst()
     }
 
-    func denormalizeVisionRect(_ rect: CGRect, imageSize: CGSize) -> CGRect {
+    nonisolated static func denormalizeVisionRect(_ rect: CGRect, imageSize: CGSize) -> CGRect {
         let w = rect.width * imageSize.width
         let h = rect.height * imageSize.height
         let x = rect.origin.x * imageSize.width

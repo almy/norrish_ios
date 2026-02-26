@@ -602,7 +602,7 @@ private extension UIImage {
 private extension ARPlateScannerViewController {
     func cropToOverlay(_ image: UIImage) -> UIImage {
         // Use cropNormalized (already defined in controller) to crop center square.
-        guard let cg = image.cgImage else { return image }
+        guard image.cgImage != nil else { return image }
         let src = image.fixedOrientation()
         guard let orientedCG = src.cgImage else { return image }
         let width = CGFloat(orientedCG.width)

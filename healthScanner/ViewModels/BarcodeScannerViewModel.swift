@@ -35,7 +35,7 @@ final class BarcodeScannerViewModel: ObservableObject {
             NotificationCenter.default.post(name: .barcodeScanCompleted, object: nil, userInfo: [
                 "upc": existing.barcode,
                 "title": existing.name,
-                "store": nil as String?
+                "store": Optional<String>.none as Any
             ])
             await AggregatorService.shared.upsertDaily(for: existing.scannedDate, modelContext: modelContext)
             return existing
@@ -52,7 +52,7 @@ final class BarcodeScannerViewModel: ObservableObject {
             NotificationCenter.default.post(name: .barcodeScanCompleted, object: nil, userInfo: [
                 "upc": product.barcode,
                 "title": product.name,
-                "store": nil as String?
+                "store": Optional<String>.none as Any
             ])
             // Event-driven aggregate update for the product's scan day
             await AggregatorService.shared.upsertDaily(for: product.scannedDate, modelContext: modelContext)
