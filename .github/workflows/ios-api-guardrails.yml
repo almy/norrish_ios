@@ -1,0 +1,16 @@
+name: iOS API Guardrails
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  guardrails:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run API guardrails
+        run: ./scripts/ios_api_guardrails.sh
