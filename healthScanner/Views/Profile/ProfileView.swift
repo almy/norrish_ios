@@ -143,6 +143,7 @@ struct ProfileView: View {
     @State private var showingAvatarSourceDialog = false
     @State private var showingAvatarCamera = false
     @State private var showingAvatarLibrary = false
+    @State private var showingPhotoPermissionAlert = false
     @State private var selectedAvatarImage: UIImage?
     @Query private var plates: [PlateAnalysisHistory]
     @Query private var products: [Product]
@@ -163,6 +164,7 @@ struct ProfileView: View {
             .background(Color.nordicBone)
             .navigationBarHidden(true)
         }
+        .accessibilityIdentifier("screen.profile")
         .alert("profile.logout".localized(), isPresented: $showingLogoutAlert) {
             Button("profile.cancel".localized(), role: .cancel) { }
             Button("profile.logout".localized(), role: .destructive) {
@@ -198,7 +200,12 @@ struct ProfileView: View {
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 Button("Take Photo") { showingAvatarCamera = true }
             }
-            Button("Choose from Library") { showingAvatarLibrary = true }
+            Button("Choose from Library") { requestPhotoLibraryAccessForAvatar() }
+            if PhotoLibraryPermission.canManageLimitedSelection {
+                Button("Manage Selected Photos") {
+                    PhotoLibraryPermission.presentLimitedLibraryPicker()
+                }
+            }
             if profileIdentity.avatarImage() != nil {
                 Button("Remove Photo", role: .destructive) {
                     profileIdentity.removeAvatar()
@@ -206,10 +213,33 @@ struct ProfileView: View {
             }
             Button("Cancel", role: .cancel) { }
         }
+        .alert("Photo Access Needed", isPresented: $showingPhotoPermissionAlert) {
+            Button("Open Settings") {
+                PhotoLibraryPermission.openSettings()
+            }
+            Button("Not Now", role: .cancel) { }
+        } message: {
+            Text("Allow Photos access to choose an avatar. You can grant Full Access or select Limited Photos.")
+        }
         .onChange(of: selectedAvatarImage) { _, newValue in
             guard let image = newValue else { return }
             profileIdentity.updateAvatar(image)
             selectedAvatarImage = nil
+        }
+    }
+}
+
+private extension ProfileView {
+    func requestPhotoLibraryAccessForAvatar() {
+        Task {
+            let status = await PhotoLibraryPermission.requestReadWriteAccess()
+            await MainActor.run {
+                if PhotoLibraryPermission.hasAccess(status) {
+                    showingAvatarLibrary = true
+                } else {
+                    showingPhotoPermissionAlert = true
+                }
+            }
         }
     }
 }

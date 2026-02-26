@@ -38,6 +38,8 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Norrish uses your camera to scan barcodes and analyze meals from photos so you get accurate nutrition insights.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Norrish uses your photos to analyze meals and set your profile picture. You can allow full access or select specific photos.</string>
 	<key>UILaunchScreen_Generation</key>
 	<false/>
 	<key>UILaunchStoryboardName</key>

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import Photos
 
 extension Notification.Name {
     static let onboardingOpenPlatePhoto = Notification.Name("onboardingOpenPlatePhoto")
@@ -118,6 +119,8 @@ struct ContentView: View {
     @State private var showingPlateUpload = false
     @State private var showingProductNotFound = false
     @State private var quickPlateCapturePayload: QuickPlateCapturePayload?
+    @State private var showingPhotoPermissionAlert = false
+    @State private var photoPermissionStatus: PHAuthorizationStatus = PhotoLibraryPermission.currentStatus()
     @State private var selectedTab = 0
     @State private var appliedScreenshotInitialTab = false
 
@@ -255,6 +258,7 @@ struct ContentView: View {
                     }
                     .tag(2)
             }
+            .accessibilityIdentifier("root.tabView")
             .accentColor(.momentumAmber)
             .onAppear {
                 guard !appliedScreenshotInitialTab else { return }
@@ -376,10 +380,18 @@ struct ContentView: View {
                         showingQuickAdd = false
                     },
                     onUploadPlate: {
-                        showingPlateUpload = true
                         showingQuickAdd = false
+                        requestPhotoLibraryAndPresentUpload()
                     }
                 )
+            }
+            .alert("Photo Access Needed", isPresented: $showingPhotoPermissionAlert) {
+                Button("Open Settings") {
+                    PhotoLibraryPermission.openSettings()
+                }
+                Button("Not Now", role: .cancel) { }
+            } message: {
+                Text(photoAccessMessage)
             }
             // Barcode handoff: fetch product, then route to detail or not-found UX.
             .onChange(of: scannedCode) { _, newValue in
@@ -443,6 +455,31 @@ struct ContentView: View {
         }
     }
 
+    private var photoAccessMessage: String {
+        switch photoPermissionStatus {
+        case .denied:
+            return "Allow Photos access in Settings to upload meal pictures. You can grant Full Access or select Limited Photos."
+        case .restricted:
+            return "Photos access is restricted on this device. Please adjust parental controls or system restrictions."
+        default:
+            return "Allow Photos access to upload meal pictures."
+        }
+    }
+
+    private func requestPhotoLibraryAndPresentUpload() {
+        Task {
+            let status = await PhotoLibraryPermission.requestReadWriteAccess()
+            await MainActor.run {
+                photoPermissionStatus = status
+                if PhotoLibraryPermission.hasAccess(status) {
+                    showingPlateUpload = true
+                } else {
+                    showingPhotoPermissionAlert = true
+                }
+            }
+        }
+    }
+
     // Deletes the selected history entity and cleans related cached media.
     private func deleteHistoryItem(_ item: HistoryItemType) {
         switch item {
@@ -479,6 +516,7 @@ private struct QuickBarcodeScanView: View {
             isScanning: $isScanning,
             isPresented: $isPresented
         )
+        .accessibilityIdentifier("screen.barcodeScanner")
         .onAppear {
             isScanning = true
         }

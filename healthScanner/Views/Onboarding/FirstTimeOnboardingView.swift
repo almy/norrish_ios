@@ -27,6 +27,7 @@ struct FirstTimeOnboardingView: View {
     @State private var showingAvatarSourceDialog = false
     @State private var showingAvatarCamera = false
     @State private var showingAvatarLibrary = false
+    @State private var showingPhotoPermissionAlert = false
     @State private var selectedAvatarImage: UIImage?
 
     var body: some View {
@@ -118,13 +119,26 @@ struct FirstTimeOnboardingView: View {
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 Button("Take Photo") { showingAvatarCamera = true }
             }
-            Button("Choose from Library") { showingAvatarLibrary = true }
+            Button("Choose from Library") { requestPhotoLibraryAccessForAvatar() }
+            if PhotoLibraryPermission.canManageLimitedSelection {
+                Button("Manage Selected Photos") {
+                    PhotoLibraryPermission.presentLimitedLibraryPicker()
+                }
+            }
             if profileIdentity.avatarImage() != nil {
                 Button("Remove Photo", role: .destructive) {
                     profileIdentity.removeAvatar()
                 }
             }
             Button("Cancel", role: .cancel) { }
+        }
+        .alert("Photo Access Needed", isPresented: $showingPhotoPermissionAlert) {
+            Button("Open Settings") {
+                PhotoLibraryPermission.openSettings()
+            }
+            Button("Not Now", role: .cancel) { }
+        } message: {
+            Text("Allow Photos access to choose an avatar. You can grant Full Access or select Limited Photos.")
         }
         .onChange(of: selectedAvatarImage) { _, newValue in
             guard let image = newValue else { return }
@@ -197,6 +211,19 @@ struct FirstTimeOnboardingView: View {
             }
         } else if preferencesManager.customRestrictions.contains(value) {
             preferencesManager.removeCustomRestriction(value)
+        }
+    }
+
+    private func requestPhotoLibraryAccessForAvatar() {
+        Task {
+            let status = await PhotoLibraryPermission.requestReadWriteAccess()
+            await MainActor.run {
+                if PhotoLibraryPermission.hasAccess(status) {
+                    showingAvatarLibrary = true
+                } else {
+                    showingPhotoPermissionAlert = true
+                }
+            }
         }
     }
 }
