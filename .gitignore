@@ -42,5 +42,8 @@ backend/.venv/
 
 
 # claude plugins
-norrish-plugin
-.claude/ 
+norrish-plugin/
+norrish-agents/
+.claude/
+.claude/*.json 
+.claude/settings.local.json 

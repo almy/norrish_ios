@@ -26,7 +26,12 @@
       "Bash(echo $?)",
       "Read(//Users/user/**)",
       "Bash(grep:*)",
-      "Bash(git -C /Users/user/Documents/appleworkspace/healthScanner log --oneline -20)"
+      "Bash(git -C /Users/user/Documents/appleworkspace/healthScanner log --oneline -20)",
+      "Bash(xcrun simctl:*)",
+      "Bash(defaults read:*)",
+      "Bash(osascript:*)",
+      "Bash(pip3 show:*)",
+      "Bash(xargs -I{} defaults read {}/Contents/Info.plist CFBundleIdentifier)"
     ],
     "deny": [],
     "ask": []
