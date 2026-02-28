@@ -25,6 +25,10 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
         private let depthOutput = AVCaptureDepthDataOutput()
         private let depthQueue = DispatchQueue(label: "enhancedDepthQueue")
         private let depthStateQueue = DispatchQueue(label: "enhancedDepthStateQueue")
+        private var videoDevice: AVCaptureDevice?
+        private var currentZoomFactor: CGFloat = 1.0
+        private var maxZoomFactor: CGFloat = 1.0
+        private var pinchStartZoomFactor: CGFloat = 1.0
 
         private var previewLayer: AVCaptureVideoPreviewLayer!
         private let focusMaskLayer = CAShapeLayer()
@@ -92,6 +96,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
             previewLayer.frame = view.layer.bounds
             view.layer.addSublayer(previewLayer)
             setupFocusOverlay()
+            setupZoomGesture()
 
             setupButtons()
 
@@ -156,7 +161,10 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 session.commitConfiguration()
                 return
             }
+            self.videoDevice = device
             session.addInput(input)
+            self.currentZoomFactor = max(1.0, CGFloat(device.videoZoomFactor))
+            self.maxZoomFactor = max(1.0, min(CGFloat(device.activeFormat.videoMaxZoomFactor), 6.0))
 
             if session.canAddOutput(photoOutput) {
                 session.addOutput(photoOutput)
@@ -269,6 +277,40 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 closeButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
                 closeButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16)
             ])
+        }
+
+        private func setupZoomGesture() {
+            let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchToZoom(_:)))
+            pinch.cancelsTouchesInView = false
+            view.addGestureRecognizer(pinch)
+        }
+
+        @objc private func handlePinchToZoom(_ gesture: UIPinchGestureRecognizer) {
+            guard let device = videoDevice else { return }
+
+            switch gesture.state {
+            case .began:
+                pinchStartZoomFactor = currentZoomFactor
+            case .changed:
+                let proposedZoom = pinchStartZoomFactor * gesture.scale
+                setZoomFactor(proposedZoom, for: device)
+            case .ended, .cancelled, .failed:
+                currentZoomFactor = CGFloat(device.videoZoomFactor)
+            default:
+                break
+            }
+        }
+
+        private func setZoomFactor(_ zoom: CGFloat, for device: AVCaptureDevice) {
+            let clampedZoom = max(1.0, min(zoom, maxZoomFactor))
+            do {
+                try device.lockForConfiguration()
+                device.videoZoomFactor = clampedZoom
+                device.unlockForConfiguration()
+                currentZoomFactor = clampedZoom
+            } catch {
+                AppLog.error(AppLog.scanner, "[EnhancedCamera] Failed to set zoom: \(error.localizedDescription)")
+            }
         }
 
         @objc private func shutterTapped() {
