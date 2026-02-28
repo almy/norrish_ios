@@ -43,3 +43,4 @@ backend/.venv/
 
 # claude plugins
 norrish-plugin
+.claude/ 
