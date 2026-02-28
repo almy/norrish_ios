@@ -39,3 +39,7 @@ fastlane/test_output
 venv/
 .venv/
 backend/.venv/
+
+
+# claude plugins
+norrish-plugin
