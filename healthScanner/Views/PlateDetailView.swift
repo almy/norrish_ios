@@ -439,7 +439,7 @@ struct PlateMacroCard: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         PlateDetailView(plateAnalysis: PlateAnalysisHistory(
             name: "Lunch",
             nutritionScore: 8.5,

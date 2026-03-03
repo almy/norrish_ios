@@ -49,7 +49,7 @@ struct PlateHistoryDetailView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         PlateHistoryDetailView(plateAnalysis: PlateAnalysisHistory.mockData())
     }
 }

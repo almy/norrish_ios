@@ -98,5 +98,5 @@ struct RecommendationListView: View {
 }
 
 #Preview {
-    NavigationView { RecommendationListView() }
+    NavigationStack { RecommendationListView() }
 }

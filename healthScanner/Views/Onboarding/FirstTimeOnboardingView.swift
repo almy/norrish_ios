@@ -21,8 +21,8 @@ struct FirstTimeOnboardingView: View {
     @EnvironmentObject private var preferencesManager: DietaryPreferencesManager
     @State private var step: OnboardingStep = .mission
     @State private var nameDraft = ""
-    @State private var exclusions: Set<String> = ["Low Sodium"]
-    @State private var needs: Set<String> = ["Dairy Free", "Plant Based"]
+    @State private var exclusions: Set<String> = []
+    @State private var needs: Set<String> = []
     @State private var focus: String = "Clean Eating"
     @State private var showingAvatarSourceDialog = false
     @State private var showingAvatarCamera = false

@@ -149,21 +149,18 @@ struct ProfileView: View {
     @Query private var products: [Product]
 
     var body: some View {
-        NavigationView {
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 24) {
-                    topBar
-                    profileHeader
-                    dietaryOverviewSection
-                    preferencesSection
-                    accountSection
-                    footerActions
-                }
-                .padding(.bottom, 32)
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 24) {
+                topBar
+                profileHeader
+                dietaryOverviewSection
+                preferencesSection
+                accountSection
+                footerActions
             }
-            .background(Color.nordicBone)
-            .navigationBarHidden(true)
+            .padding(.bottom, 32)
         }
+        .background(Color.nordicBone.ignoresSafeArea())
         .accessibilityIdentifier("screen.profile")
         .alert("profile.logout".localized(), isPresented: $showingLogoutAlert) {
             Button("profile.cancel".localized(), role: .cancel) { }
@@ -247,12 +244,7 @@ private extension ProfileView {
 private extension ProfileView {
     var topBar: some View {
         HStack {
-            Button(action: {}) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .light))
-                    .foregroundColor(.midnightSpruce)
-                    .frame(width: 40, height: 40)
-            }
+            Color.clear.frame(width: 40, height: 40)
             Spacer()
             Text("tab.profile".localized())
                 .font(AppFonts.label)
@@ -489,7 +481,7 @@ private extension ProfileView {
     }
 
     var editNameSheet: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Profile Name") {
                     TextField("Enter your name", text: $draftDisplayName)
@@ -657,7 +649,7 @@ struct LanguageSelectionView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(AppLanguage.allCases, id: \.self) { language in
                     HStack {
@@ -695,7 +687,7 @@ struct PrivacyView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 16) {

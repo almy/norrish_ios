@@ -8,13 +8,18 @@ struct HomeView: View {
     @StateObject private var profileIdentity = ProfileIdentityStore.shared
     @Query private var products: [Product]
     @Query private var plates: [PlateAnalysisHistory]
-    @State private var showingScanner = false
-    @State private var selectedPlate: PlateAnalysisHistory?
-    @State private var selectedProduct: Product?
     let onViewAllHistory: () -> Void
+    let onSelectProduct: (Product) -> Void
+    let onSelectPlate: (PlateAnalysisHistory) -> Void
 
-    init(onViewAllHistory: @escaping () -> Void = {}) {
+    init(
+        onViewAllHistory: @escaping () -> Void = {},
+        onSelectProduct: @escaping (Product) -> Void = { _ in },
+        onSelectPlate: @escaping (PlateAnalysisHistory) -> Void = { _ in }
+    ) {
         self.onViewAllHistory = onViewAllHistory
+        self.onSelectProduct = onSelectProduct
+        self.onSelectPlate = onSelectPlate
     }
 
     private var insights: [PersonalizedInsight] {
@@ -33,8 +38,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack(alignment: .bottomTrailing) {
+        ZStack(alignment: .bottomTrailing) {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
                         // Header
@@ -148,9 +152,9 @@ struct HomeView: View {
                                         Button {
                                             switch item.kind {
                                             case .plate(let plate):
-                                                selectedPlate = plate
+                                                onSelectPlate(plate)
                                             case .product(let product):
-                                                selectedProduct = product
+                                                onSelectProduct(product)
                                             }
                                         } label: {
                                             RecentActivityTile(item: item)
@@ -174,20 +178,9 @@ struct HomeView: View {
                     }
                     .padding(.top, 8)
                 }
-                .background(Color.nordicBone)
+                .background(Color.nordicBone.ignoresSafeArea())
             }
-            .navigationBarHidden(true)
-        }
         .accessibilityIdentifier("screen.home")
-        .sheet(isPresented: $showingScanner) {
-            BarcodeScannerView(scannedCode: .constant(nil), isScanning: .constant(false))
-        }
-        .sheet(item: $selectedPlate) { plate in
-            PlateDetailView(plateAnalysis: plate)
-        }
-        .sheet(item: $selectedProduct) { product in
-            ProductDetailView(product: product)
-        }
     }
 }
 

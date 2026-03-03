@@ -79,7 +79,7 @@ struct PlateQuickScanView: View {
             awaitingAnalysisResult = true
         }
         .fullScreenCover(isPresented: $showResult) {
-            NavigationView {
+            NavigationStack {
                 if let analysis = resultAnalysis {
                     if analysis.isGuardrailBlocked {
                         BlockedPlateAnalysisView(
@@ -172,7 +172,7 @@ struct PlateQuickPostCaptureFlowView: View {
     var body: some View {
         ZStack {
             if let analysis = resultAnalysis {
-                NavigationView {
+                NavigationStack {
                     if analysis.isGuardrailBlocked {
                         BlockedPlateAnalysisView(
                             analysis: analysis,

@@ -45,5 +45,4 @@ backend/.venv/
 norrish-plugin/
 norrish-agents/
 .claude/
-.claude/*.json 
 .claude/settings.local.json 

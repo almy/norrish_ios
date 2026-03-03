@@ -53,7 +53,7 @@ struct HistoryTabView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Color.nordicBone)
+        .background(Color.nordicBone.ignoresSafeArea())
         .padding(.bottom, 0)
         .accessibilityIdentifier("screen.history")
     }

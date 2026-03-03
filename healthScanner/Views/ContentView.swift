@@ -121,7 +121,7 @@ struct ContentView: View {
     @State private var quickPlateCapturePayload: QuickPlateCapturePayload?
     @State private var showingPhotoPermissionAlert = false
     @State private var photoPermissionStatus: PHAuthorizationStatus = PhotoLibraryPermission.currentStatus()
-    @State private var selectedTab = 0
+    @SceneStorage("nav.selectedTab") private var selectedTab = 0
     @State private var appliedScreenshotInitialTab = false
 
     // History controls (query-like UI state).
@@ -201,9 +201,11 @@ struct ContentView: View {
                         showingPlateScan = true
                     }
                 ) {
-                    HomeView(onViewAllHistory: {
-                        selectedTab = 1
-                    })
+                    HomeView(
+                        onViewAllHistory: { selectedTab = 1 },
+                        onSelectProduct: { selectedProduct = $0 },
+                        onSelectPlate: { selectedPlateAnalysis = $0 }
+                    )
                 }
                 .tabItem {
                     VStack {
@@ -260,6 +262,7 @@ struct ContentView: View {
             }
             .accessibilityIdentifier("root.tabView")
             .accentColor(.momentumAmber)
+            .background(Color.nordicBone.ignoresSafeArea())
             .onAppear {
                 guard !appliedScreenshotInitialTab else { return }
                 appliedScreenshotInitialTab = true

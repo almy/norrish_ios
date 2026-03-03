@@ -7,7 +7,7 @@ struct NutriScoreInfoView: View {
     private let openFoodFactsNutriScoreURL = URL(string: "https://world.openfoodfacts.org/nutriscore")
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header

@@ -21,7 +21,7 @@ struct BarcodeScannerView: View {
         @State private var showingProductNotFound = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     // Header

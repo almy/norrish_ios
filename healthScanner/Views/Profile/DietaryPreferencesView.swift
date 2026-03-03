@@ -10,14 +10,13 @@ import SwiftUI
 struct DietaryPreferencesView: View {
     @StateObject private var preferencesManager = DietaryPreferencesManager.shared
     @Environment(\.dismiss) private var dismiss
-    @State private var showingCustomAllergySheet = false
-    @State private var showingCustomRestrictionSheet = false
+    @State private var navPath: [DietaryNavDest] = []
     @State private var showingAddActionSheet = false
     @State private var customAllergyText = ""
     @State private var customRestrictionText = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack(path: $navPath) {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 20) {
                     topBar
@@ -29,25 +28,27 @@ struct DietaryPreferencesView: View {
                 .padding(.bottom, 32)
             }
             .background(Color.nordicBone)
-            .navigationBarHidden(true)
-        }
-        .sheet(isPresented: $showingCustomAllergySheet) {
-            CustomAllergySheet(
-                text: $customAllergyText,
-                onSave: { text in
-                    preferencesManager.addCustomAllergy(text)
-                    customAllergyText = ""
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: DietaryNavDest.self) { dest in
+                switch dest {
+                case .customAllergy:
+                    CustomAllergySheet(
+                        text: $customAllergyText,
+                        onSave: { text in
+                            preferencesManager.addCustomAllergy(text)
+                            customAllergyText = ""
+                        }
+                    )
+                case .customRestriction:
+                    CustomRestrictionSheet(
+                        text: $customRestrictionText,
+                        onSave: { text in
+                            preferencesManager.addCustomRestriction(text)
+                            customRestrictionText = ""
+                        }
+                    )
                 }
-            )
-        }
-        .sheet(isPresented: $showingCustomRestrictionSheet) {
-            CustomRestrictionSheet(
-                text: $customRestrictionText,
-                onSave: { text in
-                    preferencesManager.addCustomRestriction(text)
-                    customRestrictionText = ""
-                }
-            )
+            }
         }
         .confirmationDialog(
             "preferences.add_custom".localized(),
@@ -55,10 +56,12 @@ struct DietaryPreferencesView: View {
             titleVisibility: .visible
         ) {
             Button("preferences.add_custom_allergy".localized()) {
-                showingCustomAllergySheet = true
+                customAllergyText = ""
+                navPath.append(.customAllergy)
             }
             Button("preferences.add_custom_restriction".localized()) {
-                showingCustomRestrictionSheet = true
+                customRestrictionText = ""
+                navPath.append(.customRestriction)
             }
             Button("preferences.cancel".localized(), role: .cancel) {}
         }
@@ -364,48 +367,46 @@ struct CustomAllergySheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("preferences.add_custom_allergy".localized())
-                        .font(AppFonts.serif(20, weight: .bold))
+        VStack(spacing: 24) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("preferences.add_custom_allergy".localized())
+                    .font(AppFonts.serif(20, weight: .bold))
 
-                    Text("preferences.custom_allergy_description".localized())
-                        .font(AppFonts.sans(13, weight: .regular))
-                        .foregroundColor(.nordicSlate)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                TextField("preferences.allergy_name".localized(), text: $text)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .submitLabel(.done)
-                    .onSubmit {
-                        saveAndDismiss()
-                    }
-
-                Spacer()
-
-                Button {
-                    saveAndDismiss()
-                } label: {
-                    Text("preferences.add".localized())
-                        .font(AppFonts.sans(14, weight: .semibold))
-                        .foregroundColor(.nordicBone)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.nordicSlate.opacity(0.4) : Color.midnightSpruce)
-                        .cornerRadius(25)
-                }
-                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Text("preferences.custom_allergy_description".localized())
+                    .font(AppFonts.sans(13, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
-            .padding()
-            .navigationTitle("preferences.custom_allergy".localized())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("preferences.cancel".localized()) {
-                        dismiss()
-                    }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            TextField("preferences.allergy_name".localized(), text: $text)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .submitLabel(.done)
+                .onSubmit {
+                    saveAndDismiss()
+                }
+
+            Spacer()
+
+            Button {
+                saveAndDismiss()
+            } label: {
+                Text("preferences.add".localized())
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.nordicBone)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.nordicSlate.opacity(0.4) : Color.midnightSpruce)
+                    .cornerRadius(25)
+            }
+            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+        .padding()
+        .navigationTitle("preferences.custom_allergy".localized())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("preferences.cancel".localized()) {
+                    dismiss()
                 }
             }
         }
@@ -426,48 +427,46 @@ struct CustomRestrictionSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("preferences.add_custom_restriction".localized())
-                        .font(AppFonts.serif(20, weight: .bold))
+        VStack(spacing: 24) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("preferences.add_custom_restriction".localized())
+                    .font(AppFonts.serif(20, weight: .bold))
 
-                    Text("preferences.custom_allergy_description".localized())
-                        .font(AppFonts.sans(13, weight: .regular))
-                        .foregroundColor(.nordicSlate)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                TextField("preferences.allergy_name".localized(), text: $text)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .submitLabel(.done)
-                    .onSubmit {
-                        saveAndDismiss()
-                    }
-
-                Spacer()
-
-                Button {
-                    saveAndDismiss()
-                } label: {
-                    Text("preferences.add".localized())
-                        .font(AppFonts.sans(14, weight: .semibold))
-                        .foregroundColor(.nordicBone)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.nordicSlate.opacity(0.4) : Color.midnightSpruce)
-                        .cornerRadius(25)
-                }
-                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Text("preferences.custom_allergy_description".localized())
+                    .font(AppFonts.sans(13, weight: .regular))
+                    .foregroundColor(.nordicSlate)
             }
-            .padding()
-            .navigationTitle("preferences.add_custom_restriction".localized())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("preferences.cancel".localized()) {
-                        dismiss()
-                    }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            TextField("preferences.allergy_name".localized(), text: $text)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .submitLabel(.done)
+                .onSubmit {
+                    saveAndDismiss()
+                }
+
+            Spacer()
+
+            Button {
+                saveAndDismiss()
+            } label: {
+                Text("preferences.add".localized())
+                    .font(AppFonts.sans(14, weight: .semibold))
+                    .foregroundColor(.nordicBone)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.nordicSlate.opacity(0.4) : Color.midnightSpruce)
+                    .cornerRadius(25)
+            }
+            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+        .padding()
+        .navigationTitle("preferences.add_custom_restriction".localized())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("preferences.cancel".localized()) {
+                    dismiss()
                 }
             }
         }
@@ -480,6 +479,11 @@ struct CustomRestrictionSheet: View {
             dismiss()
         }
     }
+}
+
+private enum DietaryNavDest: Hashable {
+    case customAllergy
+    case customRestriction
 }
 
 #Preview {
