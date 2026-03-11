@@ -182,6 +182,11 @@ struct PlateAnalysisResultView: View {
 
     private var contentCard: some View {
         VStack(alignment: .leading, spacing: 26) {
+            Text("AI estimate — tap for detail.")
+                .font(AppFonts.sans(12, weight: .semibold))
+                .foregroundColor(.nordicSlate.opacity(0.78))
+                .accessibilityIdentifier("plateAnalysis.aiEstimateDisclaimer")
+
             HStack(spacing: 10) {
                 Circle()
                     .fill(scoreBandColor)

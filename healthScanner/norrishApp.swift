@@ -99,6 +99,7 @@ struct norrishApp: App {
     @State private var startupConfigError: String?
     private let splashMinimumDuration: TimeInterval = 5.062
     private let screenshotMode = ProcessInfo.processInfo.environment["NORRISH_SCREENSHOT_MODE"] == "1"
+    private let screenshotRoute = ProcessInfo.processInfo.environment["NORRISH_SCREENSHOT_ROUTE"]
 
     init() {
         // Kick off Core ML model prewarm at app launch (guaranteed entry point)
@@ -136,7 +137,9 @@ struct norrishApp: App {
             ZStack {
                 Color.white.ignoresSafeArea()
 
-                if !showSplash {
+                if screenshotMode, screenshotRoute == "plate_analysis_result" {
+                    screenshotPlateAnalysisResultView
+                } else if !showSplash {
                     ContentView()
                         .environmentObject(themeManager)
                         .environmentObject(localizationManager)
@@ -197,5 +200,22 @@ struct norrishApp: App {
             }
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    @ViewBuilder
+    private var screenshotPlateAnalysisResultView: some View {
+        NavigationStack {
+            PlateAnalysisResultView(
+                analysis: PlateAnalysis.mockAnalysis(),
+                image: nil,
+                onStartNewScan: {},
+                onClose: {}
+            )
+        }
+        .environmentObject(themeManager)
+        .environmentObject(localizationManager)
+        .environmentObject(preferencesManager)
+        .preferredColorScheme(themeManager.currentTheme.colorScheme)
+        .localized()
     }
 }

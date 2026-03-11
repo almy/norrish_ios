@@ -132,4 +132,22 @@ final class healthScannerUITests: XCTestCase {
         }
         XCTAssertTrue(app.descendants(matching: .any)["screen.profile"].waitForExistence(timeout: 12))
     }
+
+    func testPlateAnalysisResultShowsCondensedAIDisclaimer() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["NORRISH_SCREENSHOT_MODE"] = "1"
+        app.launchEnvironment["NORRISH_SCREENSHOT_ROUTE"] = "plate_analysis_result"
+        app.launchEnvironment["API_BASE_URL"] = "https://example.com"
+        app.launchEnvironment["API_KEY"] = "ui-test-key"
+        app.launch()
+
+        let disclaimer = app.staticTexts["plateAnalysis.aiEstimateDisclaimer"]
+        XCTAssertTrue(disclaimer.waitForExistence(timeout: 10))
+        XCTAssertEqual(disclaimer.label, "AI estimate — tap for detail.")
+
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Plate Analysis Result Disclaimer"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 }
