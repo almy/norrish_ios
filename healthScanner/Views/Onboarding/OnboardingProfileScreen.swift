@@ -2,6 +2,10 @@ import SwiftUI
 import UIKit
 
 struct OnboardingProfileScreen: View {
+    private let exclusionOptions = ["No Peanuts", "Low Sodium", "No Added Sugar", "Gluten Free", "Dairy Free"]
+    private let dietaryNeedOptions = ["Dairy Free", "Gluten Free", "Plant Based", "Vegetarian", "Pescatarian", "Paleo", "Keto", "Low Carb", "Halal", "Kosher"]
+    private let focusOptions = ["Weight Loss", "Clean Eating", "Muscle Gain"]
+
     @Binding var nameDraft: String
     @Binding var exclusions: Set<String>
     @Binding var needs: Set<String>
@@ -92,7 +96,7 @@ struct OnboardingProfileScreen: View {
                     .textCase(.uppercase)
                     .kerning(1.2)
                 OnboardingChipWrap {
-                    ForEach(["No Peanuts", "Low Sodium", "No Added Sugar", "Gluten Free", "Dairy Free"], id: \.self) { item in
+                    ForEach(exclusionOptions, id: \.self) { item in
                         OnboardingChip(label: item, isSelected: exclusions.contains(item)) {
                             if exclusions.contains(item) {
                                 exclusions.remove(item)
@@ -113,7 +117,7 @@ struct OnboardingProfileScreen: View {
                     .textCase(.uppercase)
                     .kerning(1.2)
                 OnboardingChipWrap {
-                    ForEach(["Dairy Free", "Gluten Free", "Plant Based", "Vegetarian", "Pescatarian", "Paleo", "Keto", "Low Carb", "Halal", "Kosher"], id: \.self) { item in
+                    ForEach(dietaryNeedOptions, id: \.self) { item in
                         OnboardingChip(label: item, isSelected: needs.contains(item)) {
                             if needs.contains(item) {
                                 needs.remove(item)
@@ -134,7 +138,7 @@ struct OnboardingProfileScreen: View {
                     .textCase(.uppercase)
                     .kerning(1.2)
                 OnboardingChipWrap {
-                    ForEach(["Weight Loss", "Clean Eating", "Muscle Gain"], id: \.self) { item in
+                    ForEach(focusOptions, id: \.self) { item in
                         OnboardingChip(label: item, isSelected: focus == item) {
                             focus = item
                         }
@@ -144,7 +148,7 @@ struct OnboardingProfileScreen: View {
             .padding(.horizontal, 26)
             .padding(.top, 20)
 
-            Text("Based on these choices, we'll prioritize plant-based protein alternatives and low-lactose products in your scan results.")
+            Text(personalizationSummary)
                 .font(AppFonts.serif(13, weight: .regular))
                 .italic()
                 .foregroundColor(.mossInsight.opacity(0.8))
@@ -165,6 +169,35 @@ struct OnboardingProfileScreen: View {
                 .kerning(1.6)
                 .padding(.bottom, 24)
         }
+    }
+
+    private var personalizationSummary: String {
+        let selectedNeeds = dietaryNeedOptions.filter { needs.contains($0) }
+        let selectedExclusions = exclusionOptions.filter { exclusions.contains($0) }
+
+        var clauses: [String] = []
+        if !focus.isEmpty {
+            clauses.append("support your \(focus.lowercased()) goals")
+        }
+        if !selectedNeeds.isEmpty {
+            clauses.append("reflect your dietary needs (\(joinedList(selectedNeeds)))")
+        }
+        if !selectedExclusions.isEmpty {
+            clauses.append("flag potential concerns for \(joinedList(selectedExclusions))")
+        }
+
+        if clauses.isEmpty {
+            return "As you choose your dietary needs and goals, we'll tailor recommendations, safety alerts, and meal analysis context to match them."
+        }
+
+        return "Based on your selections, we'll \(joinedList(clauses)) through tailored recommendations, safety alerts, and meal analysis context."
+    }
+
+    private func joinedList(_ items: [String]) -> String {
+        guard let first = items.first else { return "" }
+        if items.count == 1 { return first }
+        if items.count == 2 { return "\(first) and \(items[1])" }
+        return "\(items.dropLast().joined(separator: ", ")), and \(items.last!)"
     }
 }
 

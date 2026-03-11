@@ -33,4 +33,56 @@ final class healthScannerTests: XCTestCase {
         }
     }
 
+    func testIngredientFlagsMatchDairyMilkPowder() {
+        let preferences = DietaryPreferencesManager.shared
+        let originalAllergies = preferences.selectedAllergies
+        let originalRestrictions = preferences.selectedDietaryRestrictions
+        let originalCustomAllergies = preferences.customAllergies
+        let originalCustomRestrictions = preferences.customRestrictions
+
+        preferences.selectedAllergies = [.dairy]
+        preferences.selectedDietaryRestrictions = []
+        preferences.customAllergies = []
+        preferences.customRestrictions = []
+
+        defer {
+            preferences.selectedAllergies = originalAllergies
+            preferences.selectedDietaryRestrictions = originalRestrictions
+            preferences.customAllergies = originalCustomAllergies
+            preferences.customRestrictions = originalCustomRestrictions
+        }
+
+        let flags = preferences.ingredientFlags(for: "Milk Powder")
+
+        XCTAssertEqual(flags.count, 1)
+        XCTAssertTrue(flags.allSatisfy(\.isAllergy))
+        XCTAssertEqual(flags.first?.matchedKeyword, "milk")
+    }
+
+    func testIngredientFlagsMatchCustomRestriction() {
+        let preferences = DietaryPreferencesManager.shared
+        let originalAllergies = preferences.selectedAllergies
+        let originalRestrictions = preferences.selectedDietaryRestrictions
+        let originalCustomAllergies = preferences.customAllergies
+        let originalCustomRestrictions = preferences.customRestrictions
+
+        preferences.selectedAllergies = []
+        preferences.selectedDietaryRestrictions = []
+        preferences.customAllergies = []
+        preferences.customRestrictions = ["chia"]
+
+        defer {
+            preferences.selectedAllergies = originalAllergies
+            preferences.selectedDietaryRestrictions = originalRestrictions
+            preferences.customAllergies = originalCustomAllergies
+            preferences.customRestrictions = originalCustomRestrictions
+        }
+
+        let flags = preferences.ingredientFlags(for: "Black chia seeds")
+
+        XCTAssertEqual(flags.count, 1)
+        XCTAssertFalse(flags.contains(where: \.isAllergy))
+        XCTAssertEqual(flags.first?.matchedKeyword, "chia")
+    }
+
 }

@@ -73,6 +73,8 @@
 "plate.log_meal" = "Logga Måltiden";
 "chef.insight" = "Kockens Insikt";
 "ingredients.detected" = "Upptäckta Ingredienser";
+"ingredients.unavailable.product" = "Ingen ingrediensdata finns tillgänglig från våra källor";
+"ingredients.unavailable.plate" = "Inga sannolika ingredienser kunde bekräftas från denna skanning.";
 "macro.profile" = "Makroprofil";
 "macro.good" = "Bra";
 "macro.moderate" = "Måttlig";

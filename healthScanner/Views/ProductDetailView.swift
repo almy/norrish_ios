@@ -12,6 +12,7 @@ struct ProductDetailView: View {
     let product: Product
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var preferencesManager: DietaryPreferencesManager
     @State private var showNutriInfo = false
     @State private var showLogProductIntentSheet = false
     @State private var selectedMealIntent: MealLogIntent = .ateIt
@@ -182,37 +183,7 @@ struct ProductDetailView: View {
                     .lineSpacing(6)
             }
 
-            if let chips = parsedIngredients, !chips.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "book")
-                            .font(.system(size: 16))
-                            .foregroundColor(.nordicSlate)
-                        Text(NSLocalizedString("ingredients.detected", comment: "Detected ingredients header"))
-                            .font(AppFonts.label)
-                            .foregroundColor(.nordicSlate)
-                            .kerning(2)
-                            .textCase(.uppercase)
-                    }
-
-                    FlowLayout(alignment: .leading, spacing: 8) {
-                        ForEach(chips, id: \.self) { ing in
-                            Text(ing)
-                                .font(AppFonts.sans(10, weight: .semibold))
-                                .textCase(.uppercase)
-                                .kerning(1.5)
-                                .foregroundColor(.nordicSlate)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.cardSurface)
-                                        .overlay(Capsule().stroke(Color.cardBorder, lineWidth: 1))
-                                )
-                        }
-                    }
-                }
-            }
+            ingredientsSection
 
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
@@ -482,6 +453,89 @@ struct ProductDetailView: View {
         return chips
     }
 
+    private var ingredientSectionsTitle: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "book")
+                .font(.system(size: 16))
+                .foregroundColor(.nordicSlate)
+            Text(NSLocalizedString("ingredients.detected", comment: "Detected ingredients header"))
+                .font(AppFonts.label)
+                .foregroundColor(.nordicSlate)
+                .kerning(2)
+                .textCase(.uppercase)
+        }
+    }
+
+    @ViewBuilder
+    private var ingredientsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ingredientSectionsTitle
+
+            if let chips = parsedIngredients, !chips.isEmpty {
+                FlowLayout(alignment: .leading, spacing: 8) {
+                    ForEach(chips, id: \.self) { ingredient in
+                        ingredientChip(for: ingredient)
+                    }
+                }
+            } else {
+                unavailableIngredientsCard
+            }
+        }
+    }
+
+    private func ingredientChip(for ingredient: String) -> some View {
+        let flags = preferencesManager.ingredientFlags(for: ingredient)
+        let isFlagged = !flags.isEmpty
+
+        return HStack(spacing: 6) {
+            if isFlagged {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.productWarningChipForeground)
+            }
+
+            Text(ingredient)
+                .font(AppFonts.sans(10, weight: .semibold))
+                .textCase(.uppercase)
+                .kerning(1.5)
+        }
+        .foregroundColor(isFlagged ? .productWarningChipForeground : .nordicSlate)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(isFlagged ? Color.productWarningChipBackground : Color.cardSurface)
+                .overlay(
+                    Capsule()
+                        .stroke(isFlagged ? Color.productWarningChipBorder : Color.cardBorder, lineWidth: isFlagged ? 1.5 : 1)
+                )
+        )
+        .accessibilityLabel(isFlagged ? "\(ingredient). Warning for \(flags.map(\.label).joined(separator: ", "))." : ingredient)
+    }
+
+    private var unavailableIngredientsCard: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.productWarningChipForeground)
+
+            Text(NSLocalizedString("ingredients.unavailable.product", comment: "Ingredient data unavailable card text"))
+                .font(AppFonts.sans(12, weight: .medium))
+                .foregroundColor(.midnightSpruce)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.productWarningChipBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.productWarningChipBorder, lineWidth: 1)
+                )
+        )
+    }
+
     private var productInsightText: String {
         let sugar = product.nutritionData.sugar
         let carbs = product.nutritionData.carbohydrates
@@ -540,6 +594,12 @@ struct ProductDetailView: View {
             .padding(.vertical, 4)
         }
     }
+}
+
+private extension Color {
+    static let productWarningChipBackground = Color.momentumAmber.opacity(0.12)
+    static let productWarningChipBorder = Color.momentumAmber.opacity(0.75)
+    static let productWarningChipForeground = Color(red: 0.57, green: 0.27, blue: 0.0)
 }
 
 private extension ProductDetailView {

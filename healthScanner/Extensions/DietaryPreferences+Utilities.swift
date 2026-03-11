@@ -7,6 +7,86 @@
 
 import Foundation
 
+struct IngredientPreferenceFlag: Hashable {
+    enum Kind: Hashable {
+        case allergy
+        case dietaryRestriction
+        case customAllergy
+        case customRestriction
+    }
+
+    let kind: Kind
+    let label: String
+    let matchedKeyword: String
+
+    var isAllergy: Bool {
+        switch kind {
+        case .allergy, .customAllergy:
+            return true
+        case .dietaryRestriction, .customRestriction:
+            return false
+        }
+    }
+}
+
+private struct IngredientPreferenceRule {
+    let kind: IngredientPreferenceFlag.Kind
+    let label: String
+    let keywords: [String]
+}
+
+extension DietaryPreferencesManager {
+    func ingredientFlags(for ingredient: String) -> [IngredientPreferenceFlag] {
+        let normalizedIngredient = ingredient.normalizedIngredientSearchText
+        guard !normalizedIngredient.isEmpty else { return [] }
+
+        var flags: [IngredientPreferenceFlag] = []
+        var seen = Set<String>()
+
+        for rule in ingredientPreferenceRules {
+            guard let matchedKeyword = rule.keywords.first(where: { normalizedIngredient.containsIngredientKeyword($0) }) else {
+                continue
+            }
+
+            let dedupeKey = "\(rule.kind)|\(rule.label.lowercased())"
+            guard seen.insert(dedupeKey).inserted else { continue }
+
+            flags.append(
+                IngredientPreferenceFlag(
+                    kind: rule.kind,
+                    label: rule.label,
+                    matchedKeyword: matchedKeyword
+                )
+            )
+        }
+
+        return flags
+    }
+
+    fileprivate var ingredientPreferenceRules: [IngredientPreferenceRule] {
+        let allergyRules = selectedAllergies.map {
+            IngredientPreferenceRule(kind: .allergy, label: $0.displayName, keywords: $0.ingredientKeywords)
+        }
+        let dietaryRules = selectedDietaryRestrictions.map {
+            IngredientPreferenceRule(kind: .dietaryRestriction, label: $0.displayName, keywords: $0.ingredientKeywords)
+        }
+        let customAllergyRules = customAllergies
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map {
+                IngredientPreferenceRule(kind: .customAllergy, label: $0, keywords: [$0])
+            }
+        let customRestrictionRules = customRestrictions
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map {
+                IngredientPreferenceRule(kind: .customRestriction, label: $0, keywords: [$0])
+            }
+
+        return allergyRules + dietaryRules + customAllergyRules + customRestrictionRules
+    }
+}
+
 // MARK: - Product Extension for Allergy Checking
 extension Product {
     /// Checks if this product contains any of the user's allergies
@@ -18,68 +98,43 @@ extension Product {
     /// Checks if product contains specific allergies
     func containsAllergies(_ allergies: Set<Allergy>) -> Bool {
         let searchText = getSearchableText()
-
-        for allergy in allergies {
-            if searchText.contains(allergyKeywords(for: allergy)) {
-                return true
-            }
+        return allergies.contains { allergy in
+            allergy.ingredientKeywords.contains { searchText.containsIngredientKeyword($0) }
         }
-        return false
     }
 
     /// Checks if product contains custom allergies
     func containsCustomAllergies(_ customAllergies: [String]) -> Bool {
         let searchText = getSearchableText()
-
-        for allergy in customAllergies {
-            if searchText.contains(allergy.lowercased()) {
-                return true
-            }
+        return customAllergies.contains { allergy in
+            searchText.containsIngredientKeyword(allergy)
         }
-        return false
     }
 
     /// Gets searchable text from product (ingredients, name, brand, categories)
     private func getSearchableText() -> String {
         var searchableText = ""
 
-        // Add ingredients if available
         if let ingredients = self.ingredients {
-            searchableText += ingredients.lowercased() + " "
+            searchableText += ingredients + " "
         }
 
-        // Add product name and brand as fallback
-        searchableText += self.name.lowercased() + " "
-        searchableText += self.brand.lowercased() + " "
+        searchableText += self.name + " "
+        searchableText += self.brand + " "
 
-        // Add category tags if available
         if let categories = self.categoriesTags {
-            searchableText += categories.joined(separator: " ").lowercased()
+            searchableText += categories.joined(separator: " ")
         }
 
-        return searchableText
+        return searchableText.normalizedIngredientSearchText
     }
 
     /// Gets allergy warnings for this product
     var allergyWarnings: [String] {
         let manager = DietaryPreferencesManager.shared
-        var warnings: [String] = []
-
-        // Check standard allergies
-        for allergy in manager.selectedAllergies {
-            if containsAllergies([allergy]) {
-                warnings.append(allergy.displayName)
-            }
-        }
-
-        // Check custom allergies
-        for customAllergy in manager.customAllergies {
-            if containsCustomAllergies([customAllergy]) {
-                warnings.append(customAllergy)
-            }
-        }
-
-        return warnings
+        return manager.ingredientFlags(for: getSearchableText())
+            .filter(\.isAllergy)
+            .map(\.label)
     }
 
     /// Checks if product meets dietary restrictions
@@ -91,92 +146,78 @@ extension Product {
     /// Checks if product meets specific dietary restrictions
     func meetsDietaryRestrictions(_ restrictions: Set<DietaryRestriction>) -> Bool {
         let searchText = getSearchableText()
-
-        for restriction in restrictions {
-            if !meetsRestriction(restriction, searchText: searchText) {
-                return false
-            }
+        return restrictions.allSatisfy { restriction in
+            !restriction.ingredientKeywords.contains { searchText.containsIngredientKeyword($0) }
         }
-        return true
-    }
-
-    private func meetsRestriction(_ restriction: DietaryRestriction, searchText: String) -> Bool {
-        switch restriction {
-        case .vegan:
-            return !searchText.contains(animalProducts)
-        case .vegetarian:
-            return !searchText.contains(meatProducts)
-        case .pescatarian:
-            return !searchText.contains(meatProducts) // Fish is allowed
-        case .dairyfree:
-            return !searchText.contains(dairyProducts)
-        case .glutenFree:
-            return !searchText.contains(glutenProducts)
-        case .halal:
-            return !searchText.contains(nonHalalProducts)
-        case .kosher:
-            return !searchText.contains(nonKosherProducts)
-        default:
-            return true // For restrictions we can't verify from searchable text
-        }
-    }
-
-    // MARK: - Allergy Keywords
-    private func allergyKeywords(for allergy: Allergy) -> String {
-        switch allergy {
-        case .peanuts:
-            return "peanut"
-        case .shellfish:
-            return "shellfish"
-        case .soy:
-            return "soy"
-        case .dairy:
-            return "milk"
-        case .gluten:
-            return "wheat"
-        case .eggs:
-            return "egg"
-        case .treeNuts:
-            return "nuts"
-        case .fish:
-            return "fish"
-        case .sesame:
-            return "sesame"
-        }
-    }
-
-    // MARK: - Dietary Restriction Keywords
-    private var animalProducts: String {
-        "meat,chicken,beef,pork,lamb,fish,egg,milk,cheese,butter,honey"
-    }
-
-    private var meatProducts: String {
-        "meat,chicken,beef,pork,lamb,bacon,ham,sausage"
-    }
-
-    private var dairyProducts: String {
-        "milk,cheese,butter,cream,yogurt,lactose"
-    }
-
-    private var glutenProducts: String {
-        "wheat,barley,rye,gluten"
-    }
-
-    private var nonHalalProducts: String {
-        "pork,alcohol,wine,beer"
-    }
-
-    private var nonKosherProducts: String {
-        "pork,shellfish,mixing of meat and dairy"
     }
 }
 
-// MARK: - String Extension for Ingredient Checking
-extension String {
-    func contains(_ keywords: String) -> Bool {
-        let keywordList = keywords.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        return keywordList.contains { keyword in
-            range(of: keyword, options: .caseInsensitive) != nil
+private extension Allergy {
+    var ingredientKeywords: [String] {
+        switch self {
+        case .peanuts:
+            return ["peanut", "groundnut", "arachis"]
+        case .shellfish:
+            return ["shellfish", "shrimp", "prawn", "crab", "lobster", "crayfish", "krill", "clam", "mussel", "oyster", "scallop"]
+        case .soy:
+            return ["soy", "soya", "soybean", "edamame", "miso", "tempeh", "tofu", "tamari"]
+        case .dairy:
+            return ["milk", "milk powder", "whey", "casein", "butter", "cheese", "cream", "yogurt", "yoghurt", "lactose", "ghee"]
+        case .gluten:
+            return ["gluten", "wheat", "barley", "rye", "spelt", "malt", "farro", "semolina"]
+        case .eggs:
+            return ["egg", "albumin", "mayonnaise", "meringue"]
+        case .treeNuts:
+            return ["almond", "cashew", "hazelnut", "macadamia", "pecan", "pistachio", "walnut", "brazil nut", "pine nut"]
+        case .fish:
+            return ["fish", "salmon", "tuna", "anchovy", "cod", "haddock", "sardine"]
+        case .sesame:
+            return ["sesame", "tahini", "benne"]
         }
+    }
+}
+
+private extension DietaryRestriction {
+    var ingredientKeywords: [String] {
+        switch self {
+        case .vegan:
+            return ["meat", "chicken", "beef", "pork", "lamb", "fish", "egg", "milk", "cheese", "butter", "cream", "honey", "gelatin", "gelatine", "whey", "casein"]
+        case .vegetarian:
+            return ["meat", "chicken", "beef", "pork", "lamb", "bacon", "ham", "sausage", "gelatin", "gelatine", "anchovy"]
+        case .pescatarian:
+            return ["meat", "chicken", "beef", "pork", "lamb", "bacon", "ham", "sausage", "gelatin", "gelatine"]
+        case .paleo:
+            return ["wheat", "barley", "rye", "oat", "bean", "soy", "lentil", "pea protein", "corn", "sugar", "dextrose"]
+        case .keto:
+            return ["sugar", "glucose", "dextrose", "fructose", "maltodextrin", "starch", "corn syrup", "rice flour"]
+        case .lowSodium:
+            return ["salt", "sodium", "msg", "monosodium glutamate", "soy sauce", "brine"]
+        case .lowCarb:
+            return ["sugar", "glucose", "dextrose", "fructose", "maltodextrin", "starch", "corn syrup", "rice flour", "wheat flour"]
+        case .dairyfree:
+            return Allergy.dairy.ingredientKeywords
+        case .glutenFree:
+            return Allergy.gluten.ingredientKeywords
+        case .halal:
+            return ["pork", "bacon", "ham", "lard", "gelatin", "gelatine", "wine", "beer", "rum", "brandy"]
+        case .kosher:
+            return ["pork", "bacon", "ham", "shellfish", "shrimp", "crab", "lobster"]
+        }
+    }
+}
+
+private extension String {
+    var normalizedIngredientSearchText: String {
+        folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            .lowercased()
+            .replacingOccurrences(of: "[^a-z0-9]+", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func containsIngredientKeyword(_ keyword: String) -> Bool {
+        let normalizedKeyword = keyword.normalizedIngredientSearchText
+        guard !normalizedKeyword.isEmpty else { return false }
+        return normalizedIngredientSearchText.contains(normalizedKeyword)
     }
 }

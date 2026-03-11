@@ -73,6 +73,8 @@
 "plate.log_meal" = "Log This Meal";
 "chef.insight" = "Chef's Insight";
 "ingredients.detected" = "Detected Ingredients";
+"ingredients.unavailable.product" = "No ingredient data available from our sources";
+"ingredients.unavailable.plate" = "No likely ingredient data could be confirmed from this scan.";
 "macro.profile" = "Macro Profile";
 "macro.good" = "Good";
 "macro.moderate" = "Moderate";

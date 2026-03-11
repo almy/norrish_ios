@@ -150,4 +150,21 @@ final class healthScannerUITests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+
+    func testPlateAnalysisConfidenceBreakdownVisualState() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["NORRISH_SCREENSHOT_MODE"] = "1"
+        app.launchEnvironment["NORRISH_SCREENSHOT_ROUTE"] = "plate_analysis_result"
+        app.launchEnvironment["NORRISH_CONFIDENCE_BREAKDOWN_EXPANDED"] = "1"
+        app.launchEnvironment["API_BASE_URL"] = "https://example.com"
+        app.launchEnvironment["API_KEY"] = "ui-test-key"
+        app.launch()
+
+        XCTAssertTrue(app.buttons["plateAnalysis.confidenceBar"].waitForExistence(timeout: 10))
+
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "Plate Analysis Confidence Breakdown"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 }

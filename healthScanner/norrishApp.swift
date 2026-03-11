@@ -100,6 +100,7 @@ struct norrishApp: App {
     private let splashMinimumDuration: TimeInterval = 5.062
     private let screenshotMode = ProcessInfo.processInfo.environment["NORRISH_SCREENSHOT_MODE"] == "1"
     private let screenshotRoute = ProcessInfo.processInfo.environment["NORRISH_SCREENSHOT_ROUTE"]
+    private let screenshotConfidenceBreakdownExpanded = ProcessInfo.processInfo.environment["NORRISH_CONFIDENCE_BREAKDOWN_EXPANDED"] == "1"
 
     init() {
         // Kick off Core ML model prewarm at app launch (guaranteed entry point)
@@ -209,7 +210,8 @@ struct norrishApp: App {
                 analysis: PlateAnalysis.mockAnalysis(),
                 image: nil,
                 onStartNewScan: {},
-                onClose: {}
+                onClose: {},
+                startsWithConfidenceBreakdownExpanded: screenshotConfidenceBreakdownExpanded
             )
         }
         .environmentObject(themeManager)

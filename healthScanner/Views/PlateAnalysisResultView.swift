@@ -20,18 +20,22 @@ struct PlateAnalysisResultView: View {
         image: UIImage?,
         onStartNewScan: @escaping () -> Void,
         onClose: @escaping () -> Void,
-        onLogMeal: ((MealLogIntent) -> Bool)? = nil
+        onLogMeal: ((MealLogIntent) -> Bool)? = nil,
+        startsWithConfidenceBreakdownExpanded: Bool = false
     ) {
         self.analysis = analysis
         self.image = image
         self.onStartNewScan = onStartNewScan
         self.onClose = onClose
         self.onLogMeal = onLogMeal
+        _showConfidenceBreakdown = State(initialValue: startsWithConfidenceBreakdownExpanded)
     }
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var preferencesManager: DietaryPreferencesManager
     @State private var feedbackGiven = false
     @State private var showMealIntentSheet = false
+    @State private var showConfidenceBreakdown = false
     @State private var showDetailsPanel = false
     @State private var selectedMealIntent: MealLogIntent = .ateIt
     @State private var showLogFeedbackAlert = false
@@ -187,27 +191,46 @@ struct PlateAnalysisResultView: View {
                 .foregroundColor(.nordicSlate.opacity(0.78))
                 .accessibilityIdentifier("plateAnalysis.aiEstimateDisclaimer")
 
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(scoreBandColor)
-                    .frame(width: 6, height: 6)
-                Text(confidenceLabel.uppercased())
-                    .font(AppFonts.sans(10, weight: .bold))
-                    .kerning(1.8)
-                    .foregroundColor(.nordicSlate)
-                Capsule()
-                    .fill(Color.cardBorder)
-                    .frame(height: 2)
-                    .overlay(alignment: .leading) {
-                        GeometryReader { proxy in
-                            Capsule()
-                                .fill(scoreBandColor)
-                                .frame(width: proxy.size.width * confidenceClamped, height: 2)
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showConfidenceBreakdown.toggle()
+                }
+            }) {
+                HStack(spacing: 10) {
+                    Circle()
+                        .fill(scoreBandColor)
+                        .frame(width: 6, height: 6)
+                    Text(confidenceLabel.uppercased())
+                        .font(AppFonts.sans(10, weight: .bold))
+                        .kerning(1.8)
+                        .foregroundColor(.nordicSlate)
+                    Capsule()
+                        .fill(Color.cardBorder)
+                        .frame(height: 2)
+                        .overlay(alignment: .leading) {
+                            GeometryReader { proxy in
+                                Capsule()
+                                    .fill(scoreBandColor)
+                                    .frame(width: proxy.size.width * confidenceClamped, height: 2)
+                            }
                         }
-                    }
-                Text("\(Int((confidenceClamped * 100).rounded()))%")
-                    .font(AppFonts.sans(10, weight: .bold))
-                    .foregroundColor(.nordicSlate.opacity(0.6))
+                    Text("\(Int((confidenceClamped * 100).rounded()))%")
+                        .font(AppFonts.sans(10, weight: .bold))
+                        .foregroundColor(.nordicSlate.opacity(0.6))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.nordicSlate.opacity(0.45))
+                        .rotationEffect(.degrees(showConfidenceBreakdown ? 90 : 0))
+                }
+                .contentShape(Rectangle())
+                .padding(.vertical, 4)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("plateAnalysis.confidenceBar")
+
+            if showConfidenceBreakdown {
+                confidenceBreakdownPanel
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
 
             if !scoreRationaleLines.isEmpty {
@@ -360,22 +383,19 @@ struct PlateAnalysisResultView: View {
 
                 if showDetailsPanel {
                     VStack(alignment: .leading, spacing: 14) {
-                        if !analysis.ingredients.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Likely ingredients")
-                                    .font(AppFonts.sans(9, weight: .bold))
-                                    .kerning(1.4)
-                                    .textCase(.uppercase)
-                                    .foregroundColor(.nordicSlate.opacity(0.6))
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Likely ingredients")
+                                .font(AppFonts.sans(9, weight: .bold))
+                                .kerning(1.4)
+                                .textCase(.uppercase)
+                                .foregroundColor(.nordicSlate.opacity(0.6))
+
+                            if analysis.ingredients.isEmpty {
+                                plateIngredientsUnavailableCard
+                            } else {
                                 ChipFlow(alignment: .leading, spacing: 8) {
                                     ForEach(analysis.ingredients.indices, id: \.self) { idx in
-                                        Text(analysis.ingredients[idx].name)
-                                            .font(AppFonts.sans(11, weight: .medium))
-                                            .foregroundColor(.nordicSlate)
-                                            .padding(.vertical, 6)
-                                            .padding(.horizontal, 10)
-                                            .background(Color.cardSurface)
-                                            .clipShape(Capsule())
+                                        plateIngredientChip(for: analysis.ingredients[idx].name)
                                     }
                                 }
                             }
@@ -487,6 +507,217 @@ struct PlateAnalysisResultView: View {
 }
 
 private extension PlateAnalysisResultView {
+    var confidenceBreakdownPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Confidence breakdown")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate)
+                    .kerning(2)
+                    .textCase(.uppercase)
+                    .accessibilityIdentifier("plateAnalysis.confidenceBreakdownTitle")
+                Text("\(Int((confidenceClamped * 100).rounded()))% overall confidence")
+                    .font(AppFonts.serif(24, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+            }
+
+            confidenceBreakdownRow(
+                title: "Food identification",
+                value: confidenceIdentificationClamped,
+                summary: foodIdentificationSummary
+            )
+            confidenceBreakdownRow(
+                title: "Portion size estimation",
+                value: confidenceQuantityClamped,
+                summary: portionConfidenceSummary
+            )
+            confidenceBreakdownRow(
+                title: "Calorie estimate reliability",
+                value: calorieReliabilityClamped,
+                summary: calorieReliabilitySummary
+            )
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Plain-language summary")
+                    .font(AppFonts.sans(10, weight: .bold))
+                    .foregroundColor(.nordicSlate.opacity(0.72))
+                    .kerning(1.6)
+                    .textCase(.uppercase)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("We're \(confidenceLeadAdverb(for: confidenceIdentificationClamped)) about what this food is.")
+                    Text("We're \(confidenceLeadAdverb(for: confidenceQuantityClamped)) about the portion size, so calorie accuracy follows that estimate.")
+                }
+                .font(AppFonts.sans(14, weight: .medium))
+                .foregroundColor(.midnightSpruce)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("plateAnalysis.confidenceSummary")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background(Color.cardSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(Color.white.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
+        .accessibilityIdentifier("plateAnalysis.confidenceBreakdownSheet")
+    }
+
+    @ViewBuilder
+    func confidenceBreakdownRow(title: String, value: Double, summary: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(AppFonts.sans(13, weight: .semibold))
+                    .foregroundColor(.midnightSpruce)
+                Spacer()
+                Text("\(Int((value * 100).rounded()))%")
+                    .font(AppFonts.sans(13, weight: .bold))
+                    .foregroundColor(confidenceColor(for: value))
+            }
+
+            Text(summary)
+                .font(AppFonts.sans(12, weight: .regular))
+                .foregroundColor(.nordicSlate)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func plateIngredientChip(for ingredient: String) -> some View {
+        let flags = preferencesManager.ingredientFlags(for: ingredient)
+        let isFlagged = !flags.isEmpty
+
+        return HStack(spacing: 6) {
+            if isFlagged {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.plateWarningChipForeground)
+            }
+
+            Text(ingredient)
+                .font(AppFonts.sans(11, weight: .medium))
+        }
+        .foregroundColor(isFlagged ? .plateWarningChipForeground : .nordicSlate)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 10)
+        .background(isFlagged ? Color.plateWarningChipBackground : Color.cardSurface)
+        .overlay(
+            Capsule()
+                .stroke(isFlagged ? Color.plateWarningChipBorder : Color.cardBorder, lineWidth: isFlagged ? 1.5 : 1)
+        )
+        .clipShape(Capsule())
+        .accessibilityLabel(isFlagged ? "\(ingredient). Warning for \(flags.map(\.label).joined(separator: ", "))." : ingredient)
+    }
+
+    private var plateIngredientsUnavailableCard: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.nordicSlate.opacity(0.7))
+            Text(NSLocalizedString("ingredients.unavailable.plate", comment: "Plate ingredient data unavailable card text"))
+                .font(AppFonts.sans(11, weight: .medium))
+                .foregroundColor(.nordicSlate)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.cardSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
+    }
+}
+
+private extension PlateAnalysisResultView {
+    var confidenceIdentificationClamped: Double {
+        max(0.0, min(1.0, analysis.confidenceIdentification ?? confidenceClamped))
+    }
+
+    var confidenceQuantityClamped: Double {
+        if let quantity = analysis.confidenceQuantity {
+            return max(0.0, min(1.0, quantity))
+        }
+        if let portionConfidence = analysis.portionEstimate?.confidence {
+            return max(0.0, min(1.0, portionConfidence))
+        }
+        return max(0.0, min(1.0, confidenceClamped * 0.82))
+    }
+
+    var calorieReliabilityClamped: Double {
+        let weighted = (confidenceIdentificationClamped * 0.35) + (confidenceQuantityClamped * 0.65)
+        return max(0.0, min(1.0, min(confidenceClamped, weighted)))
+    }
+
+    var foodIdentificationSummary: String {
+        switch confidenceIdentificationClamped {
+        case 0.75...:
+            return "We have a strong read on the food type and main ingredients."
+        case 0.5...:
+            return "We have a decent read on the food type, but some ingredients may be inferred."
+        default:
+            return "Food recognition is tentative, so ingredient assumptions may shift."
+        }
+    }
+
+    var portionConfidenceSummary: String {
+        switch confidenceQuantityClamped {
+        case 0.75...:
+            return "Plate size and serving amount look consistent enough for a solid portion estimate."
+        case 0.5...:
+            return "Portion size is directionally useful, but serving amount may be off."
+        default:
+            return "Portion size is the weakest signal here, so serving amount may vary noticeably."
+        }
+    }
+
+    var calorieReliabilitySummary: String {
+        switch calorieReliabilityClamped {
+        case 0.75...:
+            return "Calorie estimate should be a reliable planning number."
+        case 0.5...:
+            return "Calorie estimate is useful as a range, not an exact total."
+        default:
+            return "Calorie estimate should be treated as a rough directional signal."
+        }
+    }
+
+    func confidenceLeadAdverb(for value: Double) -> String {
+        switch value {
+        case 0.75...:
+            return "confident"
+        case 0.5...:
+            return "fairly confident"
+        default:
+            return "less certain"
+        }
+    }
+
+    func confidenceColor(for value: Double) -> Color {
+        switch value {
+        case 0.75...:
+            return scoreGood
+        case 0.5...:
+            return scoreLow
+        default:
+            return scorePoor
+        }
+    }
+
     var logMealIntentSheet: some View {
         VStack(spacing: 0) {
             RoundedRectangle(cornerRadius: 999)
@@ -1258,6 +1489,12 @@ struct ChipFlow<Content: View>: View {
             content()
         }
     }
+}
+
+private extension Color {
+    static let plateWarningChipBackground = Color.momentumAmber.opacity(0.12)
+    static let plateWarningChipBorder = Color.momentumAmber.opacity(0.75)
+    static let plateWarningChipForeground = Color(red: 0.57, green: 0.27, blue: 0.0)
 }
 
 private struct FlowLayoutContainer: Layout {

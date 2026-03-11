@@ -47,7 +47,7 @@ struct FirstTimeOnboardingView: View {
                         currentStep: step.index,
                         totalSteps: OnboardingStep.allCases.count,
                         onNext: next,
-                        onSkip: skipToProfile
+                        onSkip: skipToPlateScan
                     )
                 case .plateScan:
                     OnboardingPlateScanScreen(
@@ -55,7 +55,7 @@ struct FirstTimeOnboardingView: View {
                         totalSteps: OnboardingStep.allCases.count,
                         onBack: previous,
                         onNext: next,
-                        onSkip: skipToProfile
+                        onSkip: skipToProductScan
                     )
                 case .productScan:
                     OnboardingProductScanScreen(
@@ -159,6 +159,14 @@ struct FirstTimeOnboardingView: View {
 
     private func skipToProfile() {
         step = .profile
+    }
+
+    private func skipToPlateScan() {
+        step = .plateScan
+    }
+
+    private func skipToProductScan() {
+        step = .productScan
     }
 
     private func applyProfileStep() {
