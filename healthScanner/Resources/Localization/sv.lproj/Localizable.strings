@@ -6,9 +6,15 @@
 "tab.profile" = "Profil";
 "tab.settings" = "Inställningar";
 "plate.upload_photo" = "Ladda Upp Foto";
+"quick_add.photo_meal" = "Fotografera Måltid";
 "recent.activity" = "Senaste Aktivitet";
 "recent.activity.archive" = "Arkiv";
 "home.section.suggestions" = "Snabbåtgärder";
+"debug.barcode.title" = "Produktexempel i simulatorn";
+"debug.barcode.subtitle" = "Injicera ett förinläst streckkodsresultat utan att använda kameran.";
+"debug.barcode.cta" = "Använd exempel";
+"debug.barcode.close" = "Stäng";
+"debug.barcode.footer" = "Endast för felsökning i simulatorn. Dessa exempelstreckkoder finns bara för utveckling och test.";
 
 /* Filter and Sort */
 "filter.all" = "Alla";

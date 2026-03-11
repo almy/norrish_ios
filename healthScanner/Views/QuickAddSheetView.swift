@@ -33,7 +33,7 @@ struct QuickAddSheetView: View {
             }) {
                 HStack {
                     Image(systemName: "fork.knife")
-                    Text("tab.plate".localized())
+                    Text(NSLocalizedString("quick_add.photo_meal", comment: "Quick action for photographing a meal"))
                 }
                 .frame(maxWidth: .infinity)
                 .padding()

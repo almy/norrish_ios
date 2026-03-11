@@ -6,9 +6,15 @@
 "tab.profile" = "Profile";
 "tab.settings" = "Settings";
 "plate.upload_photo" = "Upload Photo";
+"quick_add.photo_meal" = "Photo Meal";
 "recent.activity" = "Recent Activity";
 "recent.activity.archive" = "Archive";
 "home.section.suggestions" = "Quick Actions";
+"debug.barcode.title" = "Simulator Product Samples";
+"debug.barcode.subtitle" = "Inject a preloaded barcode result without using a camera.";
+"debug.barcode.cta" = "Use Sample";
+"debug.barcode.close" = "Close";
+"debug.barcode.footer" = "Debug-only simulator tooling. These sample barcodes exist only for development and testing.";
 
 /* Filter and Sort */
 "filter.all" = "All";

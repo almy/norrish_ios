@@ -41,6 +41,20 @@ final class BarcodeScannerViewModel: ObservableObject {
             return existing
         }
 
+        #if DEBUG
+        if let debugProduct = makeSimulatorDebugProduct(for: barcode) {
+            modelContext.insert(debugProduct)
+            try modelContext.save()
+            NotificationCenter.default.post(name: .barcodeScanCompleted, object: nil, userInfo: [
+                "upc": debugProduct.barcode,
+                "title": debugProduct.name,
+                "store": Optional<String>.none as Any
+            ])
+            await AggregatorService.shared.upsertDaily(for: debugProduct.scannedDate, modelContext: modelContext)
+            return debugProduct
+        }
+        #endif
+
         do {
             let product = try await productService.fetchProductInfo(for: barcode)
             // Guardrail: do not persist backend placeholders for missing products.
@@ -93,4 +107,24 @@ final class BarcodeScannerViewModel: ObservableObject {
         if looksLikeNotFoundBrand && hasNoNutritionSignal { return false }
         return true
     }
+
+    #if DEBUG
+    private func makeSimulatorDebugProduct(for barcode: String) -> Product? {
+        #if targetEnvironment(simulator)
+        guard let fixture = DebugBarcodeFixtures.fixture(for: barcode) else { return nil }
+        return Product(
+            barcode: fixture.barcode,
+            name: fixture.name,
+            brand: fixture.brand,
+            nutritionData: fixture.nutritionData,
+            imageURL: nil,
+            localImagePath: nil,
+            categoriesTags: fixture.categoryTags,
+            ingredients: fixture.ingredients
+        )
+        #else
+        return nil
+        #endif
+    }
+    #endif
 }

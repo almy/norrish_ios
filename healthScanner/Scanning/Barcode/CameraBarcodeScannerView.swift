@@ -68,21 +68,120 @@ struct BarcodeCameraOverlayView: View {
 
             VStack {
                 Spacer(minLength: 24)
-                CameraBarcodeScannerView(
-                    scannedCode: $scannedCode,
-                    isScanning: $isScanning,
-                    isPresented: $isPresented
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.cardBorder, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 8)
-                .padding(.horizontal, 20)
-                .frame(height: UIScreen.main.bounds.height * 0.6)
+                scannerSurface
                 Spacer(minLength: 32)
             }
         }
     }
+
+    @ViewBuilder
+    private var scannerSurface: some View {
+        #if DEBUG && targetEnvironment(simulator)
+        simulatorDebugSurface
+        #else
+        CameraBarcodeScannerView(
+            scannedCode: $scannedCode,
+            isScanning: $isScanning,
+            isPresented: $isPresented
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 8)
+        .padding(.horizontal, 20)
+        .frame(height: UIScreen.main.bounds.height * 0.6)
+        #endif
+    }
+
+    #if DEBUG && targetEnvironment(simulator)
+    private var simulatorDebugSurface: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "barcode.viewfinder")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(NSLocalizedString("debug.barcode.title", comment: "Simulator barcode debug panel title"))
+                            .font(AppFonts.serif(22, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                        Text(NSLocalizedString("debug.barcode.subtitle", comment: "Simulator barcode debug panel subtitle"))
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer()
+                Button(action: {
+                    isScanning = false
+                    isPresented = false
+                }) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.midnightSpruce)
+                        .frame(width: 32, height: 32)
+                        .background(Color.cardSurface)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(NSLocalizedString("debug.barcode.close", comment: "Close simulator barcode debug panel"))
+            }
+
+            VStack(spacing: 10) {
+                ForEach(DebugBarcodeFixtures.samples) { sample in
+                    Button(action: {
+                        injectDebugBarcode(sample.barcode)
+                    }) {
+                        HStack(alignment: .center, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(sample.name)
+                                    .font(AppFonts.sans(14, weight: .semibold))
+                                    .foregroundColor(.midnightSpruce)
+                                Text("\(sample.brand) · \(sample.barcode)")
+                                    .font(AppFonts.sans(12, weight: .regular))
+                                    .foregroundColor(.nordicSlate)
+                            }
+                            Spacer()
+                            Text(NSLocalizedString("debug.barcode.cta", comment: "Simulator barcode debug action"))
+                                .font(AppFonts.sans(12, weight: .semibold))
+                                .foregroundColor(.midnightSpruce)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.cardSurface)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.cardBorder, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Text(NSLocalizedString("debug.barcode.footer", comment: "Simulator barcode debug panel footer"))
+                .font(AppFonts.sans(11, weight: .regular))
+                .foregroundColor(.nordicSlate.opacity(0.82))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.nordicBone)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 8)
+        .padding(.horizontal, 20)
+    }
+
+    private func injectDebugBarcode(_ barcode: String) {
+        scannedCode = barcode
+        isScanning = false
+        isPresented = false
+    }
+    #endif
 }

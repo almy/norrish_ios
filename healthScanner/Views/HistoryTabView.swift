@@ -61,14 +61,14 @@ struct HistoryTabView: View {
     private var historyHeader: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 6) {
-                Text(NSLocalizedString("history.story_label", comment: "History header label"))
+                Text(NSLocalizedString("tab.history", comment: "History tab title"))
+                    .font(AppFonts.serif(30, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
+                Text(NSLocalizedString("history.journal_title", comment: "History journal subtitle"))
                     .font(AppFonts.label)
                     .kerning(2.5)
                     .foregroundColor(.nordicSlate)
                     .textCase(.uppercase)
-                Text(NSLocalizedString("history.journal_title", comment: "History journal title"))
-                    .font(AppFonts.serif(30, weight: .bold))
-                    .foregroundColor(.midnightSpruce)
             }
             Spacer()
             Image(systemName: "book")

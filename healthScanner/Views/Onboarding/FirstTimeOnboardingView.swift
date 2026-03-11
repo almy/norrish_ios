@@ -8,7 +8,6 @@ private enum OnboardingStep: Int, CaseIterable {
     case productScan = 4
     case profile = 5
     case ready = 6
-
     var index: Int { rawValue }
 }
 

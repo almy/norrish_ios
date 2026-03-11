@@ -172,11 +172,9 @@ final class PlateAnalysisViewModel: ObservableObject {
         if let currentHistory {
             targetHistory = currentHistory
         } else {
-            var descriptor = FetchDescriptor<PlateAnalysisHistory>(
-                sortBy: [SortDescriptor(\.analyzedDate, order: .reverse)]
-            )
-            descriptor.fetchLimit = 1
-            targetHistory = try? modelContext.fetch(descriptor).first
+            let descriptor = FetchDescriptor<PlateAnalysisHistory>()
+            let histories = try? modelContext.fetch(descriptor)
+            targetHistory = histories?.max(by: { $0.analyzedDate < $1.analyzedDate })
         }
 
         guard let history = targetHistory else { return false }
