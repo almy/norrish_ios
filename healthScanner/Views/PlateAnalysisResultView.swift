@@ -262,6 +262,8 @@ struct PlateAnalysisResultView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
 
+            ingredientPreviewSection
+
             if !scoreRationaleLines.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     sectionHeader(icon: "chart.line.uptrend.xyaxis", title: "Why this score")
@@ -506,6 +508,38 @@ struct PlateAnalysisResultView: View {
         }
     }
 
+    private var ingredientPreviewSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                sectionHeader(icon: "leaf", title: "Likely ingredients")
+                Spacer()
+                if showIngredientShowAllAction {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showDetailsPanel = true
+                        }
+                    }) {
+                        Text(showDetailsPanel ? "Expanded below" : "Show all ingredients")
+                            .font(AppFonts.sans(11, weight: .bold))
+                            .foregroundColor(primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            if analysis.ingredients.isEmpty {
+                plateIngredientsUnavailableCard
+            } else {
+                ChipFlow(alignment: .leading, spacing: 8) {
+                    ForEach(previewIngredientNames, id: \.self) { ingredient in
+                        plateIngredientChip(for: ingredient)
+                    }
+                }
+            }
+        }
+        .accessibilityIdentifier("plateAnalysis.ingredientPreview")
+    }
+
     private var bottomCTA: some View {
         VStack {
             Spacer()
@@ -673,6 +707,20 @@ private extension PlateAnalysisResultView {
 }
 
 private extension PlateAnalysisResultView {
+    var previewIngredientNames: [String] {
+        let flagged = analysis.ingredients
+            .map(\.name)
+            .filter { !preferencesManager.ingredientFlags(for: $0).isEmpty }
+        let unflagged = analysis.ingredients
+            .map(\.name)
+            .filter { preferencesManager.ingredientFlags(for: $0).isEmpty }
+        return Array((flagged + unflagged).prefix(6))
+    }
+
+    var showIngredientShowAllAction: Bool {
+        !analysis.ingredients.isEmpty && (!showDetailsPanel || analysis.ingredients.count > previewIngredientNames.count)
+    }
+
     var confidenceIdentificationClamped: Double {
         max(0.0, min(1.0, analysis.confidenceIdentification ?? confidenceClamped))
     }
