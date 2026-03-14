@@ -44,5 +44,6 @@ backend/.venv/
 # claude plugins
 norrish-plugin/
 norrish-agents/
+.xcodebuildmcp/
 .claude/
 .claude/settings.local.json 
