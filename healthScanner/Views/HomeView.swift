@@ -41,140 +41,109 @@ struct HomeView: View {
         ZStack(alignment: .bottomTrailing) {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
-                        // Header
-                        HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Welcome back")
-                                    .font(AppFonts.display)
-                                    .foregroundColor(.midnightSpruce)
-                                Text("Keep using the app to see more personalized insights")
-                                    .font(AppFonts.sans(13, weight: .regular))
-                                    .foregroundColor(.nordicSlate)
-                                    .tracking(0.2)
-                            }
-                            Spacer()
-                            // Persisted profile avatar
-                            ZStack {
-                                Circle().stroke(Color.black.opacity(0.08), lineWidth: 1)
-                                Group {
-                                    if let avatar = profileIdentity.avatarImage() {
-                                        Image(uiImage: avatar)
-                                            .resizable()
-                                            .scaledToFill()
-                                    } else if let bundledAvatar = UIImage(named: "profile_avatar") {
-                                        Image(uiImage: bundledAvatar)
-                                            .resizable()
-                                            .scaledToFill()
-                                    } else {
-                                        Image(systemName: "person.crop.circle.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .foregroundColor(.nordicSlate.opacity(0.7))
-                                            .padding(6)
-                                    }
-                                }
-                                .clipShape(Circle())
-                            }
-                            .frame(width: 48, height: 48)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
+                        header
 
-                        // Insights carousel
-                        VStack(alignment: .leading, spacing: 10) {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(Array(insights.enumerated()), id: \.offset) { _, insight in
-                                        EditorialInsightCard(title: insight.title, subtitle: insight.message, label: labelForCategory(insight.category))
-                                            .frame(width: 280)
-                                    }
-                                }
-                                .padding(.horizontal, 16)
-                            }
-                        }
-
-                        // Weekly Trends (data-driven)
-                        VStack(spacing: 10) {
-                            HStack {
-                                Text("Weekly Trends")
-                                    .font(AppFonts.label)
-                                    .textCase(.uppercase)
-                                    .tracking(2)
-                                    .foregroundColor(.nordicSlate)
-                                Spacer()
-                                Button("View All") { }
-                                    .font(AppFonts.sans(10, weight: .semibold))
-                                    .foregroundColor(.nordicSlate)
-                            }
-                            .padding(.horizontal, 16)
-
-                            if trendInsights.isEmpty {
-                                // Hide section if we have no meaningful trend insights
-                                EmptyView()
-                            } else {
+                        if isFirstUseHome {
+                            FirstUseHomeStateView()
+                                .padding(.horizontal, 20)
+                                .padding(.top, 12)
+                            Spacer(minLength: 32)
+                        } else {
+                            // Insights carousel
+                            VStack(alignment: .leading, spacing: 10) {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
-                                        ForEach(trendInsights, id: \.title) { ti in
-                                            TrendCard(icon: ti.icon,
-                                                      iconColor: ti.color,
-                                                      title: ti.title,
-                                                      value: ti.value,
-                                                      unit: ti.unit,
-                                                      note: ti.note)
-                                            .frame(width: 220)
+                                        ForEach(Array(insights.enumerated()), id: \.offset) { _, insight in
+                                            EditorialInsightCard(title: insight.title, subtitle: insight.message, label: labelForCategory(insight.category))
+                                                .frame(width: 280)
                                         }
                                     }
                                     .padding(.horizontal, 16)
                                 }
                             }
-                        }
 
-                        // Recent Activity
-                        VStack(spacing: 10) {
-                            HStack {
-                                Text(NSLocalizedString("recent.activity", comment: "Recent activity title"))
-                                    .font(AppFonts.label)
-                                    .textCase(.uppercase)
-                                    .tracking(2)
-                                    .foregroundColor(.nordicSlate)
-                                Spacer()
-                                Button("View all") {
-                                    onViewAllHistory()
+                            // Weekly Trends (data-driven)
+                            VStack(spacing: 10) {
+                                HStack {
+                                    Text("Weekly Trends")
+                                        .font(AppFonts.label)
+                                        .textCase(.uppercase)
+                                        .tracking(2)
+                                        .foregroundColor(.nordicSlate)
+                                    Spacer()
+                                    Button("View All") { }
+                                        .font(AppFonts.sans(10, weight: .semibold))
+                                        .foregroundColor(.nordicSlate)
                                 }
-                                    .font(AppFonts.sans(10, weight: .semibold))
-                                    .foregroundColor(.nordicSlate)
-                            }
-                            .padding(.horizontal, 16)
+                                .padding(.horizontal, 16)
 
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 10) {
-                                    ForEach(recentActivity.prefix(5)) { item in
-                                        Button {
-                                            switch item.kind {
-                                            case .plate(let plate):
-                                                onSelectPlate(plate)
-                                            case .product(let product):
-                                                onSelectProduct(product)
+                                if trendInsights.isEmpty {
+                                    EmptyView()
+                                } else {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 12) {
+                                            ForEach(trendInsights, id: \.title) { ti in
+                                                TrendCard(icon: ti.icon,
+                                                          iconColor: ti.color,
+                                                          title: ti.title,
+                                                          value: ti.value,
+                                                          unit: ti.unit,
+                                                          note: ti.note)
+                                                .frame(width: 220)
                                             }
-                                        } label: {
-                                            RecentActivityTile(item: item)
                                         }
-                                        .buttonStyle(.plain)
-                                        .contextMenu {
-                                            Button(role: .destructive) {
-                                                deleteRecentItem(item)
+                                        .padding(.horizontal, 16)
+                                    }
+                                }
+                            }
+
+                            // Recent Activity
+                            VStack(spacing: 10) {
+                                HStack {
+                                    Text(NSLocalizedString("recent.activity", comment: "Recent activity title"))
+                                        .font(AppFonts.label)
+                                        .textCase(.uppercase)
+                                        .tracking(2)
+                                        .foregroundColor(.nordicSlate)
+                                    Spacer()
+                                    Button("View all") {
+                                        onViewAllHistory()
+                                    }
+                                        .font(AppFonts.sans(10, weight: .semibold))
+                                        .foregroundColor(.nordicSlate)
+                                }
+                                .padding(.horizontal, 16)
+
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(recentActivity.prefix(5)) { item in
+                                            Button {
+                                                switch item.kind {
+                                                case .plate(let plate):
+                                                    onSelectPlate(plate)
+                                                case .product(let product):
+                                                    onSelectProduct(product)
+                                                }
                                             } label: {
-                                                Label("Delete", systemImage: "trash")
+                                                RecentActivityTile(item: item)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .contextMenu {
+                                                Button(role: .destructive) {
+                                                    deleteRecentItem(item)
+                                                } label: {
+                                                    Label("Delete", systemImage: "trash")
+                                                }
                                             }
                                         }
                                     }
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 4)
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 4)
                             }
-                        }
 
-                        Spacer(minLength: 40)
+                            Spacer(minLength: 40)
+                        }
                     }
                     .padding(.top, 8)
                 }
@@ -185,6 +154,67 @@ struct HomeView: View {
 }
 
 extension HomeView {
+    private var isFirstUseHome: Bool {
+        recentActivity.isEmpty
+    }
+
+    private var header: some View {
+        Group {
+            if isFirstUseHome {
+                FirstUseTabHeaderView(
+                    title: "You're all set",
+                    subtitle: "Personal guidance starts here",
+                    accent: .mossInsight,
+                    icon: "checkmark.circle"
+                )
+            } else {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Welcome back")
+                            .font(AppFonts.display)
+                            .foregroundColor(.midnightSpruce)
+                        Text(headerSubtitle)
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
+                            .tracking(0.2)
+                    }
+                    Spacer()
+                    ZStack {
+                        Circle().stroke(Color.black.opacity(0.08), lineWidth: 1)
+                        Group {
+                            if let avatar = profileIdentity.avatarImage() {
+                                Image(uiImage: avatar)
+                                    .resizable()
+                                    .scaledToFill()
+                            } else if let bundledAvatar = UIImage(named: "profile_avatar") {
+                                Image(uiImage: bundledAvatar)
+                                    .resizable()
+                                    .scaledToFill()
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .foregroundColor(.nordicSlate.opacity(0.7))
+                                    .padding(6)
+                            }
+                        }
+                        .clipShape(Circle())
+                    }
+                    .frame(width: 48, height: 48)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+            }
+        }
+    }
+
+    private var headerSubtitle: String {
+        if isFirstUseHome {
+            return "Start with your first scan and Noorish will begin shaping guidance around what you eat."
+        }
+        return "Keep using the app to see more personalized insights"
+    }
+
     private var recentActivity: [RecentActivityItem] {
         let plateItems = plates.map { plate in
             RecentActivityItem(
@@ -266,6 +296,141 @@ extension HomeView {
             }
             modelContext.delete(product)
         }
+    }
+}
+
+private struct FirstUseHomeStateView: View {
+    var body: some View {
+        VStack(spacing: 28) {
+            VStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mossInsight.opacity(0.14))
+                        .frame(width: 104, height: 104)
+                    Circle()
+                        .stroke(Color.mossInsight.opacity(0.28), lineWidth: 1)
+                        .frame(width: 104, height: 104)
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundColor(.mossInsight)
+                }
+
+                Text("You're Ready")
+                    .font(AppFonts.serif(30, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
+                    .multilineTextAlignment(.center)
+
+                Text("Your first insight is one tap away. Start by scanning a product or analyzing a meal.")
+                    .font(AppFonts.sans(13, weight: .regular))
+                    .foregroundColor(.nordicSlate)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+                    .padding(.horizontal, 18)
+            }
+            .padding(.top, 4)
+
+            VStack(spacing: 0) {
+                OnboardingFeatureRowView(
+                    icon: "barcode.viewfinder",
+                    title: "Product Scanning",
+                    subtitle: "Swedish database with smart fallback",
+                    tint: .purple.opacity(0.18)
+                )
+
+                Divider()
+                    .background(Color.softDivider)
+
+                OnboardingFeatureRowView(
+                    icon: "camera",
+                    title: "Meal Analysis",
+                    subtitle: "AI-powered nutrition breakdown",
+                    tint: .orange.opacity(0.18)
+                )
+
+                Divider()
+                    .background(Color.softDivider)
+
+                OnboardingFeatureRowView(
+                    icon: "chart.line.uptrend.xyaxis",
+                    title: "Adaptive Insights",
+                    subtitle: "Guidance that grows with your choices",
+                    tint: .green.opacity(0.18)
+                )
+            }
+            .padding(16)
+            .background(Color.cardSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color.cardBorder, lineWidth: 1)
+            )
+
+            FirstUseGuidanceChip(
+                text: "Tap + to choose how to start",
+                accent: .momentumAmber
+            )
+
+            Text("You can start with a barcode, a meal photo, or a saved plate image from your library.")
+                .font(AppFonts.sans(11, weight: .regular))
+                .foregroundColor(.nordicSlate.opacity(0.9))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 18)
+        }
+    }
+}
+
+struct FirstUseTabHeaderView: View {
+    let title: String
+    let subtitle: String
+    let accent: Color
+    let icon: String
+
+    var body: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(AppFonts.serif(30, weight: .bold))
+                    .foregroundColor(.midnightSpruce)
+                Text(subtitle)
+                    .font(AppFonts.label)
+                    .kerning(2.5)
+                    .foregroundColor(.nordicSlate)
+                    .textCase(.uppercase)
+            }
+
+            Spacer()
+
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(accent)
+                .padding(8)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+    }
+}
+
+struct FirstUseGuidanceChip: View {
+    let text: String
+    let accent: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(accent)
+            Text(text)
+                .font(AppFonts.sans(12, weight: .semibold))
+                .foregroundColor(.midnightSpruce)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.7))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
     }
 }
 

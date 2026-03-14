@@ -9,75 +9,82 @@ struct HistoryTabView: View {
     let onDeleteItem: (HistoryItemType) -> Void
 
     var body: some View {
-        List {
-            Section {
-                historyHeader
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-
-                if !historyTrendInsights.isEmpty {
-                    digestSection
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
+        Group {
+            if isFirstUseHistory {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 24) {
+                        historyHeader
+                        FirstUseHistoryStateView()
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                        Spacer(minLength: 40)
+                    }
+                    .padding(.top, 8)
                 }
-            }
+                .background(Color.nordicBone.ignoresSafeArea())
+            } else {
+                List {
+                    Section {
+                        historyHeader
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
 
-            ForEach(historySections) { section in
-                Section(header: sectionHeader(for: section.date)) {
-                    ForEach(section.items) { item in
-                        HistoryTimelineCard(item: item) {
-                            onSelectItem(item)
+                        if !historyTrendInsights.isEmpty {
+                            digestSection
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
                         }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                onDeleteItem(item)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                    }
+
+                    ForEach(historySections) { section in
+                        Section(header: sectionHeader(for: section.date)) {
+                            ForEach(section.items) { item in
+                                HistoryTimelineCard(item: item) {
+                                    onSelectItem(item)
+                                }
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        onDeleteItem(item)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        onDeleteItem(item)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                                .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 16, trailing: 20))
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
                             }
                         }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                onDeleteItem(item)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 16, trailing: 20))
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.nordicBone.ignoresSafeArea())
+                .padding(.bottom, 0)
             }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color.nordicBone.ignoresSafeArea())
-        .padding(.bottom, 0)
         .accessibilityIdentifier("screen.history")
     }
 
+    private var isFirstUseHistory: Bool {
+        filteredHistoryItems.isEmpty
+    }
+
     private var historyHeader: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(NSLocalizedString("tab.history", comment: "History tab title"))
-                    .font(AppFonts.serif(30, weight: .bold))
-                    .foregroundColor(.midnightSpruce)
-                Text(NSLocalizedString("history.journal_title", comment: "History journal subtitle"))
-                    .font(AppFonts.label)
-                    .kerning(2.5)
-                    .foregroundColor(.nordicSlate)
-                    .textCase(.uppercase)
-            }
-            Spacer()
-            Image(systemName: "book")
-                .font(.system(size: 20))
-                .foregroundColor(.momentumAmber)
-                .padding(8)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
+        FirstUseTabHeaderView(
+            title: NSLocalizedString("tab.history", comment: "History tab title"),
+            subtitle: NSLocalizedString("history.journal_title", comment: "History journal subtitle"),
+            accent: .momentumAmber,
+            icon: "book"
+        )
     }
 
     private var digestSection: some View {
@@ -408,4 +415,104 @@ private struct HistoryTimelineCard: View {
         onDeleteItem: { _ in }
     )
     .modelContainer(for: [Product.self, PlateAnalysisHistory.self], inMemory: true)
+}
+
+private struct FirstUseHistoryStateView: View {
+    var body: some View {
+        VStack(spacing: 28) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.momentumAmber.opacity(0.12))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: "heart.text.square")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.momentumAmber)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Your Journey")
+                        .font(AppFonts.sans(10, weight: .bold))
+                        .textCase(.uppercase)
+                        .kerning(1.6)
+                        .foregroundColor(.momentumAmber)
+                    Text("We’re excited to meet you")
+                        .font(AppFonts.sans(16, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
+                    Text("Start your first scan to unlock personal insights designed around your meals and products.")
+                        .font(AppFonts.sans(12, weight: .regular))
+                        .foregroundColor(.nordicSlate)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(18)
+            .background(Color.cardSurface.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(Color.momentumAmber.opacity(0.18), lineWidth: 1)
+            )
+
+            VStack(spacing: 18) {
+                ZStack {
+                    Circle()
+                        .fill(Color.momentumAmber.opacity(0.08))
+                        .frame(width: 220, height: 220)
+                        .blur(radius: 18)
+
+                    VStack(spacing: 12) {
+                        HStack(spacing: 14) {
+                            Image(systemName: "leaf.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(.mossInsight.opacity(0.7))
+                                .rotationEffect(.degrees(-12))
+                            Image(systemName: "book.closed.fill")
+                                .font(.system(size: 42))
+                                .foregroundColor(.midnightSpruce)
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 28))
+                                .foregroundColor(.momentumAmber.opacity(0.7))
+                                .rotationEffect(.degrees(12))
+                        }
+
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(Color.cardSurface)
+                            .frame(width: 120, height: 120)
+                            .overlay(
+                                Image(systemName: "fork.knife.circle.fill")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(.mossInsight)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                    .stroke(Color.cardBorder, lineWidth: 1)
+                            )
+                            .shadow(color: Color.black.opacity(0.05), radius: 14, x: 0, y: 8)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                VStack(spacing: 12) {
+                    Text("Let’s begin your wellness story together")
+                        .font(AppFonts.serif(30, weight: .bold))
+                        .foregroundColor(.midnightSpruce)
+                        .multilineTextAlignment(.center)
+
+                    Text("Whenever you’re ready, analyzing your first meal helps Noorish understand your needs and begin building a useful history.")
+                        .font(AppFonts.sans(13, weight: .regular))
+                        .foregroundColor(.nordicSlate)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 18)
+                }
+            }
+
+            FirstUseGuidanceChip(
+                text: "Tap + to begin your first entry",
+                accent: .momentumAmber
+            )
+        }
+    }
 }
