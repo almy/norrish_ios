@@ -38,16 +38,19 @@ final class BackendIntegrationTests: XCTestCase {
             if case BackendAPIError.httpError(let statusCode, let body) = error,
                statusCode == 404,
                body.contains("Not Found") {
+                print("Skipping due to 404 route mismatch: \(error)")
                 throw XCTSkip("Backend route is not deployed on the current environment.")
             }
             // Skip if blocked by Vercel security checkpoint
             if case BackendAPIError.httpError(let statusCode, let body) = error,
                statusCode == 429,
                body.contains("Vercel Security Checkpoint") {
+                print("Skipping due to Vercel security checkpoint: \(error)")
                 throw XCTSkip("Backend blocked by Vercel Security Checkpoint (429).")
             }
             // Skip on URLSession timeout
             if let urlError = error as? URLError, urlError.code == .timedOut {
+                print("Skipping due to URLSession timeout: \(error)")
                 throw XCTSkip("Backend request timed out.")
             }
             // Skip on CFNetwork stream timeout (-2102 in domain 4)
@@ -56,9 +59,11 @@ final class BackendIntegrationTests: XCTestCase {
                 if let streamCode = nsError.userInfo["_kCFStreamErrorCodeKey"] as? Int,
                    let streamDomain = nsError.userInfo["_kCFStreamErrorDomainKey"] as? Int,
                    streamCode == -2102, streamDomain == 4 {
+                    print("Skipping due to CFNetwork stream timeout: \(error) domain=\(nsError.domain) code=\(nsError.code) userInfo=\(nsError.userInfo)")
                     throw XCTSkip("Network stream timeout (-2102).")
                 }
             }
+            print("Backend integration test failed without skip mapping: \(error) domain=\(nsError.domain) code=\(nsError.code) userInfo=\(nsError.userInfo)")
             throw error
         }
     }
