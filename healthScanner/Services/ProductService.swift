@@ -32,6 +32,8 @@ final class ProductService: ObservableObject {
                 name: $0.name ?? "Unknown Product",
                 score: $0.score,
                 imageUrl: $0.imageUrl,
+                category: $0.category,
+                nutriScore: $0.nutriScore,
                 reason: $0.reason,
                 allergenWarning: $0.allergenWarning
             )
@@ -43,7 +45,7 @@ final class ProductService: ObservableObject {
         defer { isLoading = false }
 
         let request = BackendBarcodeRequest(
-            barcode: barcode,
+            ean: barcode,
             locale: Locale.current.identifier
         )
 
@@ -54,33 +56,29 @@ final class ProductService: ObservableObject {
 
         let payload = response.product
         let nutritionData = NutritionData(
-            calories: payload.nutritionData.calories,
-            fat: payload.nutritionData.fat,
-            saturatedFat: payload.nutritionData.saturatedFat,
-            sugar: payload.nutritionData.sugar,
-            sodium: payload.nutritionData.sodium,
-            protein: payload.nutritionData.protein,
-            fiber: payload.nutritionData.fiber,
-            carbohydrates: payload.nutritionData.carbohydrates,
-            fruitsVegetablesNutsPercent: payload.nutritionData.fruitsVegetablesNutsPercent
+            calories: payload.nutrition.calories,
+            fat: payload.nutrition.fat,
+            saturatedFat: payload.nutrition.saturatedFat,
+            sugar: payload.nutrition.sugar,
+            sodium: payload.nutrition.sodium,
+            protein: payload.nutrition.protein,
+            fiber: payload.nutrition.fiber,
+            carbohydrates: payload.nutrition.carbohydrates,
+            fruitsVegetablesNutsPercent: payload.nutrition.fruitsVegetablesNutsPercent
         )
 
         let product = Product(
-            barcode: payload.barcode,
+            barcode: payload.ean,
             name: payload.name,
             brand: payload.brand,
             nutritionData: nutritionData,
-            imageURL: payload.imageURL,
+            imageURL: payload.imageUrl,
             localImagePath: nil,
-            categoriesTags: payload.categoriesTags,
+            categoriesTags: payload.category.map { [$0] },
             ingredients: payload.ingredients
         )
 
-        if let scannedDate = parseDate(payload.scannedDate) {
-            product.scannedDate = scannedDate
-        }
-
-        cacheImageIfNeeded(urlString: payload.imageURL, barcode: payload.barcode, product: product)
+        cacheImageIfNeeded(urlString: payload.imageUrl, barcode: payload.ean, product: product)
 
         return product
     }
@@ -96,19 +94,5 @@ final class ProductService: ObservableObject {
                 }
             }
         }
-    }
-
-    private func parseDate(_ value: String?) -> Date? {
-        guard let value, !value.isEmpty else { return nil }
-
-        let formatterWithFraction = ISO8601DateFormatter()
-        formatterWithFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatterWithFraction.date(from: value) {
-            return date
-        }
-
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: value)
     }
 }

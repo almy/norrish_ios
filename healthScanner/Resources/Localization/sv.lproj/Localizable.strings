@@ -41,6 +41,9 @@
 "history.digest_action" = "Insikter";
 "history.today" = "Idag";
 "history.yesterday" = "Igår";
+"common.next" = "Nästa";
+"onboarding.plate_scan.title" = "Fota din\nTallrik";
+"onboarding.plate_scan.body" = "Rikta, fota och förstå vad som finns på tallriken. AI uppskattar resultatet - noggrannheten varierar med måltidens komplexitet.";
 
 /* Product Details */
 "product.details" = "Produktdetaljer";
@@ -77,6 +80,10 @@
 "plate.optimized" = "Näringsoptimerad";
 "plate.optimized.badge" = "Näringsoptimerad";
 "plate.log_meal" = "Logga Måltiden";
+"plate.score_hint" = "Högre är bättre. 7+ är en bra måltid.";
+"plate.score_band.good" = "Bra";
+"plate.score_band.fair" = "Okej";
+"plate.score_band.poor" = "Svag";
 "chef.insight" = "Kockens Insikt";
 "ingredients.detected" = "Upptäckta Ingredienser";
 "ingredients.unavailable.product" = "Ingen ingrediensdata finns tillgänglig från våra källor";

@@ -41,6 +41,9 @@
 "history.digest_action" = "Insights";
 "history.today" = "Today";
 "history.yesterday" = "Yesterday";
+"common.next" = "Next";
+"onboarding.plate_scan.title" = "Snap your\nPlate";
+"onboarding.plate_scan.body" = "Point, capture, and understand what's on your plate. AI estimates - accuracy varies by meal complexity.";
 
 /* Product Details */
 "product.details" = "Product Details";
@@ -77,6 +80,10 @@
 "plate.optimized" = "Nutritionally Optimized";
 "plate.optimized.badge" = "Nutritionally Optimized";
 "plate.log_meal" = "Log This Meal";
+"plate.score_hint" = "Higher is better. 7+ is a good meal.";
+"plate.score_band.good" = "Good";
+"plate.score_band.fair" = "Fair";
+"plate.score_band.poor" = "Poor";
 "chef.insight" = "Chef's Insight";
 "ingredients.detected" = "Detected Ingredients";
 "ingredients.unavailable.product" = "No ingredient data available from our sources";

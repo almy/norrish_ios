@@ -1,25 +1,27 @@
 import Foundation
 
 struct BackendBarcodeRequest: Encodable {
-    let barcode: String
+    let ean: String
     let locale: String?
 }
 
 struct BackendBarcodeResponse: Decodable {
     let scanId: String
     let status: String
-    let product: BackendProductPayload
+    let product: BackendProductPayloadV2
+    let enrichment: BackendProductEnrichment?
 }
 
-struct BackendProductPayload: Decodable {
-    let barcode: String
+struct BackendProductPayloadV2: Decodable {
+    let ean: String
     let name: String
     let brand: String
-    let nutritionData: BackendNutritionData
-    let imageURL: String?
-    let categoriesTags: [String]?
+    let nutrition: BackendNutritionData
+    let nutritionSource: String
+    let imageUrl: String?
+    let category: String?
+    let categorySource: String?
     let ingredients: String?
-    let scannedDate: String?
 }
 
 struct BackendNutritionData: Codable {
@@ -32,6 +34,38 @@ struct BackendNutritionData: Codable {
     let fiber: Double
     let carbohydrates: Double
     let fruitsVegetablesNutsPercent: Double?
+}
+
+struct BackendProductEnrichment: Decodable {
+    let similarProducts: [BackendSimilarProductItem]?
+    let eNumberDetails: [BackendENumberDetail]?
+    let nutriScore: String?
+    let allergens: [String]?
+    let dietaryTags: [String]?
+}
+
+struct BackendENumberDetail: Decodable, Equatable {
+    let code: String?
+    let name: String?
+    let description: String?
+    let sourceUrl: String?
+
+    enum CodingKeys: String, CodingKey {
+        case code
+        case name
+        case description
+        case sourceUrl
+        case source_url
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        code = try container.decodeIfPresent(String.self, forKey: .code)
+        name = try container.decodeIfPresent(String.self, forKey: .name)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        sourceUrl = try container.decodeIfPresent(String.self, forKey: .sourceUrl)
+            ?? container.decodeIfPresent(String.self, forKey: .source_url)
+    }
 }
 
 
@@ -197,6 +231,7 @@ struct BackendCorrelationInsightPayload: Decodable {
 
 struct BackendSimilarProductsResponse: Decodable {
     let ean: String
+    let similaritySource: String
     let results: [BackendSimilarProductItem]
 }
 
@@ -205,6 +240,8 @@ struct BackendSimilarProductItem: Decodable {
     let name: String?
     let score: Double
     let imageUrl: String?
+    let category: String?
+    let nutriScore: String?
     let reason: String?
     let allergenWarning: String?
 }

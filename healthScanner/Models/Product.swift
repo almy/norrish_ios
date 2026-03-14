@@ -53,7 +53,7 @@ final class Product {
     }
 }
 
-struct NutritionData: Codable {
+struct NutritionData: Codable, Hashable {
     let calories: Double
     let fat: Double
     let saturatedFat: Double

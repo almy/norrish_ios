@@ -39,6 +39,8 @@ struct PlateAnalysisResultView: View {
     @State private var showDetailsPanel = false
     @State private var selectedMealIntent: MealLogIntent = .ateIt
     @State private var showLogFeedbackAlert = false
+    @State private var showScoreScaleHint = false
+    @AppStorage("plateAnalysis.didShowScoreScaleHint") private var didShowScoreScaleHint = false
     @State private var logFeedbackTitle = ""
     @State private var logFeedbackMessage = ""
     @State private var dismissAfterLogFeedback = false
@@ -137,16 +139,43 @@ struct PlateAnalysisResultView: View {
                         .textCase(.uppercase)
                 }
 
-                MiniScoreRing(
-                    score: analysis.nutritionScore,
-                    color: scoreBandColor
-                )
-                .padding(.bottom, 2)
+                VStack(alignment: .trailing, spacing: 8) {
+                    MiniScoreRing(
+                        score: analysis.nutritionScore,
+                        color: scoreBandColor,
+                        bandLabel: shortScoreBandTitle
+                    )
+                    .padding(.bottom, 2)
+
+                    if showScoreScaleHint {
+                        Text(NSLocalizedString("plate.score_hint", comment: "One-time hint explaining the plate score scale"))
+                            .font(AppFonts.sans(10, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.86))
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 110, alignment: .trailing)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .accessibilityIdentifier("plateAnalysis.scoreHint")
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.bottom, 48)
             .frame(height: heroHeight, alignment: .bottom)
+        }
+        .onAppear {
+            if !didShowScoreScaleHint {
+                showScoreScaleHint = true
+                didShowScoreScaleHint = true
+            }
         }
     }
 
@@ -996,6 +1025,7 @@ struct ScoreRingView: View {
 private struct MiniScoreRing: View {
     let score: Double
     let color: Color
+    let bandLabel: String
 
     private var clampedScore: Double {
         max(0.0, min(10.0, score))
@@ -1014,14 +1044,37 @@ private struct MiniScoreRing: View {
                 .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .frame(width: 62, height: 62)
-            VStack(spacing: 0) {
-                Text("\(Int(clampedScore.rounded()))")
-                    .font(AppFonts.serif(22, weight: .semibold))
-                    .foregroundColor(.white)
-                Text("/10")
-                    .font(AppFonts.sans(9, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+            VStack(spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 1) {
+                    Text(String(format: "%.1f", clampedScore))
+                        .font(AppFonts.serif(18, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("/10")
+                        .font(AppFonts.sans(8, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.65))
+                }
+                Text(bandLabel.uppercased())
+                    .font(AppFonts.sans(8, weight: .bold))
+                    .foregroundColor(color)
+                    .kerning(1.0)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(color.opacity(0.16))
+                    .clipShape(Capsule())
             }
+        }
+    }
+}
+
+private extension PlateAnalysisResultView {
+    var shortScoreBandTitle: String {
+        switch analysis.nutritionScore {
+        case ..<4.5:
+            return NSLocalizedString("plate.score_band.poor", comment: "Short label for a low plate nutrition score")
+        case ..<7.0:
+            return NSLocalizedString("plate.score_band.fair", comment: "Short label for a mid-range plate nutrition score")
+        default:
+            return NSLocalizedString("plate.score_band.good", comment: "Short label for a strong plate nutrition score")
         }
     }
 }

@@ -57,13 +57,13 @@ struct OnboardingPlateScanScreen: View {
             .padding(.horizontal, 26)
 
             OnboardingTitleBodyView(
-                title: "Snap your\nPlate",
-                bodyText: "Point, capture, and understand what's on your plate. AI reveals the nutrition story instantly."
+                title: NSLocalizedString("onboarding.plate_scan.title", comment: "Onboarding plate scan title"),
+                bodyText: NSLocalizedString("onboarding.plate_scan.body", comment: "Onboarding plate scan body copy with AI estimate disclosure")
             )
             .padding(.top, 20)
 
             Spacer()
-            OnboardingPrimaryButton("Next", icon: "arrow.right", action: onNext)
+            OnboardingPrimaryButton(NSLocalizedString("common.next", comment: "Next button title"), icon: "arrow.right", action: onNext)
                 .padding(.horizontal, 26)
                 .padding(.bottom, 34)
         }
