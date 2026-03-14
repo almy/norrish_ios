@@ -25,9 +25,9 @@
 		882BF269549A4DCD812F01D6 /* ProductNotFoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDDB990BA3B8419AA37FB08A /* ProductNotFoundView.swift */; };
 		8B6AC6952A9B4F4C8BC9E483 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81035EE2844A4F00BBF876A6 /* ContentView.swift */; };
 		95AEB268BBD64AF48958000C /* BarcodeScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A536FD72F7B241AD82F63CC6 /* BarcodeScannerViewModel.swift */; };
-		A1D9C8B72F5A110100D0E001 /* AppLaunchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */; };
 		A0FEE3C4BB394886A47FEA0C /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */; };
 		A1B2C3D4E5F60718293A4B5D /* BackendAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F708192A3B4C /* BackendAPIClient.swift */; };
+		A1D9C8B72F5A110100D0E001 /* AppLaunchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */; };
 		A5F1B41B55D944F6BD142399 /* BarcodeScannerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA631B3A21A84D5FAA0C7ABB /* BarcodeScannerViewController.swift */; };
 		A7C41F1B9D6E4E53A1230001 /* QuickAddSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C41F1B9D6E4E53A1230011 /* QuickAddSheetView.swift */; };
 		A7C41F1B9D6E4E53A1230002 /* HistoryTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C41F1B9D6E4E53A1230012 /* HistoryTabView.swift */; };
@@ -150,6 +150,7 @@
 		8D82777BB76B4E8F8A90C702 /* NutriScoreInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutriScoreInfoView.swift; sourceTree = "<group>"; };
 		93339F43356641779417CA4A /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
 		A0B1C2D3E4F5061728394A5B /* resources/plate.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = resources/plate.jpg; sourceTree = "<group>"; };
+		A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLaunchViews.swift; sourceTree = "<group>"; };
 		A536FD72F7B241AD82F63CC6 /* BarcodeScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerViewModel.swift; sourceTree = "<group>"; };
 		A7C41F1B9D6E4E53A1230011 /* QuickAddSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddSheetView.swift; sourceTree = "<group>"; };
 		A7C41F1B9D6E4E53A1230012 /* HistoryTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryTabView.swift; sourceTree = "<group>"; };
@@ -233,7 +234,6 @@
 		F23C445DA84F4BC59693E705 /* PlateProgressRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlateProgressRingView.swift; sourceTree = "<group>"; };
 		F3A405162738495A6B7C8D9E /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		F4522A552E1D4A37B6DB60C0 /* norrishApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = norrishApp.swift; sourceTree = "<group>"; };
-		A1D9C8B82F5A110100D0E001 /* AppLaunchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLaunchViews.swift; sourceTree = "<group>"; };
 		F5E61728394A5B6C7D8E9FA0 /* BackendIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendIntegrationTests.swift; sourceTree = "<group>"; };
 		FF53FF9D477A41D0B3EA56D0 /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		FF6E4A499A014860AA425C4D /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
@@ -650,7 +650,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1540;
-				LastUpgradeCheck = 1540;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					CEF23E4A2E6C5F66002B903F = {
 						CreatedOnToolsVersion = 15.4;
@@ -868,6 +868,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -921,6 +922,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -931,6 +933,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -977,6 +980,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -1065,7 +1069,6 @@
 		CEF23E752E6C5F67002B903F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
@@ -1088,7 +1091,6 @@
 		CEF23E762E6C5F67002B903F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
@@ -1111,7 +1113,6 @@
 		CEF23E782E6C5F67002B903F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = W68D4B8SR3;
@@ -1134,7 +1135,6 @@
 		CEF23E792E6C5F67002B903F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = W68D4B8SR3;
