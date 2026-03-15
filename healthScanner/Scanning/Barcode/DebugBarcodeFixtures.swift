@@ -13,7 +13,8 @@ struct DebugBarcodeFixture: Identifiable, Hashable {
 }
 
 enum DebugBarcodeFixtures {
-    static let samples: [DebugBarcodeFixture] = [
+    /// Legacy hardcoded samples — used as fallback when FIXTURE_PATH is not set.
+    static let fallbackSamples: [DebugBarcodeFixture] = [
         DebugBarcodeFixture(
             barcode: "7390000000001",
             name: "Lingongrovbrod Sample",
@@ -71,7 +72,151 @@ enum DebugBarcodeFixtures {
     ]
 
     static func fixture(for barcode: String) -> DebugBarcodeFixture? {
-        samples.first { $0.barcode == barcode }
+        fallbackSamples.first { $0.barcode == barcode }
+    }
+
+    /// Returns the legacy fallback samples (used when FIXTURE_PATH is not configured).
+    static var samples: [DebugBarcodeFixture] {
+        fallbackSamples
     }
 }
+
+// MARK: - External Fixture Loading
+
+/// Loads barcode fixtures from external JSON files on the host filesystem.
+/// Only available in simulator debug builds. Production builds never compile this code.
+#if targetEnvironment(simulator)
+enum ExternalBarcodeFixtureLoader {
+
+    // MARK: - Manifest Types
+
+    private struct FixtureManifest: Decodable {
+        let personas: [String: PersonaFixtures]
+    }
+
+    private struct PersonaFixtures: Decodable {
+        let barcodes: [String]
+        let notes: String?
+    }
+
+    // MARK: - Public API
+
+    /// Resolved fixture root from FIXTURE_PATH environment variable.
+    static var fixturePath: String? {
+        ProcessInfo.processInfo.environment["FIXTURE_PATH"]
+    }
+
+    /// Whether external fixtures are available and usable.
+    /// Returns true only when FIXTURE_PATH points to a directory that
+    /// contains at least one loadable barcode (from the manifest or
+    /// BarcodeFixtures.json). If the directory exists but the fixture
+    /// files are missing or invalid, falls back to legacy samples.
+    static var isAvailable: Bool {
+        guard let path = fixturePath,
+              FileManager.default.fileExists(atPath: path) else { return false }
+        // Validate that at least one barcode is actually loadable.
+        if let persona = personaName {
+            return !loadPersonaBarcodes(persona: persona).isEmpty
+        }
+        return !loadAllBarcodes().isEmpty
+    }
+
+    /// Active persona name from PERSONA_NAME environment variable.
+    static var personaName: String? {
+        ProcessInfo.processInfo.environment["PERSONA_NAME"]
+    }
+
+    /// Active fixture index from FIXTURE_INDEX environment variable.
+    static var fixtureIndex: Int? {
+        guard let raw = ProcessInfo.processInfo.environment["FIXTURE_INDEX"] else { return nil }
+        return Int(raw)
+    }
+
+    /// Loads all EAN strings from the external BarcodeFixtures.json.
+    static func loadAllBarcodes() -> [String] {
+        guard let root = fixturePath else { return [] }
+        let url = URL(fileURLWithPath: root)
+            .appendingPathComponent("barcodes")
+            .appendingPathComponent("BarcodeFixtures.json")
+        guard let data = try? Data(contentsOf: url),
+              let eans = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return eans
+    }
+
+    /// Loads persona-specific barcodes from the manifest.
+    static func loadPersonaBarcodes(persona: String) -> [String] {
+        guard let manifest = loadManifest() else { return [] }
+        return manifest.personas[persona.lowercased()]?.barcodes ?? []
+    }
+
+    /// Returns the barcode to auto-inject based on PERSONA_NAME and FIXTURE_INDEX.
+    /// Returns nil if either env var is missing or the index is out of range.
+    static func autoInjectBarcode() -> String? {
+        guard let persona = personaName else { return nil }
+        let barcodes = loadPersonaBarcodes(persona: persona)
+        guard !barcodes.isEmpty else { return nil }
+        let index = fixtureIndex ?? 0
+        guard index >= 0, index < barcodes.count else { return nil }
+        return barcodes[index]
+    }
+
+    /// Returns display items for the debug picker UI.
+    /// If a persona is set, shows only that persona's barcodes.
+    /// Otherwise shows all barcodes from the fixture file.
+    static func loadDisplayItems() -> [BarcodeDisplayItem] {
+        if let persona = personaName {
+            let barcodes = loadPersonaBarcodes(persona: persona)
+            return barcodes.enumerated().map { index, ean in
+                BarcodeDisplayItem(
+                    barcode: ean,
+                    label: "\(persona.capitalized) fixture \(index + 1)",
+                    subtitle: ean
+                )
+            }
+        }
+
+        let allBarcodes = loadAllBarcodes()
+        return allBarcodes.map { ean in
+            BarcodeDisplayItem(
+                barcode: ean,
+                label: "EAN \(ean)",
+                subtitle: personaForBarcode(ean) ?? "unassigned"
+            )
+        }
+    }
+
+    // MARK: - Private
+
+    private static func loadManifest() -> FixtureManifest? {
+        guard let root = fixturePath else { return nil }
+        let url = URL(fileURLWithPath: root)
+            .appendingPathComponent("fixtures.manifest.json")
+        guard let data = try? Data(contentsOf: url),
+              let manifest = try? JSONDecoder().decode(FixtureManifest.self, from: data) else {
+            return nil
+        }
+        return manifest
+    }
+
+    /// Reverse-lookup: which persona owns this barcode?
+    private static func personaForBarcode(_ ean: String) -> String? {
+        guard let manifest = loadManifest() else { return nil }
+        for (name, fixtures) in manifest.personas {
+            if fixtures.barcodes.contains(ean) { return name }
+        }
+        return nil
+    }
+}
+
+/// Simple display model for the debug barcode picker.
+struct BarcodeDisplayItem: Identifiable, Hashable {
+    let barcode: String
+    let label: String
+    let subtitle: String
+
+    var id: String { barcode }
+}
+#endif
 #endif

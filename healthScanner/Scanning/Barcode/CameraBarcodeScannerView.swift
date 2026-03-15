@@ -98,6 +98,7 @@ struct BarcodeCameraOverlayView: View {
     #if DEBUG && targetEnvironment(simulator)
     private var simulatorDebugSurface: some View {
         VStack(alignment: .leading, spacing: 18) {
+            // Header
             HStack(spacing: 12) {
                 HStack(spacing: 12) {
                     Image(systemName: "barcode.viewfinder")
@@ -107,7 +108,7 @@ struct BarcodeCameraOverlayView: View {
                         Text(NSLocalizedString("debug.barcode.title", comment: "Simulator barcode debug panel title"))
                             .font(AppFonts.serif(22, weight: .semibold))
                             .foregroundColor(.midnightSpruce)
-                        Text(NSLocalizedString("debug.barcode.subtitle", comment: "Simulator barcode debug panel subtitle"))
+                        Text(fixtureSourceLabel)
                             .font(AppFonts.sans(13, weight: .regular))
                             .foregroundColor(.nordicSlate)
                             .fixedSize(horizontal: false, vertical: true)
@@ -129,39 +130,14 @@ struct BarcodeCameraOverlayView: View {
                 .accessibilityLabel(NSLocalizedString("debug.barcode.close", comment: "Close simulator barcode debug panel"))
             }
 
-            VStack(spacing: 10) {
-                ForEach(DebugBarcodeFixtures.samples) { sample in
-                    Button(action: {
-                        injectDebugBarcode(sample.barcode)
-                    }) {
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(sample.name)
-                                    .font(AppFonts.sans(14, weight: .semibold))
-                                    .foregroundColor(.midnightSpruce)
-                                Text("\(sample.brand) · \(sample.barcode)")
-                                    .font(AppFonts.sans(12, weight: .regular))
-                                    .foregroundColor(.nordicSlate)
-                            }
-                            Spacer()
-                            Text(NSLocalizedString("debug.barcode.cta", comment: "Simulator barcode debug action"))
-                                .font(AppFonts.sans(12, weight: .semibold))
-                                .foregroundColor(.midnightSpruce)
-                        }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.cardSurface)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(Color.cardBorder, lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
+            // Barcode list — external fixtures if available, fallback samples otherwise
+            if ExternalBarcodeFixtureLoader.isAvailable {
+                externalFixtureList
+            } else {
+                fallbackSampleList
             }
 
-            Text(NSLocalizedString("debug.barcode.footer", comment: "Simulator barcode debug panel footer"))
+            Text(fixtureFooterLabel)
                 .font(AppFonts.sans(11, weight: .regular))
                 .foregroundColor(.nordicSlate.opacity(0.82))
                 .fixedSize(horizontal: false, vertical: true)
@@ -176,6 +152,102 @@ struct BarcodeCameraOverlayView: View {
         )
         .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 8)
         .padding(.horizontal, 20)
+        .onAppear {
+            // Auto-inject if PERSONA_NAME + FIXTURE_INDEX are set (automated persona runs).
+            if let barcode = ExternalBarcodeFixtureLoader.autoInjectBarcode() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    injectDebugBarcode(barcode)
+                }
+            }
+        }
+    }
+
+    /// External fixture list loaded from FIXTURE_PATH.
+    private var externalFixtureList: some View {
+        let items = ExternalBarcodeFixtureLoader.loadDisplayItems()
+        return VStack(spacing: 10) {
+            ForEach(items) { item in
+                Button(action: {
+                    injectDebugBarcode(item.barcode)
+                }) {
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.label)
+                                .font(AppFonts.sans(14, weight: .semibold))
+                                .foregroundColor(.midnightSpruce)
+                            Text(item.subtitle)
+                                .font(AppFonts.sans(12, weight: .regular))
+                                .foregroundColor(.nordicSlate)
+                        }
+                        Spacer()
+                        Text(NSLocalizedString("debug.barcode.cta", comment: "Simulator barcode debug action"))
+                            .font(AppFonts.sans(12, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.cardBorder, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    /// Legacy fallback list using hardcoded samples.
+    private var fallbackSampleList: some View {
+        VStack(spacing: 10) {
+            ForEach(DebugBarcodeFixtures.samples) { sample in
+                Button(action: {
+                    injectDebugBarcode(sample.barcode)
+                }) {
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(sample.name)
+                                .font(AppFonts.sans(14, weight: .semibold))
+                                .foregroundColor(.midnightSpruce)
+                            Text("\(sample.brand) · \(sample.barcode)")
+                                .font(AppFonts.sans(12, weight: .regular))
+                                .foregroundColor(.nordicSlate)
+                        }
+                        Spacer()
+                        Text(NSLocalizedString("debug.barcode.cta", comment: "Simulator barcode debug action"))
+                            .font(AppFonts.sans(12, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.cardBorder, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var fixtureSourceLabel: String {
+        if ExternalBarcodeFixtureLoader.isAvailable {
+            if let persona = ExternalBarcodeFixtureLoader.personaName {
+                return "External fixtures · \(persona.capitalized)"
+            }
+            return "External fixtures loaded"
+        }
+        return NSLocalizedString("debug.barcode.subtitle", comment: "Simulator barcode debug panel subtitle")
+    }
+
+    private var fixtureFooterLabel: String {
+        if ExternalBarcodeFixtureLoader.isAvailable {
+            return "Barcodes loaded from FIXTURE_PATH. Real backend lookup runs after selection."
+        }
+        return NSLocalizedString("debug.barcode.footer", comment: "Simulator barcode debug panel footer")
     }
 
     private func injectDebugBarcode(_ barcode: String) {
