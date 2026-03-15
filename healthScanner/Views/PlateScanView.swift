@@ -34,6 +34,20 @@ struct PlateQuickScanView: View {
     var body: some View {
         ZStack {
             if mode == .camera {
+                #if DEBUG && targetEnvironment(simulator)
+                SimulatorPlateFixturePickerView(
+                    onImageSelected: { image in
+                        // Non-LiDAR baseline: no depth, no volume/mass
+                        self.capturedVolumeML = nil
+                        self.capturedMassG = nil
+                        self.capturedDepthSnapshot = nil
+                        self.capturedFocusLabel = nil
+                        self.capturedFocusConfidence = nil
+                        self.capturedImage = image
+                    },
+                    onClose: { dismiss() }
+                )
+                #else
                 EnhancedCameraPreviewView { image, volumeML, massG, depthSnapshot, focusLabel, focusConfidence in
                     DispatchQueue.main.async {
                         if let onCameraCaptured {
@@ -59,6 +73,7 @@ struct PlateQuickScanView: View {
                     }
                 }
                 .ignoresSafeArea()
+                #endif
             } else {
                 PhotoLibraryPickerView(image: $capturedImage)
                     .ignoresSafeArea()
@@ -237,3 +252,171 @@ struct PlateQuickPostCaptureFlowView: View {
         }
     }
 }
+
+// MARK: - Simulator Plate Fixture Picker
+
+#if DEBUG && targetEnvironment(simulator)
+struct SimulatorPlateFixturePickerView: View {
+    let onImageSelected: (UIImage) -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.nordicBone.opacity(0.6)
+                .ignoresSafeArea()
+                .overlay(Color.black.opacity(0.04))
+
+            VStack {
+                Spacer(minLength: 24)
+                pickerSurface
+                Spacer(minLength: 32)
+            }
+        }
+        .onAppear {
+            // Auto-inject if PERSONA_NAME + FIXTURE_INDEX are set (automated persona runs).
+            if let image = ExternalPlateFixtureLoader.autoInjectPlateImage() {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    onImageSelected(image)
+                }
+            }
+        }
+    }
+
+    private var pickerSurface: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            // Header
+            HStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "fork.knife.circle")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(.midnightSpruce)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(NSLocalizedString("debug.plate.title", comment: "Simulator plate debug panel title"))
+                            .font(AppFonts.serif(22, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                        Text(fixtureSourceLabel)
+                            .font(AppFonts.sans(13, weight: .regular))
+                            .foregroundColor(.nordicSlate)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Spacer()
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.midnightSpruce)
+                        .frame(width: 32, height: 32)
+                        .background(Color.cardSurface)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(NSLocalizedString("debug.plate.close", comment: "Close simulator plate debug panel"))
+            }
+
+            // Plate list
+            ScrollView {
+                if ExternalPlateFixtureLoader.isAvailable {
+                    externalFixtureList
+                } else {
+                    fallbackPhotoPickerPrompt
+                }
+            }
+            .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
+
+            Text(fixtureFooterLabel)
+                .font(AppFonts.sans(11, weight: .regular))
+                .foregroundColor(.nordicSlate.opacity(0.82))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.nordicBone)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.cardBorder, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 8)
+        .padding(.horizontal, 20)
+    }
+
+    private var externalFixtureList: some View {
+        let items = ExternalPlateFixtureLoader.loadDisplayItems()
+        return VStack(spacing: 10) {
+            ForEach(items) { item in
+                Button(action: {
+                    if let image = ExternalPlateFixtureLoader.loadImage(filename: item.filename) {
+                        onImageSelected(image)
+                    }
+                }) {
+                    HStack(alignment: .center, spacing: 12) {
+                        // Thumbnail
+                        if let thumb = ExternalPlateFixtureLoader.loadImage(filename: item.filename) {
+                            Image(uiImage: thumb)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 48, height: 48)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.label)
+                                .font(AppFonts.sans(14, weight: .semibold))
+                                .foregroundColor(.midnightSpruce)
+                            Text(item.subtitle)
+                                .font(AppFonts.sans(12, weight: .regular))
+                                .foregroundColor(.nordicSlate)
+                                .lineLimit(1)
+                        }
+                        Spacer()
+                        Text(NSLocalizedString("debug.plate.cta", comment: "Simulator plate debug action"))
+                            .font(AppFonts.sans(12, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.cardSurface)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.cardBorder, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    /// When no external fixtures are available, prompt user to use photo mode instead.
+    private var fallbackPhotoPickerPrompt: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "photo.on.rectangle.angled")
+                .font(.system(size: 32))
+                .foregroundColor(.nordicSlate)
+            Text("No plate fixtures configured.\nSet FIXTURE_PATH to load external plate images,\nor use Photo Meal / Upload Photo instead.")
+                .font(AppFonts.sans(13, weight: .regular))
+                .foregroundColor(.nordicSlate)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+    }
+
+    private var fixtureSourceLabel: String {
+        if ExternalPlateFixtureLoader.isAvailable {
+            if let persona = ExternalPlateFixtureLoader.personaName {
+                return "External fixtures · \(persona.capitalized)"
+            }
+            return "External fixtures loaded"
+        }
+        return NSLocalizedString("debug.plate.subtitle", comment: "Simulator plate debug panel subtitle")
+    }
+
+    private var fixtureFooterLabel: String {
+        if ExternalPlateFixtureLoader.isAvailable {
+            return "Plate images loaded from FIXTURE_PATH. Real backend analysis runs after selection."
+        }
+        return NSLocalizedString("debug.plate.footer", comment: "Simulator plate debug panel footer")
+    }
+}
+#endif
