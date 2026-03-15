@@ -7,7 +7,7 @@
 //  - ARPlateScannerView SwiftUI wrapper that presents the real scanners:
 //      * ARPlateScannerViewController (ARKit + sceneDepth on LiDAR devices)
 //      * DualCameraPlateScannerViewController (AVCapture dual‑camera depth fallback)
-//  - Simulator fallback UI that lets you simulate a scan
+//  - Simulator compile stub (active simulator flow is in PlateScanView)
 //
 // Requirements:
 //  - Keep the companion files in your target:
@@ -54,7 +54,7 @@ public struct ARPlateScanNutrition: Equatable {
 // MARK: - SwiftUI Wrapper presenting the REAL scanner(s)
 // On devices with ARKit sceneDepth → presents ARPlateScannerViewController
 // Otherwise → ARPlateScannerViewController auto‑presents DualCameraPlateScannerViewController
-// In the Simulator → we show a small simulate UI so you can test end‑to‑end UI flows.
+// In the Simulator → compile stub only (active simulator flow uses PlateScanView fixture picker).
 
 #if canImport(ARKit)
 import ARKit
@@ -98,12 +98,13 @@ public struct ARPlateScannerView: UIViewControllerRepresentable {
 
 #else
 
-// Simulator fallback keeps a minimal simulate flow so previews/tests work
+// Simulator stub — the active simulator plate flow uses PlateScanView's
+// fixture-backed path (ExternalPlateFixtureLoader / PhotoLibraryPickerView).
+// This struct exists only so ARPlateScannerView compiles on simulator targets
+// that cannot import ARKit. It is not presented in the current UI flow.
 public struct ARPlateScannerView: View {
     public let onResult: (ARPlateScanNutrition, UIImage) -> Void
     public let onCancel: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var isSimulating = false
 
     public init(onResult: @escaping (ARPlateScanNutrition, UIImage) -> Void,
                 onCancel: @escaping () -> Void) {
@@ -112,53 +113,7 @@ public struct ARPlateScannerView: View {
     }
 
     public var body: some View {
-        ZStack {
-            Color.black.opacity(0.94).ignoresSafeArea()
-            VStack(spacing: 28) {
-                Text("AR Plate Scanner").font(.title2).bold().foregroundColor(.white)
-                Text("(Simulator – placeholder)").foregroundColor(.white.opacity(0.55)).font(.footnote)
-                Spacer()
-                if isSimulating {
-                    VStack(spacing: 10) {
-                        AppInlineSpinner(size: 30)
-                        Text("Analyzing…")
-                            .font(AppFonts.sans(13, weight: .semibold))
-                            .foregroundColor(.nordicBone)
-                    }
-                } else {
-                    Button(action: simulateScan) {
-                        HStack { Image(systemName: "sparkles"); Text("Simulate Scan") }
-                            .font(.headline).foregroundColor(.black)
-                            .padding(.horizontal, 34).padding(.vertical, 14)
-                            .background(Color.midnightSpruce).cornerRadius(28)
-                    }
-                }
-                Button("Cancel", role: .cancel) { onCancel(); dismiss() }
-                    .foregroundColor(.white).padding(.top, 8)
-                Spacer()
-            }
-            .padding(.top, 50).padding(.bottom, 40)
-        }
-    }
-
-    private func simulateScan() {
-        isSimulating = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            let scan = ARPlateScanNutrition(
-                label: "Pasta",
-                confidence: 0.7,
-                volumeML: 320,
-                massG: 275,
-                calories: 610,
-                protein: 18,
-                carbs: 85,
-                fat: 14
-            )
-            let image = (UIImage(systemName: "fork.knife") ?? UIImage())
-                .withTintColor(.white, renderingMode: .alwaysOriginal)
-            onResult(scan, image)
-            dismiss()
-        }
+        Color.clear.onAppear { onCancel() }
     }
 }
 #endif

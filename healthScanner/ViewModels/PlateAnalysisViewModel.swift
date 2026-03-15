@@ -270,8 +270,17 @@ final class PlateAnalysisViewModel: ObservableObject {
                     imageSize: originalImage.size
                 )
             }
-            let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [])
+            let contextData = try JSONSerialization.data(withJSONObject: contextPayload, options: [.sortedKeys])
             let contextJSON = String(data: contextData, encoding: .utf8)
+
+            #if DEBUG && targetEnvironment(simulator)
+            // Parity verification: log context payload so fixture vs real capture can be diffed.
+            // See SIMULATOR_FIXTURE_INJECTION_PLAN.md step 10.
+            if let prettyData = try? JSONSerialization.data(withJSONObject: contextPayload, options: [.prettyPrinted, .sortedKeys]),
+               let prettyJSON = String(data: prettyData, encoding: .utf8) {
+                print("[PlateAnalysis:ContextParity]\n\(prettyJSON)")
+            }
+            #endif
 
             let response = try await backendClient.postPlateScanAI(
                 imageData: imageData,

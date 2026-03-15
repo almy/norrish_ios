@@ -33,7 +33,7 @@ Production builds should not depend on any of this path resolution.
 If `FIXTURE_PATH` is not set in simulator/debug mode:
 
 - barcode should fall back to the current hardcoded sample behavior
-- plate should fall back to the current simulator `Simulate Scan` behavior until that path is removed
+- plate should fall back to the photo library picker so developers can still select an image without fixture configuration
 
 That keeps the app usable for developers who have not configured external fixtures yet.
 
@@ -175,9 +175,7 @@ A simulator fixture path that only supplies a `UIImage` will therefore produce a
 
 That is the exact divergence risk this plan needs to account for.
 
-There is also existing simulator fallback UI in `ARPlateScanNutrition.swift` with a hardcoded `Simulate Scan` button and hardcoded `ARPlateScanNutrition` result.
-
-That path should be treated as temporary tech debt, not as the long-term fixture solution.
+The old simulator fallback UI in `ARPlateScanNutrition.swift` (hardcoded `Simulate Scan` button and fake `ARPlateScanNutrition` result) has been replaced with a compile-only stub. That view (`ARPlateScannerView`) is not used in the current plate flow — `PlateScanView` uses `EnhancedCameraPreviewView` on device and the fixture-backed picker or photo library fallback on simulator.
 
 ### Recommended Future Direction
 
@@ -216,7 +214,7 @@ At minimum the fixture-side representation may need support for:
 - region or segmentation summary
 - other transient context expected by the current analysis path
 
-The current hardcoded `Simulate Scan` fallback should be replaced by this fixture-backed path, not left alongside it indefinitely.
+The old hardcoded `Simulate Scan` fallback has been replaced by the fixture-backed path. The `ARPlateScannerView` simulator stub is now a no-op compile shim.
 
 ## Core Principle
 
@@ -325,9 +323,9 @@ The only changed behavior is internal and simulator-specific.
 5. define a reduced-fidelity simulator payload based on the existing non-LiDAR production path
 6. add fixture support for plate image plus capture context, not image alone
 7. drive fixture choice from the manifest
-8. if `FIXTURE_PATH` is missing, temporarily fall back to the current `Simulate Scan` behavior
-9. replace the hardcoded `Simulate Scan` fallback with the fixture-backed path once stable
-10. verify backend request parity against a real non-LiDAR capture path
+8. if `FIXTURE_PATH` is missing, fall back to the photo library picker (same path as Photo Meal mode)
+9. ~~replace the hardcoded `Simulate Scan` fallback~~ done — old `Simulate Scan` in `ARPlateScannerView` replaced with compile stub
+10. verify backend request parity against a real non-LiDAR capture path — implemented via `[PlateAnalysis:ContextParity]` debug log in `PlateAnalysisViewModel.analyzePreparedImage()` (simulator builds only)
 
 ### Plate Parity Verification Method
 

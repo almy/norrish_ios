@@ -35,18 +35,7 @@ struct PlateQuickScanView: View {
         ZStack {
             if mode == .camera {
                 #if DEBUG && targetEnvironment(simulator)
-                SimulatorPlateFixturePickerView(
-                    onImageSelected: { image in
-                        // Non-LiDAR baseline: no depth, no volume/mass
-                        self.capturedVolumeML = nil
-                        self.capturedMassG = nil
-                        self.capturedDepthSnapshot = nil
-                        self.capturedFocusLabel = nil
-                        self.capturedFocusConfidence = nil
-                        self.capturedImage = image
-                    },
-                    onClose: { dismiss() }
-                )
+                simulatorCameraReplacement
                 #else
                 EnhancedCameraPreviewView { image, volumeML, massG, depthSnapshot, focusLabel, focusConfidence in
                     DispatchQueue.main.async {
@@ -163,6 +152,32 @@ struct PlateQuickScanView: View {
             dismiss()
         }
     }
+
+    #if DEBUG && targetEnvironment(simulator)
+    /// Simulator camera replacement: shows fixture picker when FIXTURE_PATH
+    /// is configured, falls back to photo library picker otherwise so the
+    /// flow remains usable without fixture configuration.
+    @ViewBuilder
+    private var simulatorCameraReplacement: some View {
+        if ExternalPlateFixtureLoader.isAvailable {
+            SimulatorPlateFixturePickerView(
+                onImageSelected: { image in
+                    // Non-LiDAR baseline: no depth, no volume/mass
+                    self.capturedVolumeML = nil
+                    self.capturedMassG = nil
+                    self.capturedDepthSnapshot = nil
+                    self.capturedFocusLabel = nil
+                    self.capturedFocusConfidence = nil
+                    self.capturedImage = image
+                },
+                onClose: { dismiss() }
+            )
+        } else {
+            PhotoLibraryPickerView(image: $capturedImage)
+                .ignoresSafeArea()
+        }
+    }
+    #endif
 }
 
 struct QuickPlateCapturePayload: Identifiable {
@@ -315,11 +330,7 @@ struct SimulatorPlateFixturePickerView: View {
 
             // Plate list
             ScrollView {
-                if ExternalPlateFixtureLoader.isAvailable {
-                    externalFixtureList
-                } else {
-                    fallbackPhotoPickerPrompt
-                }
+                externalFixtureList
             }
             .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
 
@@ -386,37 +397,15 @@ struct SimulatorPlateFixturePickerView: View {
         }
     }
 
-    /// When no external fixtures are available, prompt user to use photo mode instead.
-    private var fallbackPhotoPickerPrompt: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 32))
-                .foregroundColor(.nordicSlate)
-            Text("No plate fixtures configured.\nSet FIXTURE_PATH to load external plate images,\nor use Photo Meal / Upload Photo instead.")
-                .font(AppFonts.sans(13, weight: .regular))
-                .foregroundColor(.nordicSlate)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
-    }
-
     private var fixtureSourceLabel: String {
-        if ExternalPlateFixtureLoader.isAvailable {
-            if let persona = ExternalPlateFixtureLoader.personaName {
-                return "External fixtures · \(persona.capitalized)"
-            }
-            return "External fixtures loaded"
+        if let persona = ExternalPlateFixtureLoader.personaName {
+            return "External fixtures · \(persona.capitalized)"
         }
-        return NSLocalizedString("debug.plate.subtitle", comment: "Simulator plate debug panel subtitle")
+        return "External fixtures loaded"
     }
 
     private var fixtureFooterLabel: String {
-        if ExternalPlateFixtureLoader.isAvailable {
-            return "Plate images loaded from FIXTURE_PATH. Real backend analysis runs after selection."
-        }
-        return NSLocalizedString("debug.plate.footer", comment: "Simulator plate debug panel footer")
+        "Plate images loaded from FIXTURE_PATH. Real backend analysis runs after selection."
     }
 }
 #endif
