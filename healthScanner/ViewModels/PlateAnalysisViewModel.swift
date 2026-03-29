@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 import SwiftData
 import UIKit
-import Vision
 import CoreGraphics
 import AVFoundation
 
@@ -214,7 +213,7 @@ final class PlateAnalysisViewModel: ObservableObject {
         currentHistory = nil
 
         do {
-            let resized = resizedImage(uploadImage, maxSide: 896)
+            let resized = uploadImage.downsized(maxSide: 896)
             guard let imageData = resized.jpegData(compressionQuality: 0.75) else {
                 throw BackendAPIError.encodingFailed
             }
@@ -328,18 +327,6 @@ final class PlateAnalysisViewModel: ObservableObject {
             // Fallback to original single preprocess
             let pre = ImagePreprocessor.preprocessFoodImage(image)
             await analyzePreparedImage(pre.image, regions: [pre], originalImage: image, modelContext: modelContext)
-        }
-    }
-
-    private func resizedImage(_ image: UIImage, maxSide: CGFloat) -> UIImage {
-        let size = image.size
-        let maxCurrentSide = max(size.width, size.height)
-        guard maxCurrentSide > maxSide, maxSide > 0 else { return image }
-        let scale = maxSide / maxCurrentSide
-        let newSize = CGSize(width: max(1, size.width * scale), height: max(1, size.height * scale))
-        let renderer = UIGraphicsImageRenderer(size: newSize)
-        return renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: newSize))
         }
     }
 

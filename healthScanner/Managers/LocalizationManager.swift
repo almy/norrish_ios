@@ -71,11 +71,6 @@ class LocalizationManager: ObservableObject {
     }
 }
 
-// Notification for language changes
-extension Notification.Name {
-    static let languageChanged = Notification.Name("languageChanged")
-}
-
 // Helper view modifier to refresh views when language changes
 struct LocalizedView: ViewModifier {
     @StateObject private var localizationManager = LocalizationManager.shared

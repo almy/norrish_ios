@@ -44,6 +44,19 @@ extension MealLogIntent {
             return "For someone else"
         }
     }
+
+    var systemImage: String {
+        switch self {
+        case .ateIt:
+            return "fork.knife"
+        case .boughtIt:
+            return "cart"
+        case .checkingInfo:
+            return "eye"
+        case .forSomeoneElse:
+            return "person.2"
+        }
+    }
 }
 
 @Model

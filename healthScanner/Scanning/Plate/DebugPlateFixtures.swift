@@ -19,6 +19,37 @@ enum ExternalPlateFixtureLoader {
         let notes: String?
     }
 
+    // MARK: - Cached Manifest
+
+    private static var _cachedManifest: FixtureManifest?
+    private static var _manifestLoaded = false
+
+    private static func loadManifest() -> FixtureManifest? {
+        if _manifestLoaded { return _cachedManifest }
+        _manifestLoaded = true
+        guard let root = fixturePath else { return nil }
+        let url = URL(fileURLWithPath: root)
+            .appendingPathComponent("fixtures.manifest.json")
+        guard let data = try? Data(contentsOf: url),
+              let manifest = try? JSONDecoder().decode(FixtureManifest.self, from: data) else {
+            return nil
+        }
+        _cachedManifest = manifest
+        return manifest
+    }
+
+    /// Pre-built reverse lookup: plate filename → persona name.
+    private static let plateToPersona: [String: String] = {
+        guard let manifest = loadManifest() else { return [:] }
+        var map: [String: String] = [:]
+        for (name, fixtures) in manifest.personas {
+            for plate in fixtures.plates ?? [] {
+                map[plate] = name
+            }
+        }
+        return map
+    }()
+
     // MARK: - Public API
 
     /// Resolved fixture root from FIXTURE_PATH environment variable.
@@ -38,15 +69,11 @@ enum ExternalPlateFixtureLoader {
     }
 
     /// Whether external plate fixtures are available and usable.
-    /// Returns true only when FIXTURE_PATH points to a directory
-    /// containing at least one loadable plate filename.
+    /// If PERSONA_NAME is set but unrecognized, falls through to all available plates.
     static var isAvailable: Bool {
         guard let path = fixturePath,
               FileManager.default.fileExists(atPath: path) else { return false }
-        if let persona = personaName {
-            return !loadPersonaPlates(persona: persona).isEmpty
-        }
-        return !loadAllPlateFilenames().isEmpty
+        return !resolvedPlates().isEmpty
     }
 
     /// Loads all plate filenames from the manifest's persona entries.
@@ -71,10 +98,11 @@ enum ExternalPlateFixtureLoader {
     }
 
     /// Returns the plate image to auto-inject based on PERSONA_NAME and FIXTURE_INDEX.
-    /// Returns nil if either env var is missing or the index is out of range.
+    /// Falls through to all plates if persona is unrecognized.
+    /// Returns nil if PERSONA_NAME is missing or the index is out of range.
     static func autoInjectPlateImage() -> UIImage? {
-        guard let persona = personaName else { return nil }
-        let plates = loadPersonaPlates(persona: persona)
+        guard personaName != nil else { return nil }
+        let plates = resolvedPlates()
         guard !plates.isEmpty else { return nil }
         let index = fixtureIndex ?? 0
         guard index >= 0, index < plates.count else { return nil }
@@ -82,15 +110,19 @@ enum ExternalPlateFixtureLoader {
     }
 
     /// Returns display items for the debug plate picker UI.
+    /// If PERSONA_NAME is set and recognized, shows only that persona's plates.
+    /// If PERSONA_NAME is set but unrecognized, falls through to all plates.
     static func loadDisplayItems() -> [PlateDisplayItem] {
         if let persona = personaName {
             let plates = loadPersonaPlates(persona: persona)
-            return plates.enumerated().map { index, filename in
-                PlateDisplayItem(
-                    filename: filename,
-                    label: "\(persona.capitalized) plate \(index + 1)",
-                    subtitle: filename
-                )
+            if !plates.isEmpty {
+                return plates.enumerated().map { index, filename in
+                    PlateDisplayItem(
+                        filename: filename,
+                        label: "\(persona.capitalized) plate \(index + 1)",
+                        subtitle: filename
+                    )
+                }
             }
         }
 
@@ -99,16 +131,17 @@ enum ExternalPlateFixtureLoader {
             PlateDisplayItem(
                 filename: filename,
                 label: humanReadableLabel(filename),
-                subtitle: personaForPlate(filename) ?? "unassigned"
+                subtitle: plateToPersona[filename] ?? "unassigned"
             )
         }
     }
 
-    /// Loads a UIImage from the plates directory.
+    /// Loads a UIImage from the plates directory (resolved from manifest or default "plates").
     static func loadImage(filename: String) -> UIImage? {
         guard let root = fixturePath else { return nil }
+        let platesDir = loadManifest()?.plates_directory ?? "plates"
         let url = URL(fileURLWithPath: root)
-            .appendingPathComponent("plates")
+            .appendingPathComponent(platesDir)
             .appendingPathComponent(filename)
         guard let data = try? Data(contentsOf: url) else { return nil }
         return UIImage(data: data)
@@ -116,24 +149,13 @@ enum ExternalPlateFixtureLoader {
 
     // MARK: - Private
 
-    private static func loadManifest() -> FixtureManifest? {
-        guard let root = fixturePath else { return nil }
-        let url = URL(fileURLWithPath: root)
-            .appendingPathComponent("fixtures.manifest.json")
-        guard let data = try? Data(contentsOf: url),
-              let manifest = try? JSONDecoder().decode(FixtureManifest.self, from: data) else {
-            return nil
+    /// Returns persona-specific plates if recognized, otherwise all plates.
+    private static func resolvedPlates() -> [String] {
+        if let persona = personaName {
+            let plates = loadPersonaPlates(persona: persona)
+            if !plates.isEmpty { return plates }
         }
-        return manifest
-    }
-
-    /// Reverse-lookup: which persona owns this plate?
-    private static func personaForPlate(_ filename: String) -> String? {
-        guard let manifest = loadManifest() else { return nil }
-        for (name, fixtures) in manifest.personas {
-            if (fixtures.plates ?? []).contains(filename) { return name }
-        }
-        return nil
+        return loadAllPlateFilenames()
     }
 
     /// Converts "plate-food-01-roast-chicken.jpg" → "Roast Chicken"

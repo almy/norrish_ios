@@ -538,7 +538,7 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
 
         private func cropCapturedImageToROI(_ image: UIImage) -> UIImage {
             // Match the visible ROI by converting through preview-layer metadata mapping (aspect-fill aware).
-            let upright = image.normalizedUpOrientation()
+            let upright = image.normalizedOrientation()
             guard let cg = upright.cgImage else { return image }
             let pixelSize = CGSize(width: CGFloat(cg.width), height: CGFloat(cg.height))
             guard pixelSize.width > 1, pixelSize.height > 1 else { return image }
@@ -593,18 +593,6 @@ struct CameraControllerRepresentable: UIViewControllerRepresentable {
                 memcpy(dst, src, copyBytesPerRow)
             }
             return destination
-        }
-    }
-}
-
-private extension UIImage {
-    func normalizedUpOrientation() -> UIImage {
-        guard imageOrientation != .up else { return self }
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = scale
-        format.opaque = false
-        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
-            draw(in: CGRect(origin: .zero, size: size))
         }
     }
 }

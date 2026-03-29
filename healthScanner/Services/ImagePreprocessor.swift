@@ -1,7 +1,6 @@
 import Foundation
 import UIKit
 import Vision
-import CoreML
 
 public struct ImagePreprocessor {
     public struct Result {
@@ -78,13 +77,14 @@ public struct ImagePreprocessor {
             if img.size.width == maxWidth {
                 scaledImages.append(img)
             } else {
-                let scale = maxWidth / max(1, img.size.width)
-                let newSize = CGSize(width: maxWidth, height: img.size.height * scale)
-                UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-                img.draw(in: CGRect(origin: .zero, size: newSize))
-                let out = UIGraphicsGetImageFromCurrentImageContext()
-                UIGraphicsEndImageContext()
-                scaledImages.append(out ?? img)
+                let ratio = maxWidth / max(1, img.size.width)
+                let newSize = CGSize(width: maxWidth, height: img.size.height * ratio)
+                let fmt = UIGraphicsImageRendererFormat()
+                fmt.scale = 1
+                let scaled = UIGraphicsImageRenderer(size: newSize, format: fmt).image { _ in
+                    img.draw(in: CGRect(origin: .zero, size: newSize))
+                }
+                scaledImages.append(scaled)
             }
         }
         // Compute canvas size (simple vertical stack if cols == 1)
@@ -564,23 +564,6 @@ private func regionsFromMask(_ maskBuffer: CVPixelBuffer, image: UIImage, maxReg
             let px = Int(cropped.size.width * cropped.size.height)
             return .init(image: cropped, boundingBox: rect.integral, pixelCount: px, confidence: component.confidence)
         }
-}
-
-private func saliencyBoundingBox(for image: UIImage) -> CGRect? {
-    guard let cg = cgImage(from: image) else { return nil }
-    let request = VNGenerateAttentionBasedSaliencyImageRequest()
-    let handler = VNImageRequestHandler(cgImage: cg, orientation: cgImagePropertyOrientation(from: image.imageOrientation), options: [:])
-    do {
-        try handler.perform([request])
-        guard let result = request.results?.first else { return nil }
-        // Pick the most salient region
-        let regions = result.salientObjects ?? []
-        let best = regions.max(by: { ($0.confidence) < ($1.confidence) })?.boundingBox ?? CGRect(x: 0, y: 0, width: 1, height: 1)
-        // Vision bounding boxes are in normalized coordinates with origin at bottom-left
-        return denormalizeVisionRect(best, imageSize: image.size)
-    } catch {
-        return nil
-    }
 }
 
 private func crop(image: UIImage, to rect: CGRect) -> UIImage? {

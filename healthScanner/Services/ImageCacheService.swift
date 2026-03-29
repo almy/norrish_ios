@@ -31,10 +31,10 @@ class ImageCacheService: ObservableObject {
     private let maxCacheFileCount = 500
     
     private let fileManager = FileManager.default
-    private var cacheDirectory: URL {
+    private lazy var cacheDirectory: URL = {
         let documentsPath = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let cacheDir = documentsPath.appendingPathComponent("ImageCache")
-        
+
         // Create directory if it doesn't exist
         if !fileManager.fileExists(atPath: cacheDir.path) {
             do {
@@ -44,9 +44,9 @@ class ImageCacheService: ObservableObject {
                 log("❌ ImageCacheService: Failed to create cache directory: \(error)")
             }
         }
-        
+
         return cacheDir
-    }
+    }()
     
     private init() {
         log("🎯 ImageCacheService: Singleton initialized")
@@ -87,7 +87,7 @@ class ImageCacheService: ObservableObject {
             return
         }
 
-        let preparedImage = downscaledImageIfNeeded(image, maxDimension: maxCacheImageDimension)
+        let preparedImage = image.downsized(maxSide: maxCacheImageDimension)
         guard let imageData = preparedImage.safeJPEGData(compressionQuality: cacheJPEGQuality) else {
             log("❌ ImageCacheService: Failed to convert image to JPEG data for key: \(key)")
             return
@@ -214,22 +214,6 @@ class ImageCacheService: ObservableObject {
         let sanitized = filename.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "_", options: .regularExpression)
         log("🔧 ImageCacheService: Sanitized filename '\(filename)' to '\(sanitized)'")
         return sanitized
-    }
-
-    private func downscaledImageIfNeeded(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
-        let size = image.size
-        let longestSide = max(size.width, size.height)
-        guard longestSide > maxDimension, maxDimension > 0 else { return image }
-
-        let scale = maxDimension / longestSide
-        let targetSize = CGSize(width: size.width * scale, height: size.height * scale)
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = false
-        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
-        return renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: targetSize))
-        }
     }
 
     private struct CacheFileEntry {

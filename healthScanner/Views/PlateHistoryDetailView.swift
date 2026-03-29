@@ -12,6 +12,8 @@ struct PlateHistoryDetailView: View {
     let plateAnalysis: PlateAnalysisHistory
     let onClose: () -> Void
 
+    private static let recommendationEngine = OnDeviceNutritionRecommendationEngine()
+
     init(plateAnalysis: PlateAnalysisHistory, onClose: @escaping () -> Void = {}) {
         self.plateAnalysis = plateAnalysis
         self.onClose = onClose
@@ -20,7 +22,7 @@ struct PlateHistoryDetailView: View {
     var body: some View {
         VStack(spacing: 12) {
             // Adaptive qualitative message for this plate
-            if let rec = OnDeviceNutritionRecommendationEngine().qualitativeMealMessage(for: plateAnalysis) {
+            if let rec = Self.recommendationEngine.qualitativeMealMessage(for: plateAnalysis) {
                 HStack(spacing: 12) {
                     Image(systemName: "lightbulb.fill").foregroundColor(.momentumAmber)
                     VStack(alignment: .leading, spacing: 2) {

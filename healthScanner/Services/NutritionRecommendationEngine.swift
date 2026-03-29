@@ -26,6 +26,14 @@ import SwiftData
 @MainActor
 final class OnDeviceNutritionRecommendationEngine: ObservableObject {
 
+    // MARK: - Shared Formatters
+
+    private static let dayFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+        return df
+    }()
+
     // MARK: - Constants
 
     private struct NutritionConstants {
@@ -46,9 +54,15 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
         ]
 
         struct Adaptive {
+            private static let dayFormatter: DateFormatter = {
+                let df = DateFormatter()
+                df.dateFormat = "yyyy-MM-dd"
+                return df
+            }()
+
             /// Computes a rolling average over `days` from provided daily values.
             static func rollingAverage(valuesByDay: [String: Double], days: Int, now: Date = Date()) -> Double {
-                let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+                let df = Self.dayFormatter
                 let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: now) ?? now
                 let filtered = valuesByDay.compactMap { (k, v) -> (Date, Double)? in
                     guard let d = df.date(from: k) else { return nil }
@@ -219,8 +233,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
 
     private func aggregateNutritionData(plates: [PlateAnalysisHistory], products: [Product]) -> [String: DailyNutrition] {
         var days: [String: DailyNutrition] = [:]
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
+        let df = Self.dayFormatter
 
         for plate in plates {
             let day = df.string(from: plate.analyzedDate)
@@ -263,7 +276,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
         var fiberByDay: [String: Double] = [:]
         var vitaminCByDay: [String: Double] = [:]
         var ironByDay: [String: Double] = [:]
-        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+        let df = Self.dayFormatter
 
         for plate in plates {
             let day = df.string(from: plate.analyzedDate)
@@ -312,8 +325,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
     private func generateSampleEvidence(for nutrient: NutrientDeficiency.Nutrient,
                                       plates: [PlateAnalysisHistory],
                                       products: [Product]) -> (plates: [SampleRef], products: [SampleRef]) {
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
+        let df = Self.dayFormatter
         var plateSamples: [SampleRef] = []
         var productSamples: [SampleRef] = []
 
@@ -405,7 +417,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
     }
 
     private func analyzeBehaviorPatterns(recentPlates: [PlateAnalysisHistory], recentProducts: [Product]) -> BehaviorPatterns {
-        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+        let df = Self.dayFormatter
 
         let avgPlate = recentPlates.map { $0.nutritionScore }.reduce(0,+) / Double(max(1, recentPlates.count))
         var cats: [String:Int] = [:]
@@ -431,7 +443,7 @@ final class OnDeviceNutritionRecommendationEngine: ObservableObject {
 
     private func discoverCorrelations(plates: [PlateAnalysisHistory], products: [Product]) -> [CorrelationInsight] {
         guard !plates.isEmpty || !products.isEmpty else { return [] }
-        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+        let df = Self.dayFormatter
 
         // Map day -> avg plate score
         var dayPlateScores: [String: [Double]] = [:]

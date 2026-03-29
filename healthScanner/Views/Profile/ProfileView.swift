@@ -102,26 +102,8 @@ final class ProfileIdentityStore: ObservableObject {
     }
 
     private func encodedAvatarData(from image: UIImage) -> Data? {
-        let prepared = image.normalizedAndDownsampled(maxDimension: 1200)
+        let prepared = image.downsized(maxSide: 1200)
         return prepared.jpegData(compressionQuality: 0.82) ?? prepared.pngData()
-    }
-}
-
-private extension UIImage {
-    func normalizedAndDownsampled(maxDimension: CGFloat) -> UIImage {
-        let size = self.size
-        guard size.width > 0, size.height > 0 else { return self }
-
-        let maxSide = max(size.width, size.height)
-        let scaleRatio = min(1.0, maxDimension / maxSide)
-        let targetSize = CGSize(width: size.width * scaleRatio, height: size.height * scaleRatio)
-
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = 1
-        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
-        return renderer.image { _ in
-            self.draw(in: CGRect(origin: .zero, size: targetSize))
-        }
     }
 }
 

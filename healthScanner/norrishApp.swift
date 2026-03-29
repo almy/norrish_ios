@@ -73,7 +73,6 @@ enum NorrishSchemaV2: VersionedSchema {
             PlateAnalysisHistory.self,
             PlateIngredientEntity.self,
             PlateInsightEntity.self,
-            Item.self,
             DailyNutritionAggregateEntity.self,
             ScanEventEntity.self
         ]
@@ -123,7 +122,6 @@ struct norrishApp: App {
                 PlateAnalysisHistory.self,
                 PlateIngredientEntity.self,
                 PlateInsightEntity.self,
-                Item.self,
                 DailyNutritionAggregateEntity.self,
                 ScanEventEntity.self,
                 migrationPlan: NorrishMigrationPlan.self

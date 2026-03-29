@@ -7,11 +7,6 @@ final class LiveClassificationState: ObservableObject {
     @Published var isRunning: Bool = false
 }
 
-extension Notification.Name {
-    static let enhancedCapturePhoto = Notification.Name("enhancedCapturePhoto")
-    static let liveFoodDetectionUpdate = Notification.Name("liveFoodDetectionUpdate")
-}
-
 struct EnhancedCameraPreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var state = LiveClassificationState()

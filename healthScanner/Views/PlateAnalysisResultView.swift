@@ -666,19 +666,19 @@ private extension PlateAnalysisResultView {
             if isFlagged {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.plateWarningChipForeground)
+                    .foregroundColor(.warningChipForeground)
             }
 
             Text(ingredient)
                 .font(AppFonts.sans(11, weight: .medium))
         }
-        .foregroundColor(isFlagged ? .plateWarningChipForeground : .nordicSlate)
+        .foregroundColor(isFlagged ? .warningChipForeground : .nordicSlate)
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
-        .background(isFlagged ? Color.plateWarningChipBackground : Color.cardSurface)
+        .background(isFlagged ? Color.warningChipBackground : Color.cardSurface)
         .overlay(
             Capsule()
-                .stroke(isFlagged ? Color.plateWarningChipBorder : Color.cardBorder, lineWidth: isFlagged ? 1.5 : 1)
+                .stroke(isFlagged ? Color.warningChipBorder : Color.cardBorder, lineWidth: isFlagged ? 1.5 : 1)
         )
         .clipShape(Capsule())
         .accessibilityLabel(isFlagged ? "\(ingredient). Warning for \(flags.map(\.label).joined(separator: ", "))." : ingredient)
@@ -934,141 +934,6 @@ private extension PlateAnalysisResultView {
     }
 }
 
-private extension MealLogIntent {
-    var systemImage: String {
-        switch self {
-        case .ateIt:
-            return "fork.knife"
-        case .boughtIt:
-            return "cart"
-        case .checkingInfo:
-            return "eye"
-        case .forSomeoneElse:
-            return "person.2"
-        }
-    }
-}
-
-struct InsightCard: View {
-    let insight: Insight
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(iconBackgroundColor)
-                    .frame(width: 32, height: 32)
-                
-                Image(systemName: iconName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(iconColor)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(insight.title)
-                    .font(AppFonts.serif(15, weight: .semibold))
-                    .foregroundColor(.midnightSpruce)
-                
-                Text(insight.description)
-                    .font(AppFonts.sans(12, weight: .regular))
-                    .foregroundColor(.nordicSlate)
-            }
-            
-            Spacer()
-        }
-        .padding()
-        .background(cardBackgroundColor)
-        .cornerRadius(12)
-    }
-    
-    private var iconName: String {
-        switch insight.type {
-        case .positive:
-            return "checkmark.circle"
-        case .suggestion:
-            return "lightbulb"
-        case .warning:
-            return "exclamationmark.triangle"
-        }
-    }
-    
-    private var iconColor: Color {
-        switch insight.type {
-        case .positive:
-            return .mossInsight
-        case .suggestion:
-            return .momentumAmber
-        case .warning:
-            return .midnightSpruce
-        }
-    }
-    
-    private var iconBackgroundColor: Color {
-        switch insight.type {
-        case .positive:
-            return Color.mossInsight.opacity(0.2)
-        case .suggestion:
-            return Color.momentumAmber.opacity(0.2)
-        case .warning:
-            return Color.midnightSpruce.opacity(0.2)
-        }
-    }
-    
-    private var cardBackgroundColor: Color {
-        switch insight.type {
-        case .positive:
-            return Color.mossInsight.opacity(0.08)
-        case .suggestion:
-            return Color.momentumAmber.opacity(0.08)
-        case .warning:
-            return Color.midnightSpruce.opacity(0.08)
-        }
-    }
-}
-
-// MARK: - Score Ring
-struct ScoreRingView: View {
-    let score: Double // 0..10
-
-    private var color: Color {
-        let rgb = nutriScoreLetter.color
-        return Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
-    }
-
-    private var nutriScoreLetter: NutriScoreLetter {
-        return nutriScoreForPlate(score0to10: score)
-    }
-
-    private var label: String {
-        return String(format: NSLocalizedString("nutriscore.grade", comment: "Nutri-Score grade format"), nutriScoreLetter.rawValue)
-    }
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.nordicSlate.opacity(0.2), lineWidth: 16)
-                .frame(width: 200, height: 200)
-            Circle()
-                .trim(from: 0, to: Swift.min(Swift.max(score/10.0, 0.0), 1.0))
-                .stroke(color, style: StrokeStyle(lineWidth: 16, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 200, height: 200)
-            VStack(spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(String(format: "%.1f", score))
-                        .font(AppFonts.serif(34, weight: .bold))
-                    Text("/10")
-                        .font(AppFonts.sans(14, weight: .medium))
-                        .foregroundColor(.nordicSlate)
-                }
-                Text(label)
-                    .font(AppFonts.sans(12, weight: .semibold))
-                    .foregroundColor(color)
-            }
-        }
-    }
-}
-
 // MARK: - Helpers
 private struct MiniScoreRing: View {
     let score: Double
@@ -1200,164 +1065,6 @@ private struct PlateMicroHighlight {
     let color: Color
 }
 
-private struct ResultMacroCard: View {
-    let title: String
-    let value: String
-    let color: Color
-    @Environment(\.colorScheme) private var scheme
-
-    var body: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Circle().fill(color.opacity(0.25)).frame(width: 12, height: 12)
-                Text(title)
-                    .font(AppFonts.sans(12, weight: .semibold))
-                    .foregroundColor(.midnightSpruce)
-                Spacer()
-            }
-            HStack {
-                Text(value).font(AppFonts.serif(26, weight: .bold)).foregroundColor(.midnightSpruce)
-                Spacer()
-            }
-        }
-        .padding()
-        .frame(minHeight: 96)
-        .background(Color.cardSurface)
-        .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardBorder, lineWidth: 1))
-    }
-}
-
-struct ResultNutrientDot: View {
-    let label: String
-    let value: String
-    let color: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(color)
-                    .frame(width: 8, height: 8)
-                Text(label)
-                    .font(AppFonts.sans(11, weight: .regular))
-                    .foregroundColor(.white.opacity(0.8))
-            }
-
-            Text(value)
-                .font(AppFonts.sans(11, weight: .semibold))
-                .foregroundColor(.white)
-        }
-    }
-}
-
-struct ResultIngredientRow: View {
-    let name: String
-    let amount: String
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        HStack {
-            Text(name)
-                .font(.body)
-                .foregroundColor(.midnightSpruce)
-
-            Spacer()
-
-            Text(amount)
-                .font(AppFonts.sans(13, weight: .regular))
-                .foregroundColor(.nordicSlate)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(
-            Color.cardSurface
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.cardBorder, lineWidth: 1)
-        )
-        .padding(.bottom, 8)
-    }
-}
-
-struct ResultModernInsightCard: View {
-    let insight: Insight
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: iconName)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(iconColor)
-                .frame(width: 22)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(insight.title)
-                    .font(AppFonts.sans(15, weight: .semibold))
-                    .foregroundColor(.midnightSpruce)
-                Text(insight.description)
-                    .font(AppFonts.sans(12, weight: .regular))
-                    .foregroundColor(.nordicSlate)
-            }
-            Spacer()
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.cardSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.cardBorder, lineWidth: 1)
-                )
-        )
-    }
-
-    private var iconName: String {
-        switch insight.type {
-        case .positive:
-            return "checkmark.circle.fill"
-        case .suggestion:
-            return "lightbulb.fill"
-        case .warning:
-            return "exclamationmark.triangle.fill"
-        }
-    }
-
-    private var iconColor: Color {
-        switch insight.type {
-        case .positive: return .mossInsight
-        case .suggestion: return .momentumAmber
-        case .warning: return .midnightSpruce
-        }
-    }
-}
-
-struct PlateMicronutrientCard: View {
-    let name: String
-    let level: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(name)
-                .font(AppFonts.sans(13, weight: .medium))
-                .foregroundColor(.midnightSpruce)
-            Text(level)
-                .font(AppFonts.sans(11, weight: .regular))
-                .foregroundColor(.nordicSlate)
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.cardSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(color.opacity(0.25), lineWidth: 1)
-                )
-        )
-    }
-}
 
 private extension PlateAnalysisResultView {
     var scoreBandTitle: String {
@@ -1540,101 +1247,10 @@ private extension PlateAnalysisResultView {
     }
 }
 
-struct MacroBarRow: View {
-    let title: String
-    let label: String
-    let fill: CGFloat // 0..1 visual fill to mirror mock
-    let accent: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title.uppercased())
-                    .font(AppFonts.label)
-                    .foregroundColor(.nordicSlate)
-                    .kerning(2)
-                Spacer()
-                Text(label)
-                    .font(AppFonts.serif(18, weight: .regular))
-                    .foregroundColor(.midnightSpruce)
-            }
-            GeometryReader { proxy in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.cardSurface)
-                        .frame(height: 2)
-                    Capsule()
-                        .fill(accent.opacity(0.3))
-                        .frame(width: proxy.size.width * fill, height: 2)
-                }
-            }
-            .frame(height: 2)
-        }
-    }
-}
-
-// Minimal flow layout for wrapping chips
-struct ChipFlow<Content: View>: View {
-    let alignment: HorizontalAlignment
-    let spacing: CGFloat
-    @ViewBuilder var content: () -> Content
-
-    init(alignment: HorizontalAlignment = .leading, spacing: CGFloat = 8, @ViewBuilder content: @escaping () -> Content) {
-        self.alignment = alignment
-        self.spacing = spacing
-        self.content = content
-    }
-
-    var body: some View {
-        FlowLayoutContainer(spacing: spacing) {
-            content()
-        }
-    }
-}
-
 private extension Color {
-    static let plateWarningChipBackground = Color.momentumAmber.opacity(0.12)
-    static let plateWarningChipBorder = Color.momentumAmber.opacity(0.75)
-    static let plateWarningChipForeground = Color(red: 0.57, green: 0.27, blue: 0.0)
-}
-
-private struct FlowLayoutContainer: Layout {
-    let spacing: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? CGFloat.infinity
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            x += size.width + spacing
-            rowHeight = Swift.max(rowHeight, size.height)
-        }
-        return CGSize(width: maxWidth, height: y + rowHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > bounds.width {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            subview.place(at: CGPoint(x: bounds.minX + x, y: bounds.minY + y), proposal: ProposedViewSize(width: size.width, height: size.height))
-            x += size.width + spacing
-            rowHeight = Swift.max(rowHeight, size.height)
-        }
-    }
+    static let warningChipBackground = Color.momentumAmber.opacity(0.12)
+    static let warningChipBorder = Color.momentumAmber.opacity(0.75)
+    static let warningChipForeground = Color(red: 0.57, green: 0.27, blue: 0.0)
 }
 
 #Preview {

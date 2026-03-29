@@ -491,7 +491,7 @@ struct ProductDetailView: View {
             if isFlagged {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.productWarningChipForeground)
+                    .foregroundColor(.warningChipForeground)
             }
 
             Text(ingredient)
@@ -499,15 +499,15 @@ struct ProductDetailView: View {
                 .textCase(.uppercase)
                 .kerning(1.5)
         }
-        .foregroundColor(isFlagged ? .productWarningChipForeground : .nordicSlate)
+        .foregroundColor(isFlagged ? .warningChipForeground : .nordicSlate)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(
             Capsule()
-                .fill(isFlagged ? Color.productWarningChipBackground : Color.cardSurface)
+                .fill(isFlagged ? Color.warningChipBackground : Color.cardSurface)
                 .overlay(
                     Capsule()
-                        .stroke(isFlagged ? Color.productWarningChipBorder : Color.cardBorder, lineWidth: isFlagged ? 1.5 : 1)
+                        .stroke(isFlagged ? Color.warningChipBorder : Color.cardBorder, lineWidth: isFlagged ? 1.5 : 1)
                 )
         )
         .accessibilityLabel(isFlagged ? "\(ingredient). Warning for \(flags.map(\.label).joined(separator: ", "))." : ingredient)
@@ -517,7 +517,7 @@ struct ProductDetailView: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.productWarningChipForeground)
+                .foregroundColor(.warningChipForeground)
 
             Text(NSLocalizedString("ingredients.unavailable.product", comment: "Ingredient data unavailable card text"))
                 .font(AppFonts.sans(12, weight: .medium))
@@ -528,10 +528,10 @@ struct ProductDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.productWarningChipBackground)
+                .fill(Color.warningChipBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.productWarningChipBorder, lineWidth: 1)
+                        .stroke(Color.warningChipBorder, lineWidth: 1)
                 )
         )
     }
@@ -597,9 +597,9 @@ struct ProductDetailView: View {
 }
 
 private extension Color {
-    static let productWarningChipBackground = Color.momentumAmber.opacity(0.12)
-    static let productWarningChipBorder = Color.momentumAmber.opacity(0.75)
-    static let productWarningChipForeground = Color(red: 0.57, green: 0.27, blue: 0.0)
+    static let warningChipBackground = Color.momentumAmber.opacity(0.12)
+    static let warningChipBorder = Color.momentumAmber.opacity(0.75)
+    static let warningChipForeground = Color(red: 0.57, green: 0.27, blue: 0.0)
 }
 
 private extension ProductDetailView {
@@ -734,21 +734,6 @@ private extension ProductDetailView {
     }
 }
 
-private extension MealLogIntent {
-    var systemImage: String {
-        switch self {
-        case .ateIt:
-            return "fork.knife"
-        case .boughtIt:
-            return "cart"
-        case .checkingInfo:
-            return "eye"
-        case .forSomeoneElse:
-            return "person.2"
-        }
-    }
-}
-
 // Preview-only: static sample product and in-memory model context.
 #Preview("Product Detail") {
     ProductDetailView(product: Product.sampleProduct)
@@ -757,54 +742,4 @@ private extension MealLogIntent {
 
 // CachedAsyncImage moved to Views/Components/CachedAsyncImage.swift
 
-struct FlowLayout<Content: View>: View {
-    let alignment: HorizontalAlignment
-    let spacing: CGFloat
-    let content: () -> Content
-    init(alignment: HorizontalAlignment = .leading, spacing: CGFloat = 8, @ViewBuilder content: @escaping () -> Content) {
-        self.alignment = alignment
-        self.spacing = spacing
-        self.content = content
-    }
-    var body: some View {
-        FlowLayoutContainer(spacing: spacing) { content() }
-    }
-}
-
-private struct FlowLayoutContainer: Layout {
-    let spacing: CGFloat
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? CGFloat.infinity
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            x += size.width + spacing
-            rowHeight = Swift.max(rowHeight, size.height)
-        }
-        return CGSize(width: maxWidth, height: y + rowHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > bounds.width {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            subview.place(at: CGPoint(x: bounds.minX + x, y: bounds.minY + y), proposal: ProposedViewSize(width: size.width, height: size.height))
-            x += size.width + spacing
-            rowHeight = Swift.max(rowHeight, size.height)
-        }
-    }
-}
+// FlowLayout moved to Views/Components/FlowLayout.swift

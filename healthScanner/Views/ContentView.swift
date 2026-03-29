@@ -9,11 +9,6 @@ import SwiftUI
 import SwiftData
 import Photos
 
-extension Notification.Name {
-    static let onboardingOpenPlatePhoto = Notification.Name("onboardingOpenPlatePhoto")
-    static let onboardingOpenProductScan = Notification.Name("onboardingOpenProductScan")
-}
-
 // Shared grade filter used by History presentation controls.
 enum ProductFilter: CaseIterable {
     case all, gradeA, gradeB, gradeC, gradeD, gradeE
@@ -187,7 +182,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        PromptOverlayHost {
+        Group {
             // Main app shell with Home / History / Profile tabs.
             TabView(selection: $selectedTab) {
                 TabWithFloatingAddButton(

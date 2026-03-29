@@ -2,11 +2,6 @@ import SwiftUI
 import SwiftData
 import UIKit
 
-extension Notification.Name {
-    static let closePlateScanFlow = Notification.Name("closePlateScanFlow")
-    static let retakePlateScanFlow = Notification.Name("retakePlateScanFlow")
-}
-
 struct PlateQuickScanView: View {
     enum Mode { case camera, photo }
 

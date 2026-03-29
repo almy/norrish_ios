@@ -62,7 +62,6 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         super.viewDidLoad()
         view.backgroundColor = .black
         setupUI()
-        setupVision()
         startSession()
     }
 
@@ -115,22 +114,6 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         dismiss(animated: true)
     }
 
-    private func setupVision() {
-        // TODO: Uncomment when FoodSegmentation and FoodClassifier models are added
-        /*
-        if let segModel = try? VNCoreMLModel(for: FoodSegmentation().model) {
-            let req = VNCoreMLRequest(model: segModel)
-            req.imageCropAndScaleOption = .scaleFill
-            segmentationRequest = req
-        }
-        if let clsModel = try? VNCoreMLModel(for: FoodClassifier().model) {
-            let req = VNCoreMLRequest(model: clsModel)
-            req.imageCropAndScaleOption = .centerCrop
-            classificationRequest = req
-        }
-        */
-    }
-
     // MARK: Session
     private func startSession() {
         let config = ARWorldTrackingConfiguration()
@@ -175,36 +158,6 @@ public final class ARPlateScannerViewController: UIViewController, ARSessionDele
         present(fallback, animated: true)
     }
     
-    private func addTapGestureForNonLiDAR() {
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(screenTapped))
-        sceneView.addGestureRecognizer(tapGesture)
-    }
-    
-    @objc private func screenTapped() {
-        guard !didEmit else { return }
-        guard let frame = sceneView.session.currentFrame else { return }
-        didEmit = true
-        sceneView.session.delegate = nil
-        hud.setStatus("Processing...")
-        let fullImage = UIImage(pixelBuffer: frame.capturedImage, orientation: .right)
-        let cropped = cropToOverlay(fullImage)
-        let result = ARPlateScanNutrition(
-            label: "food",
-            confidence: 0.7,
-            volumeML: 150.0,
-            massG: 150.0,
-            calories: 200,
-            protein: 15,
-            carbs: 25,
-            fat: 8
-        )
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.onResult?(result, cropped)
-            self.dismiss(animated: true)
-        }
-    }
-
     // MARK: ARSessionDelegate
     public func session(_ session: ARSession, didUpdate frame: ARFrame) {
         guard !didEmit else { return }
@@ -603,7 +556,7 @@ private extension ARPlateScannerViewController {
     func cropToOverlay(_ image: UIImage) -> UIImage {
         // Use cropNormalized (already defined in controller) to crop center square.
         guard image.cgImage != nil else { return image }
-        let src = image.fixedOrientation()
+        let src = image.normalizedOrientation()
         guard let orientedCG = src.cgImage else { return image }
         let width = CGFloat(orientedCG.width)
         let height = CGFloat(orientedCG.height)
@@ -634,17 +587,6 @@ private final class PlateCropOverlay: UIView {
         ctx.setLineWidth(3)
         ctx.addPath(circlePath.cgPath)
         ctx.strokePath()
-    }
-}
-
-private extension UIImage {
-    func fixedOrientation() -> UIImage {
-        if imageOrientation == .up { return self }
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        draw(in: CGRect(origin: .zero, size: size))
-        let normalized = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return normalized ?? self
     }
 }
 

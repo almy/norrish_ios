@@ -1200,7 +1200,7 @@ private final class HUD: UIView {
 // MARK: - Cropping Helpers
 private extension DualCameraPlateScannerViewController {
     func cropToRing(_ image: UIImage) -> UIImage {
-        let src = image.fixedOrientation()
+        let src = image.normalizedOrientation()
         guard let cg = src.cgImage else { return image }
         let imgW = CGFloat(cg.width)
         let imgH = CGFloat(cg.height)
@@ -1291,12 +1291,4 @@ private extension UIImage {
         self.init(cgImage: cgImage, scale: 1.0, orientation: orientation)
     }
     
-    func fixedOrientation() -> UIImage {
-        if imageOrientation == .up { return self }
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        draw(in: CGRect(origin: .zero, size: size))
-        let normalized = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return normalized ?? self
-    }
 }

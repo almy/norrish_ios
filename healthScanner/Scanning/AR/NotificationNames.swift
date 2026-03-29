@@ -5,11 +5,24 @@ import Foundation
 import OSLog
 
 extension Notification.Name {
-    // Posted when a plate scan completes. userInfo: ["result": ARPlateScanNutrition, "image": UIImage]
+    // AR scanning
     static let plateScanCompleted = Notification.Name("PlateScanCompleted")
-    
-    // Posted when a barcode scan completes. userInfo: ["upc": String, "title": String?, "store": String?]
     static let barcodeScanCompleted = Notification.Name("BarcodeScanCompleted")
+
+    // Plate scan flow
+    static let closePlateScanFlow = Notification.Name("closePlateScanFlow")
+    static let retakePlateScanFlow = Notification.Name("retakePlateScanFlow")
+
+    // Camera
+    static let enhancedCapturePhoto = Notification.Name("enhancedCapturePhoto")
+    static let liveFoodDetectionUpdate = Notification.Name("liveFoodDetectionUpdate")
+
+    // Onboarding
+    static let onboardingOpenPlatePhoto = Notification.Name("onboardingOpenPlatePhoto")
+    static let onboardingOpenProductScan = Notification.Name("onboardingOpenProductScan")
+
+    // Localization
+    static let languageChanged = Notification.Name("languageChanged")
 }
 
 enum AppLog {

@@ -17,7 +17,6 @@
  See also: docs/adr/0001-insights-strategy-and-ml-snapshot.md
 */
 import Foundation
-import Accelerate
 
 struct MLFeatureSpace {
     let featureNames: [String] // aligns with vector order
@@ -144,9 +143,15 @@ struct DailyAggregate {
 /// - Requires at least 7 distinct days to produce meaningful next-day targets; returns `nil` otherwise.
 /// - Does not persist raw data; callers may persist snapshots of learned coefficients for warm-starts.
 struct LocalRecommendationML {
+    private static let dayFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+        return df
+    }()
+
     // Builds training data from recent history. Requires at least 7 samples.
     static func buildTrainingData(plates: [PlateAnalysisHistory], products: [Product], maxCategories: Int = 8) -> MLTrainingData? {
-        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
+        let df = dayFormatter
 
         // Aggregate per day
         var byDay: [String: DailyAggregate] = [:]
