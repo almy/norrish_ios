@@ -4,39 +4,6 @@ import CoreML
 import CoreImage
 
 public final class SegmentationEnhancer {
-    private static var cachedModel: VNCoreMLModel?
-
-    private static func loadModel() -> VNCoreMLModel? {
-        if let cached = cachedModel {
-            return cached
-        }
-
-        let config = MLModelConfiguration()
-        config.computeUnits = .all
-
-        let bundle = Bundle.main
-        let modelNames = ["yolov8x-oiv7"]
-        let modelExtensions = ["mlmodelc", "mlpackage"]
-        let subdirectory = "CoreML"
-
-        for modelName in modelNames {
-            for ext in modelExtensions {
-                if let url = bundle.url(forResource: modelName, withExtension: ext) ?? bundle.url(forResource: modelName, withExtension: ext, subdirectory: subdirectory) {
-                    do {
-                        let mlModel = try MLModel(contentsOf: url, configuration: config)
-                        let vnModel = try VNCoreMLModel(for: mlModel)
-                        cachedModel = vnModel
-                        AppLog.debug(AppLog.vision, "[SegEnhance] YOLOv8x model loaded: \(url.lastPathComponent)")
-                        return vnModel
-                    } catch {
-                        continue
-                    }
-                }
-            }
-        }
-        AppLog.error(AppLog.vision, "[SegEnhance] YOLOv8x model not found in bundle; falling back")
-        return nil
-    }
 
     public init() {}
 
@@ -52,7 +19,7 @@ public final class SegmentationEnhancer {
         // 1) Try YOLO segmentation-like mask (feature outputs), else detections → boxes, else saliency
         var boxes: [CGRect] = []
         var maskCI: CIImage? = nil
-        let yoloModel = Self.loadModel()
+        let yoloModel = YOLOModelProvider.load()
         AppLog.debug(AppLog.vision, "[SegEnhance] YOLO available: \(yoloModel != nil ? "YES" : "NO")")
         if let model = yoloModel {
             let handler = VNImageRequestHandler(cgImage: cg, orientation: cgImagePropertyOrientation(from: image.imageOrientation), options: [:])

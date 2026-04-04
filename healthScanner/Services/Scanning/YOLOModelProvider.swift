@@ -43,6 +43,16 @@ enum YOLOModelProvider {
         return loadSynchronously()
     }
 
+    /// Async convenience that returns a ready-to-use VNCoreMLRequest.
+    static func getDetectionRequest(completion: @escaping (VNCoreMLRequest?) -> Void) {
+        getModel { model in
+            guard let model else { completion(nil); return }
+            let req = VNCoreMLRequest(model: model)
+            req.imageCropAndScaleOption = .scaleFill
+            completion(req)
+        }
+    }
+
     private static func loadSynchronously() -> VNCoreMLModel? {
         if let cached {
             return cached

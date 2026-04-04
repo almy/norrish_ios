@@ -10,89 +10,6 @@ import CoreVideo
 import simd
 import SwiftUI
 
-// MARK: - Detection Model Provider (prewarm support)
-fileprivate final class DetectionModelProvider {
-    static let shared = DetectionModelProvider()
-    private let queue = DispatchQueue(label: "detection.model.loader")
-    private var detectionRequest: VNCoreMLRequest?
-    private var loading = false
-    private var completions: [(VNCoreMLRequest?) -> Void] = []
-
-    func preload() {
-        AppLog.debug(AppLog.scanner, "🔸 [Vision] Prewarm requested")
-        getDetectionRequest { _ in }
-    }
-
-    func getDetectionRequest(completion: @escaping (VNCoreMLRequest?) -> Void) {
-        queue.async {
-            if let req = self.detectionRequest {
-                AppLog.debug(AppLog.scanner, "⚡️ [Vision] Using cached detection request")
-                DispatchQueue.main.async { completion(req) }
-                return
-            }
-            self.completions.append(completion)
-            if self.loading { return }
-            self.loading = true
-            let start = CACurrentMediaTime()
-            let req = self.loadDetectionRequest()
-            self.detectionRequest = req
-            let ms = Int((CACurrentMediaTime() - start) * 1000)
-            AppLog.debug(AppLog.scanner, "✅ [Vision] Prewarm complete in \(ms) ms (success: \(req != nil))")
-            let callbacks = self.completions
-            self.completions.removeAll()
-            self.loading = false
-            for cb in callbacks {
-                DispatchQueue.main.async { cb(req) }
-            }
-        }
-    }
-
-    private func loadDetectionRequest() -> VNCoreMLRequest? {
-        guard let url = findModelURL(named: "yolov8x-oiv7") else {
-            AppLog.debug(AppLog.scanner, "ℹ️ [Vision] YOLOv8 model not available")
-            logBundleModels()
-            return nil
-        }
-        do {
-            let cfg = MLModelConfiguration(); cfg.computeUnits = .all
-            let ml = try MLModel(contentsOf: url, configuration: cfg)
-            if let vn = try? VNCoreMLModel(for: ml) {
-                let req = VNCoreMLRequest(model: vn)
-                req.imageCropAndScaleOption = .scaleFill
-                AppLog.debug(AppLog.scanner, "✅ [Vision] YOLOv8 detection model enabled (\(url.pathExtension)) [prewarmed]")
-                return req
-            } else {
-                AppLog.debug(AppLog.scanner, "⚠️ [Vision] Could not wrap model in VNCoreMLModel")
-            }
-        } catch {
-            AppLog.debug(AppLog.scanner, "⚠️ [Vision] Failed to load YOLOv8 model: \(error)")
-        }
-        logBundleModels()
-        return nil
-    }
-
-    private func findModelURL(named baseName: String, bundle: Bundle = .main) -> URL? {
-        if let url = bundle.url(forResource: baseName, withExtension: "mlmodelc") { return url }
-        if let url = bundle.url(forResource: baseName, withExtension: "mlmodelc", subdirectory: "CoreML") { return url }
-        if let url = bundle.url(forResource: baseName, withExtension: "mlpackage") { return url }
-        if let url = bundle.url(forResource: baseName, withExtension: "mlpackage", subdirectory: "CoreML") { return url }
-        return nil
-    }
-
-    private func logBundleModels() {
-        let compiled = Bundle.main.paths(forResourcesOfType: "mlmodelc", inDirectory: nil)
-        if !compiled.isEmpty {
-            AppLog.debug(AppLog.scanner, "📦 .mlmodelc in bundle:")
-            compiled.forEach { AppLog.debug(AppLog.scanner, "  - \($0)") }
-        }
-        let packages = Bundle.main.paths(forResourcesOfType: "mlpackage", inDirectory: nil)
-        if !packages.isEmpty {
-            AppLog.debug(AppLog.scanner, "📦 .mlpackage in bundle:")
-            packages.forEach { AppLog.debug(AppLog.scanner, "  - \($0)") }
-        }
-    }
-}
-
 public final class DualCameraPlateScannerViewController: UIViewController,
     AVCaptureVideoDataOutputSampleBufferDelegate,
     AVCaptureDepthDataOutputDelegate
@@ -103,10 +20,10 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
     // MARK: Prewarming
     public static func prewarmModels() {
-        DetectionModelProvider.shared.preload()
+        YOLOModelProvider.preload()
     }
     public static func prewarmModels(completion: @escaping (Bool) -> Void) {
-        DetectionModelProvider.shared.getDetectionRequest { req in
+        YOLOModelProvider.getDetectionRequest { req in
             completion(req != nil)
         }
     }
@@ -377,7 +294,7 @@ public final class DualCameraPlateScannerViewController: UIViewController,
 
     // MARK: Vision
     private func setupVision() {
-        DetectionModelProvider.shared.getDetectionRequest { [weak self] req in
+        YOLOModelProvider.getDetectionRequest { [weak self] req in
             guard let self else { return }
             self.detectionRequest = req
             let detAvailable = (req != nil) ? "YES" : "NO"
