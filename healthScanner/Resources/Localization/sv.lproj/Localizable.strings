@@ -126,6 +126,7 @@
 "profile.active" = "Aktiva";
 "profile.download_report" = "Ladda Ned Näringsrapport";
 "profile.goal.balance" = "Balanserad";
+"profile.day" = "Dag";
 "profile.days" = "Dagar";
 "profile.version" = "Version 1.0.0";
 "profile.tagline" = "Gör hälsosamma val enklare";

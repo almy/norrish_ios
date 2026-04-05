@@ -354,9 +354,11 @@ private extension FoodRegionSelectionView {
 
                 Button(action: confirm) {
                     if viewModel.isAnalyzing {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 6) {
                             AppInlineSpinner(size: 14)
                             Text("Analyzing…")
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.75)
                         }
                     } else {
                         Text("Analyze")

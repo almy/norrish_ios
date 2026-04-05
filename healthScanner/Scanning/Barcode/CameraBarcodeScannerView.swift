@@ -66,8 +66,26 @@ struct BarcodeCameraOverlayView: View {
                 .ignoresSafeArea()
                 .overlay(Color.black.opacity(0.04))
 
-            VStack {
-                Spacer(minLength: 24)
+            VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    Button {
+                        isScanning = false
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.midnightSpruce)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.9))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel("Close")
+                    .padding(.trailing, 20)
+                    .padding(.top, 12)
+                }
+
+                Spacer(minLength: 12)
                 scannerSurface
                 Spacer(minLength: 32)
             }

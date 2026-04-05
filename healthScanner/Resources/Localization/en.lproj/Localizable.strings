@@ -126,6 +126,7 @@
 "profile.active" = "Active";
 "profile.download_report" = "Download Nutritional Report";
 "profile.goal.balance" = "Balanced";
+"profile.day" = "Day";
 "profile.days" = "Days";
 "profile.version" = "Version 1.0.0";
 

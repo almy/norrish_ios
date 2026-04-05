@@ -264,6 +264,21 @@ struct PlateAnalysisResultView: View {
 
             ingredientPreviewSection
 
+            if confidenceClamped < 0.25 {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.nordicSlate.opacity(0.6))
+                    Text("Confidence is too low to provide detailed advice. Try retaking with better lighting or a clearer angle.")
+                        .font(AppFonts.sans(12, weight: .regular))
+                        .foregroundColor(.nordicSlate.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
+                .background(Color.nordicSlate.opacity(0.06))
+                .cornerRadius(10)
+            }
+
             if !scoreRationaleLines.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     sectionHeader(icon: "chart.line.uptrend.xyaxis", title: "Why this score")
@@ -1118,14 +1133,18 @@ private extension PlateAnalysisResultView {
     }
 
     var scoreRationaleLines: [String] {
+        // Suppress rationale when confidence is too low — the analysis is unreliable
+        guard confidenceClamped >= 0.25 else { return [] }
         if let why = analysis.whyThisScore?.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }), !why.isEmpty {
             return Array(why.prefix(3))
         }
         let fallback = analysis.insights.prefix(2).map(\.description).filter { !$0.isEmpty }
-        return fallback.isEmpty ? ["Macronutrient balance and estimated portion drove this score."] : fallback
+        return fallback
     }
 
     var primaryQuickWin: String? {
+        // Suppress suggestions when confidence is too low
+        guard confidenceClamped >= 0.25 else { return nil }
         if let wins = analysis.quickWinActions?.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }), !wins.isEmpty {
             return wins[0]
         }
@@ -1133,6 +1152,7 @@ private extension PlateAnalysisResultView {
     }
 
     var secondaryQuickWins: [String] {
+        guard confidenceClamped >= 0.25 else { return [] }
         if let wins = analysis.quickWinActions?.filter({ !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }), wins.count > 1 {
             return Array(wins.dropFirst().prefix(3))
         }

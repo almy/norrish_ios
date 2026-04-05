@@ -52,7 +52,7 @@ struct RecentScanRow: View {
             if let product = products.first(where: { $0.barcode == scan.barcode }) {
                 onProductSelected(product)
             } else {
-                print("[RecentScanRow] Product not found for barcode=\(scan.barcode) name=\(scan.productName)")
+                AppLog.debug(AppLog.app, "[RecentScanRow] Product not found for barcode=\(scan.barcode) name=\(scan.productName)")
             }
         }
     }

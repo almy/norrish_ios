@@ -312,7 +312,9 @@ private extension ProfileView {
                 .foregroundColor(.midnightSpruce)
                 .padding(.horizontal, 20)
 
-            let daysLabel = NSLocalizedString("profile.days", comment: "Days label")
+            let daysLabel = activeDays == 1
+                ? NSLocalizedString("profile.day", comment: "Day label (singular)")
+                : NSLocalizedString("profile.days", comment: "Days label (plural)")
             HStack(spacing: 12) {
                 ProfileMetricCard(title: "profile.primary_goal".localized(), value: primaryGoalText)
                 ProfileMetricCard(title: "profile.daily_streak".localized(), value: "\(activeDays) \(daysLabel)")

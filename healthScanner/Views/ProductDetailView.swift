@@ -66,13 +66,13 @@ struct ProductDetailView: View {
             Text(logFeedbackMessage)
         }
         .onAppear {
-            print("[ProductDetailView] Appeared for barcode=\(product.barcode) name=\(product.name) brand=\(product.brand) imageURL=\(product.imageURL ?? "nil") localImagePath=\(product.localImagePath ?? "nil")")
+            AppLog.debug(AppLog.app, "[ProductDetailView] Appeared for barcode=\(product.barcode) name=\(product.name)")
             if let existingIntent = product.mealLogIntent {
                 selectedMealIntent = existingIntent
             }
             if product.localImagePath == nil, let path = ImageCacheService.shared.cachedFilePath(forKey: product.barcode) {
                 product.localImagePath = path
-                print("[ProductDetailView] Set missing localImagePath=\(path)")
+                AppLog.debug(AppLog.app, "[ProductDetailView] Set missing localImagePath=\(path)")
             }
             if !didLoadSimilar {
                 didLoadSimilar = true
@@ -556,10 +556,10 @@ struct ProductDetailView: View {
         product.mealLoggedAt = Date()
         do {
             try modelContext.save()
-            print("[ProductDetailView] Logged product: \(product.name) as \(intent.rawValue)")
+            AppLog.debug(AppLog.app, "[ProductDetailView] Logged product: \(product.name) as \(intent.rawValue)")
             return true
         } catch {
-            print("[ProductDetailView] Failed to log product intent for \(product.name): \(error)")
+            AppLog.error(AppLog.app, "[ProductDetailView] Failed to log product intent for \(product.name): \(error)")
             return false
         }
     }
