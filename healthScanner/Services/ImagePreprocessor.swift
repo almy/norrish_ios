@@ -273,6 +273,10 @@ private enum SegmentationStartupMetrics {
 }
 
 private func segmentedFoodRegions(_ image: UIImage, maxRegions: Int, padding: CGFloat) -> [ImagePreprocessor.Result]? {
+    #if targetEnvironment(simulator)
+    // YOLO26X-seg produces garbage masks on simulator CPU — skip to saliency/detection fallback.
+    return nil
+    #else
     SegmentationStartupMetrics.markAttemptStartIfNeeded()
     guard let cg = cgImage(from: image),
           let model = YOLOSegmentationModelProvider.syncModel() else {
@@ -320,6 +324,7 @@ private func segmentedFoodRegions(_ image: UIImage, maxRegions: Int, padding: CG
         }
     }
     return nil
+    #endif
 }
 
 private func maskBuffer(from observations: [VNObservation]) -> CVPixelBuffer? {

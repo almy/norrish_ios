@@ -421,7 +421,7 @@ private extension FoodRegionSelectionView {
     func detect() {
         isLoading = true
         Task {
-            let results: [ImagePreprocessor.Result] = await withCheckedContinuation { continuation in
+            var results: [ImagePreprocessor.Result] = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .userInitiated).async {
                     let computed = ImagePreprocessor.preprocessFoodRegions(
                         image,
@@ -432,6 +432,14 @@ private extension FoodRegionSelectionView {
                     continuation.resume(returning: computed)
                 }
             }
+            #if targetEnvironment(simulator)
+            // Saliency/segmentation models may not work on simulator CPU — fall back to full image.
+            if results.isEmpty {
+                let fullRect = CGRect(origin: .zero, size: image.size)
+                let px = Int(image.size.width * image.size.height)
+                results = [ImagePreprocessor.Result(image: image, boundingBox: fullRect, pixelCount: px, confidence: 1.0)]
+            }
+            #endif
             guard !Task.isCancelled else { return }
             let colors: [Color] = [.momentumAmber, .mossInsight, .midnightSpruce, .nordicSlate, .momentumAmber.opacity(0.7), .mossInsight.opacity(0.7)]
             await MainActor.run {
